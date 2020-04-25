@@ -72,13 +72,16 @@ class Maze:
        by = 0
        for i in range(0,self.M*self.N):
            if self.maze[ bx + (by*self.M) ] == 1:
-               display_surf.blit(image_surf,( bx * 32 , by * 32))
+               display_surf.blit(image_surf,(bx * 32 , by * 32))
       
            bx = bx + 1
            if bx > self.M-1:
                bx = 0 
                by = by + 1
 
+    #def calcular_Casilla(self):
+
+#def resizeImages():
 
 class App:
     windowWidth = 800
@@ -112,6 +115,7 @@ class App:
         pygame.display.set_caption('Laberinto SquidCastle 2020, Pandemia.')
         self._running = True
         self._jugador_surf = pygame.image.load("../Resources/player.png").convert()
+        self._jugador_surf = pygame.transform.scale(self._jugador_surf, (32, 32))
         self._enemigo_surf = pygame.image.load("../Resources/wilber-eeek.png").convert()
         self._block_surf = pygame.image.load("../Resources/floor.png").convert()
  
@@ -124,7 +128,7 @@ class App:
     
     def on_render(self):
         self._display_surf.fill((0,0,0))
-        self._display_surf.blit(self._jugador_surf,(self.player.x, self.player.y))
+        self._display_surf.blit(self._jugador_surf, (self.player.x, self.player.y))
         self._display_surf.blit(self._enemigo_surf, (self.enemigo.x, self.enemigo.y))
         self.maze.draw(self._display_surf, self._block_surf)
         pygame.display.flip()
