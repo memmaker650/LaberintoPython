@@ -1,6 +1,7 @@
 import mates
 
 import logging
+import statistics
 import os
 import sys
 
@@ -51,12 +52,23 @@ def load_sound(nombre, dir_sonido):
         sonido = None
     return sonido
 
+class estadisticasSquid:
+    tiempoNivel = 0
+    EnemigosMuertos = 0
+    puntos = 0
 
-class Player:
-    x = 44
-    y = 44
-    speed = 1
 
+class partidaGuardada:
+    nivel = 0
+    puntos = 0
+    enemigosMuertos = 0
+    llavesRojas = 0
+    llavesAmarillos = 0
+    llavesNegras = 0
+
+
+
+class personaje:
     def moveRight(self):
         self.x = self.x + self.speed
 
@@ -70,23 +82,15 @@ class Player:
         self.y = self.y + self.speed
 
 
-class Enemigo:
+class Enemigo(personaje):
     x = 44
     y = 44
     speed = 1
 
-    def moveRight(self):
-        self.x = self.x + self.speed
-
-    def moveLeft(self):
-        self.x = self.x - self.speed
-
-    def moveUp(self):
-        self.y = self.y - self.speed
-
-    def moveDown(self):
-        self.y = self.y + self.speed
-
+class Player(personaje):
+    x = 44
+    y = 44
+    speed = 1
 
 class Maze:
     def __init__(self):
@@ -125,14 +129,16 @@ class Maze:
             if self.maze[bx + (by * self.M)] == 1:
                 #pygame.sprite.Sprite.__init__(self)
                 display_surf.blit(image_surf, (bx * 32, by * 32))
-                #self.rect = self.image.get_rect()
+                self.rect = image_surf.get_rect()
 
             bx = bx + 1
             if bx > self.M - 1:
                 bx = 0
                 by = by + 1
 
-    # def calcularCasilla(self):
+    # def calcularCasilla(self, valor):
+
+    # def calcularCasilla(self, valorX, valorY):
 
     def esAlcanzable(self, x, y):
         if self.maze[x + (y * self.M)] == 1:
@@ -149,8 +155,8 @@ class App:
     clock = pygame.time.Clock()
     pygame.mixer.init()
 
-    # gameIcon = pygame.image.load('carIcon.png')
-    # pygame.display.set_icon(gameIcon)
+    gameIcon = pygame.image.load('../Resources/Bone.png')
+    pygame.display.set_icon(gameIcon)
 
     def __init__(self):
         self._running = True
@@ -222,7 +228,7 @@ class App:
 
 
             # fills the screen with a color
-            self._display_surf.fill((60, 25, 60))
+            self.pantalla.fill((60, 25, 60))
 
             # stores the (x,y) coordinates into
             # the variable as a tuple
@@ -232,27 +238,27 @@ class App:
             # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
             if mates.dentroBoton(mouse, width / 2, (height / 2) - 50, 230, 40) or mates.dentroBoton(mouse, width / 2, height / 2, 230, 40) or mates.dentroBoton(mouse,  width / 2, (height / 2) + 100, 230, 40):
                 if mates.dentroBoton(mouse, width / 2, (height / 2) - 50, 230, 40):
-                    pygame.draw.rect(self._display_surf, color_light, [width / 2, (height / 2) - 50, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_light, [width / 2, (height / 2) - 50, 230, 40])
 
                 # Botón 2 - Cargar partida
 
                 # Botón 3 - Opciones
                 if mates.dentroBoton(mouse, width / 2, height / 2, 230, 40):
-                    pygame.draw.rect(self._display_surf, color_light, [int(width / 2), int(height / 2), 230, 40])
+                    pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int(height / 2), 230, 40])
 
                 # Botón 4 - Salir del juego
                 if mates.dentroBoton(mouse, width / 2, (height / 2) + 100, 230, 40):
-                    pygame.draw.rect(self._display_surf, color_light, [int(width / 2), int((height / 2))+100, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int((height / 2))+100, 230, 40])
 
             else:
-                pygame.draw.rect(self._display_surf, color_dark, [int(width / 2), int((height / 2)) - 50, 230, 40])
-                pygame.draw.rect(self._display_surf, color_dark, [int(width / 2), int((height / 2)), 230, 40])
-                pygame.draw.rect(self._display_surf, color_dark, [int(width / 2), int((height / 2)) + 100, 230, 40])
+                pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) - 50, 230, 40])
+                pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)), 230, 40])
+                pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) + 100, 230, 40])
 
             # superimposing the text onto our button
-            self._display_surf.blit(text1, (width / 2 + 50, (height / 2) - 50))
-            self._display_surf.blit(text2, (width / 2 + 50, (height / 2)))
-            self._display_surf.blit(text3, (width / 2 + 50, (height / 2) + 100))
+            self.pantalla.blit(text1, (width / 2 + 50, (height / 2) - 50))
+            self.pantalla.blit(text2, (width / 2 + 50, (height / 2)))
+            self.pantalla.blit(text3, (width / 2 + 50, (height / 2) + 100))
 
             # updates the frames of the game
             pygame.display.update()
@@ -263,19 +269,22 @@ class App:
 
         pygame.display.set_caption('Laberinto SquidCastle 2020, Pandemia.')
         logging.info("Inicio del juego.")
-        #if self.tocaMenu:
-            #self.menu()
 
+        logging.info("Pintamos el menú del juego.")
+        if self.tocaMenu:
+            self.menu()
+
+        logging.info("Empezamos un juego nuevo.")
         self._running = True
         self._jugador = load_image("player_modif.png", IMG_DIR, alpha=True)
         #pygame.sprite.Sprite.__init__(self._jugador) # Sprite Player
-        self._jugador = pygame.transform.scale(self._jugador, (32, 32))
-        #self.rect = self.image.get_rect()  # rectángulo Sprite Player
+        self._jugador = pygame.transform.scale(self._jugador, (28, 28))
+        self.rect = self._jugador.get_rect()  # rectángulo Sprite Player
         logging.info("Pintado Jugador")
         self._enemigo_surf = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
         #pygame.sprite.Sprite.__init__(self._jugador)
-        self._enemigo_surf = pygame.transform.scale(self._enemigo_surf, (32, 32))
-        #self.rect = self.image.get_rect()  # rectángulo Sprite Player
+        self._enemigo_surf = pygame.transform.scale(self._enemigo_surf, (28, 28))
+        self.rect = self._enemigo_surf.get_rect()  # rectángulo Sprite Player
         logging.info('Plot Enemigo')
 
         self._block_surf = pygame.image.load("../Resources/floor.png").convert()
@@ -285,7 +294,13 @@ class App:
 
     def on_event(self, event):
         if event.type == QUIT:
+            logging.debug("ESCAPE pulsado.")
             self._running = False
+
+        if event.type == pygame.QUIT:
+            pygame.display.quit()
+            pygame.quit()
+            exit()
 
     def on_loop(self):
         pass
@@ -342,8 +357,8 @@ class App:
 
 if __name__ == "__main__":
 
-    logging.basicConfig(filename="../log/squidcastle.log", level=logging.DEBUG)
-    logging.basicConfig(format="%(asctime)s %(message)s")
+    logging.basicConfig(filename="../log/squidcastle.log", level=logging.DEBUG,
+    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
     logging.warning("Inicio Problema!!!")
 
     theApp = App()
