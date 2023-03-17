@@ -1,7 +1,9 @@
 import mates
+import player
 
 import logging
 import statistics
+import random
 import os
 import sys
 
@@ -14,6 +16,8 @@ from pygame.locals import *
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
+CASILLA_PIXEL = 32
+NUM_CASILLAS = 25
 IMG_DIR = "Resources"
 SONIDO_DIR = "Resources/Sonidos"
 
@@ -66,36 +70,20 @@ class partidaGuardada:
     llavesAmarillos = 0
     llavesNegras = 0
 
+class posicion:
+    x = 0
+    y = 0
 
-
-class personaje:
-    def moveRight(self):
-        self.x = self.x + self.speed
-
-    def moveLeft(self):
-        self.x = self.x - self.speed
-
-    def moveUp(self):
-        self.y = self.y - self.speed
-
-    def moveDown(self):
-        self.y = self.y + self.speed
-
-
-class Enemigo(personaje):
-    x = 44
-    y = 44
-    speed = 1
-
-class Player(personaje):
-    x = 44
-    y = 44
-    speed = 1
+    def __init__(self, valorX, valorY):
+        x = valorX
+        y = valorY
 
 class Maze:
+
+
     def __init__(self):
-        self.M = 25
-        self.N = 25
+        self.M = NUM_CASILLAS
+        self.N = NUM_CASILLAS
         self.maze = [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                      1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                      1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
@@ -128,7 +116,7 @@ class Maze:
         for i in range(0, self.M * self.N):
             if self.maze[bx + (by * self.M)] == 1:
                 #pygame.sprite.Sprite.__init__(self)
-                display_surf.blit(image_surf, (bx * 32, by * 32))
+                display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
                 self.rect = image_surf.get_rect()
 
             bx = bx + 1
@@ -136,26 +124,44 @@ class Maze:
                 bx = 0
                 by = by + 1
 
-    # def calcularCasilla(self, valor):
+    def calcularCasilla(self, valorX, valorY):
+        casilla = (valorX / CASILLA_PIXEL) + ((valorY / CASILLA_PIXEL)*NUM_CASILLAS)
+        casilla = int(casilla)
+        logging.info("Valor calculado: %s", casilla)
 
-    # def calcularCasilla(self, valorX, valorY):
+        if casilla < self.M*self.N:
+            logging.info("calcularCasilla:posición: X %s and Y %s ==> Casilla: ", posicion.x, posicion.y, casilla)
+            return valorX + (valorY * self.M)
+        else:
+            logging.warning("Error al calcular CASILLA del tablero.")
+            pygame.quit()
+
+    def calcularPixelPorCasilla(self, Casilla):
+        posicion.x = (Casilla % 10) * CASILLA_PIXEL
+        posicion.y = (Casilla / 10) * CASILLA_PIXEL
+        logging.info("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
+
+        return posicion
 
     def esAlcanzable(self, x, y):
-        if self.maze[x + (y * self.M)] == 1:
+        logging.info("Dentro")
+        if self.maze[self.calcularCasilla(x, y)] == 1:
             return False
         else:
             return True
 
 class App:
-    windowWidth = 800
-    windowHeight = 600
+    windowWidth = SCREEN_WIDTH
+    windowHeight = SCREEN_HEIGHT
     player = 0
+    numEnemigos = 5
+    enemigosArray = []
 
     # Inicio el reloj y el Sonido.
     clock = pygame.time.Clock()
     pygame.mixer.init()
 
-    gameIcon = pygame.image.load('../Resources/Bone.png')
+    gameIcon = pygame.image.load('../Resources/player.png')
     pygame.display.set_icon(gameIcon)
 
     def __init__(self):
@@ -166,9 +172,16 @@ class App:
         self._jugador = None
         self._enemigo_surf = None
         self._block_surf = None
-        self.player = Player()
-        self.enemigo = Enemigo()
+        self.player = player.Player()
+        #self.enemigo = player.Enemigo()
+
+        for i in range(1, self.numEnemigos):
+            self.enemigosArray.append(player.Enemigo(SCREEN_WIDTH, SCREEN_HEIGHT))
+
+        logging.info("Cagados todos los enemigos")
+
         self.maze = Maze()
+        logging.info("Cargado el escenario")
 
     def menu(self):
         color = (255, 255, 255)
@@ -307,11 +320,19 @@ class App:
 
     def on_render(self):
         self.pantalla.fill((0, 0, 0))
-        # Aquí defino imagen con clase Jugador
-        self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-        # Aquí defino imagen con clase Enemigo
+        # Aquí busco lugar suelo para Jugador
+        if self.maze.esAlcanzable(self.player.x, self.player.y):
+            self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+        else:
+            self.player.x= random.randint(0, SCREEN_WIDTH)
+            self.player.x = random.randint(0, SCREEN_HEIGHT)
+
+        # Aquí busco lugar suelo para Enemigo
+        logging.info("Pintamos los enemigos.")
         self.pantalla.blit(self._enemigo_surf, (self.enemigo.x, self.enemigo.y))
+
         # Defino el laberinto
+        logging.info("Pintamos laberinto.")
         self.maze.draw(self.pantalla, self._block_surf)
         pygame.display.flip()
 
