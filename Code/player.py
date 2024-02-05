@@ -30,8 +30,8 @@ class personaje:
 
 
 class Enemigo(personaje):
-    x = 100
-    y = 100
+    x = 12
+    y = 12
     speed = 1
 
     def __init__(self):
@@ -45,8 +45,8 @@ class Enemigo(personaje):
         logging.info("Pintamos Enemigo")
 
 class Player(personaje):
-    x = 44
-    y = 44
+    x = 23
+    y = 23
     speed = 1
 
     def __init__(self):

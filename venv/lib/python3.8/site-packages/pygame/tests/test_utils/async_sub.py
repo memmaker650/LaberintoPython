@@ -21,27 +21,15 @@ def geterror():
     return sys.exc_info()[1]
 
 
-if sys.version_info >= (3,):
-    null_byte = "\x00".encode("ascii")
-else:
-    null_byte = "\x00"
+null_byte = "\x00".encode("ascii")
 
 if platform.system() == "Windows":
-    if sys.version_info >= (3,):
-        # Test date should be in ascii.
-        def encode(s):
-            return s.encode("ascii")
 
-        def decode(b):
-            return b.decode("ascii")
+    def encode(s):
+        return s.encode("ascii")
 
-    else:
-        # Strings only; do nothing
-        def encode(s):
-            return s
-
-        def decode(b):
-            return b
+    def decode(b):
+        return b.decode("ascii")
 
     try:
         import ctypes
@@ -152,7 +140,7 @@ class Popen(subprocess.Popen):
             sent = self.send(data)
             if sent is None:
                 raise Exception("Other end disconnected!")
-            data = buffer(data, sent)
+            data = memoryview(data, sent)
 
     def get_conn_maxsize(self, which, maxsize):
         if maxsize is None:
@@ -284,12 +272,12 @@ def proc_in_time_or_kill(cmd, time_out, wd=None, env=None):
         response += [proc.read_async(wait=0.1, e=0)]
 
     if ret_code is None:
-        ret_code = '"Process timed out (time_out = %s secs) ' % time_out
+        ret_code = f'"Process timed out (time_out = {time_out} secs) '
         try:
             proc.kill()
             ret_code += 'and was successfully terminated"'
         except Exception:
-            ret_code += 'and termination failed (exception: %s)"' % (geterror(),)
+            ret_code += f'and termination failed (exception: {geterror()})"'
 
     return ret_code, "".join(response)
 
@@ -300,7 +288,7 @@ def proc_in_time_or_kill(cmd, time_out, wd=None, env=None):
 class AsyncTest(unittest.TestCase):
     def test_proc_in_time_or_kill(self):
         ret_code, response = proc_in_time_or_kill(
-            [sys.executable, "-c", "while 1: pass"], time_out=1
+            [sys.executable, "-c", "while True: pass"], time_out=1
         )
 
         self.assertIn("rocess timed out", ret_code)

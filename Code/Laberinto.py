@@ -9,6 +9,7 @@ import sys
 
 import pygame
 from pygame.locals import *
+import sqlite3
 
 # -----------
 # Constantes
@@ -80,7 +81,6 @@ class posicion:
 
 class Maze:
 
-
     def __init__(self):
         self.M = NUM_CASILLAS
         self.N = NUM_CASILLAS
@@ -144,7 +144,12 @@ class Maze:
         return posicion
 
     def esAlcanzable(self, x, y):
-        logging.info("Dentro")
+        logging.info("Dentro Método alcanzable")
+
+        if x > 25 or y > 25:
+            logging.info("esAlcanzble : X= %s and Y= %s", x, y)
+            return False
+
         if self.maze[self.calcularCasilla(x, y)] == 1:
             return False
         else:
@@ -173,7 +178,7 @@ class App:
         self._enemigo_surf = None
         self._block_surf = None
         self.player = player.Player()
-        #self.enemigo = player.Enemigo()
+        self.enemigo = player.Enemigo(25, 25)
 
         for i in range(1, self.numEnemigos):
             self.enemigosArray.append(player.Enemigo(SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -280,7 +285,7 @@ class App:
         pygame.init()
         self.pantalla = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
 
-        pygame.display.set_caption('Laberinto SquidCastle 2020, Pandemia.')
+        pygame.display.set_caption('Laberinto SquidCastle 2024, Aurora.')
         logging.info("Inicio del juego.")
 
         logging.info("Pintamos el menú del juego.")
@@ -291,12 +296,12 @@ class App:
         self._running = True
         self._jugador = load_image("player_modif.png", IMG_DIR, alpha=True)
         #pygame.sprite.Sprite.__init__(self._jugador) # Sprite Player
-        self._jugador = pygame.transform.scale(self._jugador, (28, 28))
+        self._jugador = pygame.transform.scale(self._jugador, (13, 13))
         self.rect = self._jugador.get_rect()  # rectángulo Sprite Player
         logging.info("Pintado Jugador")
         self._enemigo_surf = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
         #pygame.sprite.Sprite.__init__(self._jugador)
-        self._enemigo_surf = pygame.transform.scale(self._enemigo_surf, (28, 28))
+        self._enemigo_surf = pygame.transform.scale(self._enemigo_surf, (5, 5))
         self.rect = self._enemigo_surf.get_rect()  # rectángulo Sprite Player
         logging.info('Plot Enemigo')
 
@@ -382,7 +387,11 @@ if __name__ == "__main__":
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
     logging.warning("Inicio Problema!!!")
 
+    con = sqlite3.connect("../DB/tutorial.db")
+
     theApp = App()
     theApp.on_execute()
+
+    con.close()
 
     logging.info("Se acabo!")
