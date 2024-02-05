@@ -15,18 +15,25 @@ class personaje:
 
     def moveRight(self):
         self.x = self.x + self.speed
+        self.logMovimiento('Derecha', self.x, self.y)
 
     def moveLeft(self):
         self.x = self.x - self.speed
+        self.logMovimiento('Izquierda', self.x, self.y)
 
     def moveUp(self):
         self.y = self.y - self.speed
+        self.logMovimiento('Arriba', self.x, self.y)
 
     def moveDown(self):
         self.y = self.y + self.speed
+        self.logMovimiento('Abajo', self.x, self.y)
 
     def getPosicion(self):
         return self.casilla
+
+    def logMovimiento(self, direccion, finalx, finaly):
+        logging.info('Movimiento %s hasta %s', direccion, finalx, finaly)
 
 
 class Enemigo(personaje):
