@@ -130,7 +130,7 @@ class Maze:
         logging.info("Valor calculado: %s", casilla)
 
         if casilla < self.M*self.N:
-            logging.info("calcularCasilla:posición: X %s and Y %s ==> Casilla: ", posicion.x, posicion.y, casilla)
+            logging.info("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", posicion.x, posicion.y, int(casilla))
             return valorX + (valorY * self.M)
         else:
             logging.warning("Error al calcular CASILLA del tablero.")
@@ -159,7 +159,7 @@ class App:
     windowWidth = SCREEN_WIDTH
     windowHeight = SCREEN_HEIGHT
     player = 0
-    numEnemigos = 5
+    numEnemigos = 2
     enemigosArray = []
 
     # Inicio el reloj y el Sonido.
@@ -172,6 +172,7 @@ class App:
     def __init__(self):
         self._running = True
         self.tocaMenu = True
+        self.movimiento = True
         self.pause = False
         self.pantalla = 1
         self._jugador = None
@@ -296,12 +297,12 @@ class App:
         self._running = True
         self._jugador = load_image("player_modif.png", IMG_DIR, alpha=True)
         #pygame.sprite.Sprite.__init__(self._jugador) # Sprite Player
-        self._jugador = pygame.transform.scale(self._jugador, (13, 13))
+        self._jugador = pygame.transform.scale(self._jugador, (25, 25))
         self.rect = self._jugador.get_rect()  # rectángulo Sprite Player
         logging.info("Pintado Jugador")
         self._enemigo_surf = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
         #pygame.sprite.Sprite.__init__(self._jugador)
-        self._enemigo_surf = pygame.transform.scale(self._enemigo_surf, (5, 5))
+        self._enemigo_surf = pygame.transform.scale(self._enemigo_surf, (25, 25))
         self.rect = self._enemigo_surf.get_rect()  # rectángulo Sprite Player
         logging.info('Plot Enemigo')
 
@@ -325,20 +326,25 @@ class App:
 
     def on_render(self):
         self.pantalla.fill((0, 0, 0))
-        # Aquí busco lugar suelo para Jugador
-        if self.maze.esAlcanzable(self.player.x, self.player.y):
-            self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-        else:
-            self.player.x= random.randint(0, SCREEN_WIDTH)
-            self.player.x = random.randint(0, SCREEN_HEIGHT)
 
-        # Aquí busco lugar suelo para Enemigo
-        logging.info("Pintamos los enemigos.")
-        self.pantalla.blit(self._enemigo_surf, (self.enemigo.x, self.enemigo.y))
+        if self.pause == False:
+            #Defino el laberinto
+            logging.info("Pintamos laberinto.")
+            self.maze.draw(self.pantalla, self._block_surf)
 
-        # Defino el laberinto
-        logging.info("Pintamos laberinto.")
-        self.maze.draw(self.pantalla, self._block_surf)
+            # Aquí busco lugar suelo para Jugador
+            if self.maze.esAlcanzable(self.player.x, self.player.y):
+                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+            else:
+                self.player.x = random.randint(0, SCREEN_WIDTH)
+                self.player.x = random.randint(0, SCREEN_HEIGHT)
+
+            # Aquí busco lugar suelo para Enemigo
+            logging.info("Pintamos los enemigos.")
+            self.pantalla.blit(self._enemigo_surf, (self.enemigo.x, self.enemigo.y))
+
+            #self.movimiento = False
+
         pygame.display.flip()
 
     def on_cleanup(self):
@@ -357,24 +363,36 @@ class App:
             pygame.event.pump()
             keys = pygame.key.get_pressed()
 
-            if (keys[K_RIGHT]):
+            if keys[K_RIGHT]:
+                self.movimiento = True
+                logging.info('Pulsado cursor DERECHO.')
                 self.player.moveRight()
 
-            if (keys[K_LEFT]):
+            if keys[K_LEFT]:
+                self.movimiento = True
+                logging.info('Pulsado cursor IZQUIERDO.')
                 self.player.moveLeft()
 
-            if (keys[K_UP]):
+            if keys[K_UP]:
+                self.movimiento = True
+                logging.info('Pulsado cursor ARRIBA.')
                 self.player.moveUp()
 
-            if (keys[K_DOWN]):
+            if keys[K_DOWN]:
+                self.movimiento = True
+                logging.info('Pulsado cursor ABAJO.')
                 self.player.moveDown()
 
-            if (keys[K_ESCAPE]):
+            if keys[K_ESCAPE]:
                 self._running = False
 
-            if (keys[K_p]):
-                self.pause = True
-                logging.info('Tecla de juego pausado PULSADA.')
+            if keys[K_p]:
+                if self.Pause == False:
+                    self.pause = True
+                else:
+                    self.pause = False
+
+                logging.info('PAUSA PULSADA.')
 
             self.on_loop()
             self.on_render()
