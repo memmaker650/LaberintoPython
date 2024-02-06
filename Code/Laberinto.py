@@ -80,6 +80,8 @@ class posicion:
         y = valorY
 
 class Maze:
+    M = NUM_CASILLAS
+    N = NUM_CASILLAS
 
     def __init__(self):
         self.M = NUM_CASILLAS
@@ -126,33 +128,36 @@ class Maze:
                 bx = 0
                 by = by + 1
 
-    def calcularCasilla(self, valorX, valorY):
+    @staticmethod
+    def calcularCasilla(valorX, valorY):
         casilla = (valorX / CASILLA_PIXEL) + ((valorY / CASILLA_PIXEL)*NUM_CASILLAS)
         casilla = int(casilla)
         logging.info("Valor calculado: %s", casilla)
 
-        if casilla < self.M*self.N:
+        if casilla < Maze.M*Maze.N:
             logging.info("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", posicion.x, posicion.y, int(casilla))
-            return valorX + (valorY * self.M)
+            return valorX + (valorY * Maze.M)
         else:
             logging.warning("Error al calcular CASILLA del tablero.")
             pygame.quit()
 
-    def calcularPixelPorCasilla(self, Casilla):
+    @staticmethod
+    def calcularPixelPorCasilla(Casilla):
         posicion.x = (Casilla % 10) * CASILLA_PIXEL
         posicion.y = (Casilla / 10) * CASILLA_PIXEL
         logging.info("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
 
         return posicion
 
-    def esAlcanzable(self, x, y):
+    @staticmethod
+    def esAlcanzable(x, y):
         logging.info("Dentro Método alcanzable")
 
         if x > NUM_CASILLAS or y > NUM_CASILLAS:
             logging.info("esAlcanzble : X= %s and Y= %s", x, y)
             return False
 
-        if self.maze[self.calcularCasilla(x, y)] == 1:
+        if Maze.calcularCasilla(x, y) == 1:
             return False
         else:
             return True
@@ -161,7 +166,7 @@ class App:
     windowWidth = SCREEN_WIDTH
     windowHeight = SCREEN_HEIGHT
     player = 0
-    numEnemigos = 2
+    numEnemigos = 5
     enemigosArray = []
 
     # Inicio el reloj y el Sonido.
@@ -181,15 +186,24 @@ class App:
         self._enemigo_surf = None
         self._block_surf = None
         self.player = player.Player()
-        self.enemigo = player.Enemigo(25, 25)
+        self.enemigo = player.Enemigo()
 
+        # Llenar el vector de enemigos
         for i in range(1, self.numEnemigos):
-            self.enemigosArray.append(player.Enemigo(SCREEN_WIDTH, SCREEN_HEIGHT))
+            self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
+            self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
+            self.enemigosArray.append(player.Enemigo)
 
         logging.info("Cagados todos los enemigos")
 
         self.maze = Maze()
         logging.info("Cargado el escenario")
+    def verInfoEnemigos(self):
+        enemy = player.Enemigo()
+
+        for i in range(1, self.numEnemigos):
+            enemy= self.enemigosArray[i]
+            enemy.logPosicionEnemigo()
 
     def menu(self):
         color = (255, 255, 255)
@@ -216,6 +230,7 @@ class App:
         # rendering a text written in Corbel font.
         text1 = smallfont.render('Nuevo Juego', True, color)
         text2 = smallfont.render('Opciones', True, color)
+        text4 = smallfont.render('Cargar Partida', True, color)
         text3 = smallfont.render('salir', True, color)
 
         while True:
@@ -234,8 +249,8 @@ class App:
                         self.tocaMenu = False
                         self.on_execute()
 
-                    # Botón 2 - Cargar partida
-
+                    # Botón 4 - Cargar partida
+                    #TO DO Programación botón cargar partida.
 
                     # Botón 3 - Opciones
                     if mates.dentroBoton(mouse, int(width / 2), int(height / 2), 230, 40):

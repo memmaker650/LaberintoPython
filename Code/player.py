@@ -44,10 +44,18 @@ class Enemigo(personaje):
     def __init__(self):
         logging.info("Init Enemigo")
 
-    def __init__(self, vx, vy):
+    def inicio(self, vx, vy):
         logging.info("")
         self.x = random.randint(0, vx)
         self.y = random.randint(0, vy)
+
+    def inicioCelda(self, cell):
+        personaje.casilla = cell
+
+    def logPosicionEnemigo(self):
+        logging.info('Posición Enemigo: x: %s e y: %s con casilla --> %s', self.x, self.y, personaje.casilla)
+
+
     def pintarEnemigo(self, posicion):
         logging.info("Pintamos Enemigo")
 
