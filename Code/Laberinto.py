@@ -21,7 +21,16 @@ CASILLA_PIXEL = 32
 NUM_CASILLAS = 27
 IMG_DIR = "Resources"
 SONIDO_DIR = "Resources/Sonidos"
+FPS = 60 # desired framerate in frames per second.
 
+# Especificación de la paleta de colores
+BLANCO = (255, 255, 255)
+NEGRO = (0, 0, 0)
+ROJO = (255, 0, 0)
+VERDE = (0, 255, 0)
+AZUL = (0, 0, 255)
+HC74225 = (199, 66, 37)
+H61CD35 = (97, 205, 53)
 
 # ------------------------------
 # Clases y Funciones utilizadas
@@ -82,6 +91,7 @@ class posicion:
 class Maze:
     M = NUM_CASILLAS
     N = NUM_CASILLAS
+    MazeSprite = pygame.sprite.Group
 
     def __init__(self):
         self.M = NUM_CASILLAS
@@ -122,6 +132,8 @@ class Maze:
                 #pygame.sprite.Sprite.__init__(self)
                 display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
                 self.rect = image_surf.get_rect()
+            #else:
+                #self.MazeSprite.add()
 
             bx = bx + 1
             if bx > self.M - 1:
@@ -134,18 +146,14 @@ class Maze:
         casilla = int(casilla)
         logging.info("Valor calculado: %s", casilla)
 
-        if casilla < Maze.M*Maze.N:
-            logging.info("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", posicion.x, posicion.y, int(casilla))
-            return valorX + (valorY * Maze.M)
-        else:
-            logging.warning("Error al calcular CASILLA del tablero.")
-            pygame.quit()
+        logging.debug("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", valorX, valorY, int(casilla))
+        return casilla
 
     @staticmethod
     def calcularPixelPorCasilla(Casilla):
         posicion.x = (Casilla % 10) * CASILLA_PIXEL
         posicion.y = (Casilla / 10) * CASILLA_PIXEL
-        logging.info("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
+        logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
 
         return posicion
 
@@ -158,21 +166,25 @@ class Maze:
             return False
 
         if Maze.calcularCasilla(x, y) == 1:
-            return False
-        else:
             return True
+        else:
+            return False
 
 class App:
     windowWidth = SCREEN_WIDTH
     windowHeight = SCREEN_HEIGHT
     player = 0
+    enemigo = 0
+    flagInit = True
     numEnemigos = 5
     enemigosArray = []
+    enemigosSprites = pygame.sprite.Group()
 
     # Inicio el reloj y el Sonido.
     clock = pygame.time.Clock()
     pygame.mixer.init()
 
+    #Definimos el icono del juego.
     gameIcon = pygame.image.load('../Resources/player.png')
     pygame.display.set_icon(gameIcon)
 
@@ -183,26 +195,29 @@ class App:
         self.pause = False
         self.pantalla = 1
         self._jugador = None
-        self._enemigo_surf = None
+        self._enemigo_surf = []
         self._block_surf = None
-        self.player = player.Player()
+        self.player = player.Player()  # damos los valores por defecto.
         self.enemigo = player.Enemigo()
 
         # Llenar el vector de enemigos
-        for i in range(1, self.numEnemigos):
+        for i in range(0, self.numEnemigos):
             self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
             self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
-            self.enemigosArray.append(player.Enemigo)
+            self.enemigosArray.append(self.enemigo)
+            self.enemigosSprites.add(self.enemigo)
 
+        logging.info('Contenido grupo Sprites: %s', len(self.enemigosSprites))
         logging.info("Cagados todos los enemigos")
 
         self.maze = Maze()
         logging.info("Cargado el escenario")
+
     def verInfoEnemigos(self):
         enemy = player.Enemigo()
 
         for i in range(1, self.numEnemigos):
-            enemy= self.enemigosArray[i]
+            enemy = self.enemigosArray[i]
             enemy.logPosicionEnemigo()
 
     def menu(self):
@@ -312,31 +327,33 @@ class App:
 
         logging.info("Empezamos un juego nuevo.")
         self._running = True
-        self._jugador = load_image("player_modif.png", IMG_DIR, alpha=True)
-        #pygame.sprite.Sprite.__init__(self._jugador) # Sprite Player
-        self._jugador = pygame.transform.scale(self._jugador, (25, 25))
+        self.player.pintarJugador()
+        self._jugador = self.player.image
         self.rect = self._jugador.get_rect()  # rectángulo Sprite Player
         logging.info("Pintado Jugador")
-        self._enemigo_surf = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
-        #pygame.sprite.Sprite.__init__(self._jugador)
-        self._enemigo_surf = pygame.transform.scale(self._enemigo_surf, (40, 40))
-        self.rect = self._enemigo_surf.get_rect()  # rectángulo Sprite Player
+
+        print(len(self.enemigosArray))
+        i = 0
+        for i in range(0, self.numEnemigos):
+            enemy = self.enemigosArray[i]
+            enemy.pintarEnemigo()
+            self.rect = enemy.image.get_rect()  # rectángulo Sprite Player
+
         logging.info('Plot Enemigo')
 
         self._block_surf = pygame.image.load("../Resources/floor.png").convert()
-
-        #pygame.key.set_repeat(1, 25)  # Activa repeticion de teclas
 
 
     def on_event(self, event):
         if event.type == QUIT:
             logging.debug("ESCAPE pulsado.")
             self._running = False
+            pygame.quit()
 
         if event.type == pygame.QUIT:
-            pygame.display.quit()
+            logging.debug("X ventana pulsada !!")
+            self._running = False
             pygame.quit()
-            exit()
 
     def on_loop(self):
         pass
@@ -346,21 +363,31 @@ class App:
 
         if self.pause == False:
             #Defino el laberinto
-            logging.info("Pintamos laberinto.")
+            logging.debug("Pintamos laberinto.")
             self.maze.draw(self.pantalla, self._block_surf)
 
             # Aquí busco lugar suelo para Jugador
-            if self.maze.esAlcanzable(self.player.x, self.player.y):
-                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+            # Llamada a la IA
+            if self.flagInit == True:
+                self.flagInit = False
+                if self.maze.esAlcanzable(self.player.x, self.player.y):
+                    self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+                else:
+                    self.player.x = random.randint(0, SCREEN_WIDTH)
+                    self.player.y = random.randint(0, SCREEN_HEIGHT)
+                    self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
             else:
-                self.player.x = random.randint(0, SCREEN_WIDTH)
-                self.player.x = random.randint(0, SCREEN_HEIGHT)
+                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
 
             # Aquí busco lugar suelo para Enemigo
-            logging.info("Pintamos los enemigos.")
-            self.pantalla.blit(self._enemigo_surf, (self.enemigo.x, self.enemigo.y))
+            logging.debug("Pintamos los enemigos.")
+            #self.pantalla.blit(self._enemigo_surf, (self.enemigo.x, self.enemigo.y))
+            i = 0
+            for i in range(0, self.numEnemigos):
+                self.enemigo = self.enemigosArray[i]
+                #self.pantalla.blit(self._enemigo_surf[i], (self.enemigo.x, self.enemigo.y))
 
-            #self.movimiento = False
+            self.enemigosSprites.draw(self.pantalla)
 
         pygame.display.flip()
 
@@ -375,58 +402,100 @@ class App:
         if self.on_init() == False:
             self._running = False
 
+        milliseconds = self.clock.tick(FPS)  # milliseconds passed since last frame
+        seconds = milliseconds / 1000.0  # seconds passed since last frame
+
         while (self._running):
 
-            pygame.event.pump()
-            keys = pygame.key.get_pressed()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self._running = False # pygame window closed by user
+                elif event.type == pygame.KEYDOWN:
+                    self.player.speed = 1
+                    if event.key == pygame.K_ESCAPE:
+                        self._running = False  # user pressed ESC
+                    if event.key == pygame.K_RIGHT:
+                        self.movimiento = True
+                        logging.info('¡¡¡ Pulsado cursor DERECHO !!!')
+                        self.player.moveRight()
+                    if event.key == pygame.K_LEFT:
+                        self.movimiento = True
+                        logging.info('¡¡¡ Pulsado cursor IZQUIERDO !!!')
+                        self.player.moveLeft()
+                    if event.key == pygame.K_UP:
+                        self.movimiento = True
+                        logging.info('¡¡¡ Pulsado cursor ARRIBA !!!')
+                        self.player.moveUp()
+                    if event.key == pygame.K_DOWN:
+                        self.movimiento = True
+                        logging.info('¡¡¡ Pulsado cursor ABAJO !!!')
+                        self.player.moveDown()
+                    if event.key == pygame.K_SPACE:
+                        self.player.disparo()
+                    if event.key == pygame.K_p:
+                        if self.Pause == False:
+                            self.pause = True
+                        else:
+                            self.pause = False
+                        logging.info('PAUSA PULSADA.')
 
-            if keys[K_RIGHT]:
-                self.movimiento = True
-                logging.info('¡¡¡ Pulsado cursor DERECHO !!!')
-                self.player.moveRight()
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_RIGHT:
+                        self.movimiento = True
+                        logging.info('¡¡¡ SOLtado cursor DERECHO !!!')
+                        self.player.stop()
 
-            if keys[K_LEFT]:
-                self.movimiento = True
-                logging.info('¡¡¡ Pulsado cursor IZQUIERDO !!!')
-                self.player.moveLeft()
+                    if event.key == pygame.K_LEFT:
+                        self.movimiento = True
+                        logging.info('¡¡¡ SOLtado cursor IZQUIERDO !!!')
+                        self.player.stop()
 
-            if keys[K_UP]:
-                self.movimiento = True
-                logging.info('¡¡¡ Pulsado cursor ARRIBA !!!')
-                self.player.moveUp()
+                    if event.key == pygame.K_UP:
+                        self.movimiento = True
+                        logging.info('¡¡¡ SOLtado cursor ARRIBA !!!')
+                        self.player.stop()
 
-            if keys[K_DOWN]:
-                self.movimiento = True
-                logging.info('¡¡¡ Pulsado cursor ABAJO !!!')
-                self.player.moveDown()
-
-            if keys[K_ESCAPE]:
-                self._running = False
-
-            if keys[K_p]:
-                if self.Pause == False:
-                    self.pause = True
-                else:
-                    self.pause = False
-
-                logging.info('PAUSA PULSADA.')
-
+                    if event.key == pygame.K_DOWN:
+                        self.movimiento = True
+                        logging.info('¡¡¡ SOLtado cursor ABAJO !!!')
+                        self.player.stop()
             self.on_loop()
             self.on_render()
+
         self.on_cleanup()
+        pygame.quit()
 
 
 if __name__ == "__main__":
 
     logging.basicConfig(filename="../log/squidcastle.log", level=logging.DEBUG,
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
-    logging.warning("Inicio Problema!!!")
+    logging.warning("Inicio LaberintoPy!!!")
 
-    con = sqlite3.connect("../DB/tutorial.db")
+    sqliteConnection = sqlite3.connect("../DB/tutorial.db")
+    cursor = sqliteConnection.cursor()
+    logging.info("Successfully Connected to SQLite")
 
+    logging.info('Creación Base de Datos y Tablas principales.')
+    #cursor.execute("""CREATE DATABASE OctoPussyDB""")
+    try:
+        # cursor.execute("""CREATE TABLE partida (id integer PRIMARY KEY, fecha Date, jugador text NOT NULL, puntuacion integer, nivel integer NOT NULL)""")
+        # cursor.execute("""CREATE TABLE estadisticas (id interger PRIMARY KEY, jugador text NOT NULL, partida integer, disparos integer, nivelmax integer NOT NULL, enemigosmuertos integer, vidasusadas integer)""")
+        # sqliteConnection.commit()
+        logging.info('Ejecución SQL creación tablas.')
+    except sqlite3.Error as error:
+        logging.error("Failed to Tables in SQLite", error)
+    finally:
+        logging.info('Tablas DB creadas')
+
+    logging.info('Fin acciones Base de Datos')
+
+    # App principal
     theApp = App()
     theApp.on_execute()
 
-    con.close()
+    #Cerramos base de datos
+    sqliteConnection.close()
+    logging.info("The SQLite connection is closed")
 
-    logging.info("Se acabo!")
+    logging.info("JUEGO ¡¡ Se acabo !!")
