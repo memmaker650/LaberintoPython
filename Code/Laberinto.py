@@ -7,6 +7,7 @@ import random
 import os
 import sys
 
+
 import pygame
 from pygame.locals import *
 import sqlite3
@@ -91,7 +92,12 @@ class posicion:
 class Maze:
     M = NUM_CASILLAS
     N = NUM_CASILLAS
+    rectSuelo = pygame.sprite.Sprite
     MazeSprite = pygame.sprite.Group
+
+    def addText(self, texto, x, y):
+        self.font = pygame.font.SysFont('Arial', 25)
+        self.font.render(texto, True, (255, 0, 0))
 
     def __init__(self):
         self.M = NUM_CASILLAS
@@ -132,8 +138,12 @@ class Maze:
                 #pygame.sprite.Sprite.__init__(self)
                 display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
                 self.rect = image_surf.get_rect()
-            #else:
-                #self.MazeSprite.add()
+            else:
+                self.rectSuelo.image = pygame.Surface([CASILLA_PIXEL, CASILLA_PIXEL])
+                self.rectSuelo.rect = self.rectSuelo.image.get_rect()
+                self.addText(str(i), self.rectSuelo.rect.centerx, self.rectSuelo.rect.centery)
+                self.MazeSprite.add(self.rectSuelo)
+                #pygame.draw.rect(self.pantalla, ROJO, self.rectSuelo)
 
             bx = bx + 1
             if bx > self.M - 1:
@@ -180,6 +190,8 @@ class App:
     enemigosArray = []
     enemigosSprites = pygame.sprite.Group()
 
+    salir = bool = False
+
     # Inicio el reloj y el Sonido.
     clock = pygame.time.Clock()
     pygame.mixer.init()
@@ -195,13 +207,15 @@ class App:
         self.pause = False
         self.pantalla = 1
         self._jugador = None
-        self._enemigo_surf = []
+        self._enemigo = None
         self._block_surf = None
         self.player = player.Player()  # damos los valores por defecto.
         self.enemigo = player.Enemigo()
+        self.salir = False
 
         # Llenar el vector de enemigos
         for i in range(0, self.numEnemigos):
+            self.enemigo = player.Enemigo()
             self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
             self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
             self.enemigosArray.append(self.enemigo)
@@ -253,6 +267,7 @@ class App:
             for ev in pygame.event.get():
 
                 if ev.type == pygame.QUIT:
+                    self.salir = True
                     pygame.quit()
 
                 # Chequeamos click del ratón
@@ -275,44 +290,45 @@ class App:
 
                     # Botón 4 - Salir del juego
                     if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 100, 230, 40):
+                        self.salir = True
                         pygame.quit()
 
+            if self.salir == False:
+                # fills the screen with a color
+                self.pantalla.fill((60, 25, 60))
 
-            # fills the screen with a color
-            self.pantalla.fill((60, 25, 60))
+                # stores the (x,y) coordinates into
+                # the variable as a tuple
+                mouse = pygame.mouse.get_pos()
 
-            # stores the (x,y) coordinates into
-            # the variable as a tuple
-            mouse = pygame.mouse.get_pos()
+                # Compruebo si el ratón está dentro de botón.
+                # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
+                if mates.dentroBoton(mouse, width / 2, (height / 2) - 50, 230, 40) or mates.dentroBoton(mouse, width / 2, height / 2, 230, 40) or mates.dentroBoton(mouse,  width / 2, (height / 2) + 100, 230, 40):
+                    if mates.dentroBoton(mouse, width / 2, (height / 2) - 50, 230, 40):
+                        pygame.draw.rect(self.pantalla, color_light, [width / 2, (height / 2) - 50, 230, 40])
 
-            # Compruebo si el ratón está dentro de botón.
-            # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
-            if mates.dentroBoton(mouse, width / 2, (height / 2) - 50, 230, 40) or mates.dentroBoton(mouse, width / 2, height / 2, 230, 40) or mates.dentroBoton(mouse,  width / 2, (height / 2) + 100, 230, 40):
-                if mates.dentroBoton(mouse, width / 2, (height / 2) - 50, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_light, [width / 2, (height / 2) - 50, 230, 40])
+                        # Botón 2 - Cargar partida
 
-                # Botón 2 - Cargar partida
+                        # Botón 3 - Opciones
+                        if mates.dentroBoton(mouse, width / 2, height / 2, 230, 40):
+                            pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int(height / 2), 230, 40])
 
-                # Botón 3 - Opciones
-                if mates.dentroBoton(mouse, width / 2, height / 2, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int(height / 2), 230, 40])
+                        # Botón 4 - Salir del juego
+                        if mates.dentroBoton(mouse, width / 2, (height / 2) + 100, 230, 40):
+                            pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int((height / 2))+100, 230, 40])
 
-                # Botón 4 - Salir del juego
-                if mates.dentroBoton(mouse, width / 2, (height / 2) + 100, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int((height / 2))+100, 230, 40])
+                        else:
+                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) - 50, 230, 40])
+                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)), 230, 40])
+                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) + 100, 230, 40])
 
-            else:
-                pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) - 50, 230, 40])
-                pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)), 230, 40])
-                pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) + 100, 230, 40])
+                # superimposing the text onto our button
+                self.pantalla.blit(text1, (width / 2 + 50, (height / 2) - 50))
+                self.pantalla.blit(text2, (width / 2 + 50, (height / 2)))
+                self.pantalla.blit(text3, (width / 2 + 50, (height / 2) + 100))
 
-            # superimposing the text onto our button
-            self.pantalla.blit(text1, (width / 2 + 50, (height / 2) - 50))
-            self.pantalla.blit(text2, (width / 2 + 50, (height / 2)))
-            self.pantalla.blit(text3, (width / 2 + 50, (height / 2) + 100))
-
-            # updates the frames of the game
-            pygame.display.update()
+                # updates the frames of the game
+                pygame.display.update()
 
     def on_init(self):
         pygame.init()
@@ -332,6 +348,8 @@ class App:
         self.rect = self._jugador.get_rect()  # rectángulo Sprite Player
         logging.info("Pintado Jugador")
 
+        self.enemigo.pintarEnemigo()
+        self._enemigo = self.enemigo.image
         print(len(self.enemigosArray))
         i = 0
         for i in range(0, self.numEnemigos):
@@ -365,6 +383,7 @@ class App:
             #Defino el laberinto
             logging.debug("Pintamos laberinto.")
             self.maze.draw(self.pantalla, self._block_surf)
+            #self.maze.MazeSprite.draw(self.pantalla, self._block_surf)
 
             # Aquí busco lugar suelo para Jugador
             # Llamada a la IA
@@ -385,9 +404,9 @@ class App:
             i = 0
             for i in range(0, self.numEnemigos):
                 self.enemigo = self.enemigosArray[i]
-                #self.pantalla.blit(self._enemigo_surf[i], (self.enemigo.x, self.enemigo.y))
+                self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
 
-            self.enemigosSprites.draw(self.pantalla)
+            #self.enemigosSprites.draw(self.pantalla)
 
         pygame.display.flip()
 
@@ -410,6 +429,7 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self._running = False # pygame window closed by user
+                    self.salir = True
                 elif event.type == pygame.KEYDOWN:
                     self.player.speed = 1
                     if event.key == pygame.K_ESCAPE:
