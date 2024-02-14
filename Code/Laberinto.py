@@ -26,10 +26,16 @@ FPS = 60 # desired framerate in frames per second.
 
 # Especificación de la paleta de colores
 BLANCO = (255, 255, 255)
+GRIS = (155, 155, 155)
 NEGRO = (0, 0, 0)
 ROJO = (255, 0, 0)
 VERDE = (0, 255, 0)
 AZUL = (0, 0, 255)
+AMARILLO = (255, 255, 0)
+AMARILLO_CLARO = (253, 253, 150)
+MARRON = (200, 100, 0)
+CYAN = (0, 255, 255)
+MAGENTA = (255, 0, 255)
 HC74225 = (199, 66, 37)
 H61CD35 = (97, 205, 53)
 
@@ -185,6 +191,7 @@ class App:
     windowHeight = SCREEN_HEIGHT
     player = 0
     enemigo = 0
+    JefeEnemigo = 0
     flagInit = True
     numEnemigos = 5
     enemigosArray = []
@@ -211,6 +218,7 @@ class App:
         self._block_surf = None
         self.player = player.Player()  # damos los valores por defecto.
         self.enemigo = player.Enemigo()
+        self.JefeEnemigo = player.Enemigo()
         self.salir = False
 
         # Llenar el vector de enemigos
@@ -223,6 +231,10 @@ class App:
 
         logging.info('Contenido grupo Sprites: %s', len(self.enemigosSprites))
         logging.info("Cagados todos los enemigos")
+
+        self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
+        self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+        # Cargamos Jefe enemigo
 
         self.maze = Maze()
         logging.info("Cargado el escenario")
@@ -359,6 +371,10 @@ class App:
 
         logging.info('Plot Enemigo')
 
+        logging.info('Pintar Jefe Enemigo')
+        self.JefeEnemigo.pintarJefeEnemigo()
+        self.rect = self.JefeEnemigo.image.get_rect()  # rectángulo Sprite Jefe Enemigo
+
         self._block_surf = pygame.image.load("../Resources/floor.png").convert()
 
 
@@ -366,11 +382,13 @@ class App:
         if event.type == QUIT:
             logging.debug("ESCAPE pulsado.")
             self._running = False
+            self.salir = True
             pygame.quit()
 
         if event.type == pygame.QUIT:
             logging.debug("X ventana pulsada !!")
             self._running = False
+            self.salir = True
             pygame.quit()
 
     def on_loop(self):
@@ -407,6 +425,8 @@ class App:
                 self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
 
             #self.enemigosSprites.draw(self.pantalla)
+
+        self.pantalla.blit(self.JefeEnemigo.image, (self.JefeEnemigo.x, self.JefeEnemigo.y))
 
         pygame.display.flip()
 

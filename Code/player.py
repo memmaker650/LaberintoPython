@@ -1,4 +1,5 @@
 import mates
+import KerberosIA
 
 import logging
 import statistics
@@ -36,70 +37,6 @@ def load_image(nombre, dir_imagen, alpha=False):
         image = image.convert()
     return image
 
-class Enemigo(pygame.sprite.Sprite):
-    x = 12
-    y = 12
-    casilla = 0
-
-    speedV = 1
-    speedH = 1
-    image = None
-    rect = None
-    balas = pygame.sprite.Group
-
-    def __init__(self):
-        logging.info("Init Enemigo")
-        super().__init__()
-
-    def inicio(self, vx, vy):
-        logging.info("Inicio Enemigos")
-        self.x = random.randint(0, vx)
-        self.y = random.randint(0, vy)
-
-    def inicioCelda(self, cell):
-        casilla = cell
-
-    def logPosicionEnemigo(self):
-        logging.info('Posición Enemigo: x: %s e y: %s con casilla --> %s', self.x, self.y, self.casilla)
-
-    def moveRight(self):
-        self.x = self.x + self.speedH
-        self.logMovimiento('Derecha', self.x, self.y)
-
-    def moveLeft(self):
-        self.x = self.x - self.speedH
-        self.logMovimiento('Izquierda', self.x, self.y)
-
-    def moveUp(self):
-        self.y = self.y - self.speedV
-        self.logMovimiento('Arriba', self.x, self.y)
-
-    def moveDown(self):
-        self.y = self.y + self.speedV
-        self.logMovimiento('Abajo', self.x, self.y)
-
-    def getPosicion(self):
-        return self.casilla
-
-    def logMovimiento(self, direccion, finalx, finaly):
-        logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
-
-    def pintarEnemigo(self):
-        logging.info("Pintamos Enemigo")
-        self.image = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
-        self.image = pygame.transform.scale(self.image, (40, 40))
-        self.rect = self.image.get_rect()
-
-    def rotar(self, angulo):
-        return pygame.transform.rotate(self.imagen, angulo)
-
-    def escalaGrises(self):
-        return pygame.transform.grayscale(self.imagen)
-
-    def disparo(self):
-        bala = Disparos(self.rect.centerx, self.rect.top)
-        self.balas.add(bala)
-
 class Player(pygame.sprite.Sprite):
     x = 23
     y = 23
@@ -114,12 +51,11 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         logging.info("Init Player")
         super().__init__()
-        #imagen = load_image("player_modif.png", IMG_DIR, alpha=True)
-        #imagen = pygame.transform.scale(imagen, (25, 25))
+
 
     def stop(self):
-        speedH = 0
-        speedV = 0
+        self.speedH = 0
+        self.speedV = 0
 
     def moveRight(self):
         self.x = self.x + self.speedH
@@ -167,3 +103,88 @@ class Disparos(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.bottom = y
         self.rect.centerx = x
+
+class Enemigo(pygame.sprite.Sprite):
+    x = 12
+    y = 12
+    casilla = 0
+
+    orientacion = str
+    visionImage = None
+    speedV = 1
+    speedH = 1
+    image = None
+    rect = None
+    balas = pygame.sprite.Group
+    balasArray = []
+    kia = None
+
+    def __init__(self):
+        logging.info("Init Enemigo")
+        super().__init__()
+        self.orientacion = 'N'
+        self.kia = KerberosIA.KerberosIA()
+
+    def inicio(self, vx, vy):
+        logging.info("Inicio Enemigos")
+        self.x = random.randint(0, vx)
+        self.y = random.randint(0, vy)
+
+    def inicioCelda(self, cell):
+        casilla = cell
+
+    def logPosicionEnemigo(self):
+        logging.info('Posición Enemigo: x: %s e y: %s con casilla --> %s', self.x, self.y, self.casilla)
+
+    def moveRight(self):
+        self.x = self.x + self.speedH
+        self.logMovimiento('Derecha', self.x, self.y)
+
+    def moveLeft(self):
+        self.x = self.x - self.speedH
+        self.logMovimiento('Izquierda', self.x, self.y)
+
+    def moveUp(self):
+        self.y = self.y - self.speedV
+        self.logMovimiento('Arriba', self.x, self.y)
+
+    def moveDown(self):
+        self.y = self.y + self.speedV
+        self.logMovimiento('Abajo', self.x, self.y)
+
+    def getPosicion(self):
+        return self.casilla
+
+    def vision(self):
+        logging.info("Pintamos cono de visión")
+        self.image = load_image("wilber-eeek.png", '/assets/linterna.png', alpha=True)
+        self.image = pygame.transform.scale(self.image, (40, 40))
+        self.rect = self.image.get_rect()
+
+    def logMovimiento(self, direccion, finalx, finaly):
+        logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
+
+    def pintarEnemigo(self):
+        logging.info("Pintamos Enemigo")
+        self.image = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
+        self.image = pygame.transform.scale(self.image, (40, 40))
+        self.rect = self.image.get_rect()
+
+    def pintarJefeEnemigo(self):
+        logging.info("Pintamos Enemigo")
+        self.image = load_image("Chainsaw.png", IMG_DIR, alpha=True)
+        self.image = pygame.transform.scale(self.image, (40, 40))
+        self.rect = self.image.get_rect()
+
+    def rotar(self, angulo):
+        return pygame.transform.rotate(self.imagen, angulo)
+
+    def escalaGrises(self):
+        return pygame.transform.grayscale(self.imagen)
+
+    def disparo(self):
+        bala = Disparos(self.rect.centerx, self.rect.top)
+        self.balas.add(bala)
+
+
+

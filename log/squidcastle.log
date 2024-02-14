@@ -1,0 +1,1436 @@
+2024-02-13 15:25:05.324 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-13 15:25:05.326 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-13 15:25:05.326 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-13 15:25:05.326 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-13 15:25:05.326 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-13 15:25:05.326 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-13 15:25:05.326 INFO player - __init__: Init Player
+2024-02-13 15:25:05.326 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:05.326 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:05.326 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:05.326 INFO Laberinto - calcularCasilla: Valor calculado: 642
+2024-02-13 15:25:05.326 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 408 and Y 746 ==> Casilla: 642
+2024-02-13 15:25:05.326 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:05.326 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:05.326 INFO Laberinto - calcularCasilla: Valor calculado: 92
+2024-02-13 15:25:05.326 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 136 and Y 104 ==> Casilla: 92
+2024-02-13 15:25:05.326 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:05.326 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:05.326 INFO Laberinto - calcularCasilla: Valor calculado: 254
+2024-02-13 15:25:05.326 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 553 and Y 281 ==> Casilla: 254
+2024-02-13 15:25:05.326 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:05.326 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:05.326 INFO Laberinto - calcularCasilla: Valor calculado: 670
+2024-02-13 15:25:05.326 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 811 and Y 765 ==> Casilla: 670
+2024-02-13 15:25:05.326 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:05.326 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:05.326 INFO Laberinto - calcularCasilla: Valor calculado: 179
+2024-02-13 15:25:05.326 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 5 and Y 212 ==> Casilla: 179
+2024-02-13 15:25:05.326 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-13 15:25:05.326 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-13 15:25:05.326 INFO Laberinto - __init__: Cargado el escenario
+2024-02-13 15:25:05.731 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:25:05.731 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:25:07.694 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:25:07.695 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:25:07.695 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-13 15:25:07.695 INFO player - pintarJugador: Pintamos Jugador
+2024-02-13 15:25:07.697 INFO Laberinto - on_init: Pintado Jugador
+2024-02-13 15:25:07.697 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:07.697 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:07.697 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:07.698 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:07.698 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:07.698 INFO Laberinto - on_init: Plot Enemigo
+2024-02-13 15:25:07.698 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:41.462 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-13 15:25:41.464 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-13 15:25:41.464 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-13 15:25:41.464 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-13 15:25:41.464 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-13 15:25:41.464 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-13 15:25:41.464 INFO player - __init__: Init Player
+2024-02-13 15:25:41.464 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:41.464 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:41.464 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:41.464 INFO Laberinto - calcularCasilla: Valor calculado: 501
+2024-02-13 15:25:41.464 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 20 and Y 594 ==> Casilla: 501
+2024-02-13 15:25:41.464 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:41.464 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:41.464 INFO Laberinto - calcularCasilla: Valor calculado: 578
+2024-02-13 15:25:41.464 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 685 ==> Casilla: 578
+2024-02-13 15:25:41.464 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:41.464 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:41.464 INFO Laberinto - calcularCasilla: Valor calculado: 563
+2024-02-13 15:25:41.464 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 739 and Y 640 ==> Casilla: 563
+2024-02-13 15:25:41.464 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:41.464 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:41.464 INFO Laberinto - calcularCasilla: Valor calculado: 58
+2024-02-13 15:25:41.464 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 834 and Y 38 ==> Casilla: 58
+2024-02-13 15:25:41.464 INFO player - __init__: Init Enemigo
+2024-02-13 15:25:41.464 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:25:41.464 INFO Laberinto - calcularCasilla: Valor calculado: 222
+2024-02-13 15:25:41.464 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 533 and Y 244 ==> Casilla: 222
+2024-02-13 15:25:41.464 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-13 15:25:41.464 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-13 15:25:41.464 INFO Laberinto - __init__: Cargado el escenario
+2024-02-13 15:25:41.853 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:25:41.853 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:25:43.461 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:25:43.461 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:25:43.461 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-13 15:25:43.461 INFO player - pintarJugador: Pintamos Jugador
+2024-02-13 15:25:43.462 INFO Laberinto - on_init: Pintado Jugador
+2024-02-13 15:25:43.462 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:43.463 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:43.463 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:43.463 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:43.463 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:25:43.463 INFO Laberinto - on_init: Plot Enemigo
+2024-02-13 15:25:43.469 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:43.644 INFO Laberinto - esAlcanzable: Dentro Método alcanzable
+2024-02-13 15:25:43.644 INFO Laberinto - calcularCasilla: Valor calculado: 20
+2024-02-13 15:25:43.644 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 23 ==> Casilla: 20
+2024-02-13 15:25:43.644 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:43.645 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:43.769 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:43.770 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:43.894 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:43.895 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:44.017 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:44.018 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:44.136 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:44.137 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:44.261 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:44.262 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:44.382 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:44.383 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:44.515 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:44.515 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:44.655 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:44.656 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:44.785 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:44.786 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:44.904 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:44.905 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:45.019 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:45.020 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:45.124 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:45.125 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:45.256 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:45.257 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:45.374 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:45.375 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:45.508 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:45.509 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:45.617 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:45.618 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:45.724 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:45.725 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:45.830 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:45.831 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:45.939 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:45.939 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:46.045 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:46.045 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:46.150 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:46.151 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:46.257 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:46.257 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:46.362 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:46.363 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:46.469 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:46.469 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:46.581 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:46.582 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:46.689 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:46.690 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:46.803 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:46.804 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:46.910 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:46.911 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.016 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.017 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.122 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.123 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.228 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.229 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.334 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.335 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.440 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.441 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.546 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.547 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.652 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.652 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.758 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.758 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.865 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.866 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:47.973 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:47.974 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:48.081 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:48.081 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:48.188 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:48.189 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:48.295 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:48.295 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:48.401 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:48.402 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:48.507 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:48.508 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:48.619 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:48.620 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:48.726 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:48.727 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:48.832 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:48.833 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:48.939 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:48.940 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:49.046 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:49.047 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:49.153 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:49.153 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:49.262 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:49.263 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:49.378 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:49.379 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:49.485 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:49.486 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:49.592 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:49.593 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:49.699 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:49.699 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:49.805 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:49.806 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:49.911 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:49.912 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.018 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.019 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.124 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.124 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.247 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.248 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.355 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.356 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.462 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.462 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.568 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.569 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.674 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.675 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.780 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.781 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.887 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.888 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:50.994 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:50.994 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:51.100 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:51.101 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:51.218 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:51.219 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:51.326 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:51.327 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:51.434 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:51.435 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:51.540 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:51.542 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:51.648 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:51.648 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:51.755 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:51.756 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:51.862 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:51.863 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:51.969 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:51.969 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:52.081 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:52.082 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:52.197 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:52.198 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:52.304 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:52.304 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:52.410 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:52.418 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:52.524 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:52.525 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:52.630 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:52.630 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:52.735 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:52.736 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:52.842 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:52.842 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:52.948 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:52.948 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:53.053 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:53.054 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:53.159 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:53.160 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:53.265 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:53.266 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:53.378 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:53.378 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:53.495 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:53.496 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:53.601 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:53.602 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:53.741 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:53.742 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:53.848 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:53.849 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:53.955 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:53.955 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:54.060 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:54.061 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:54.166 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:25:54.258 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:25:54.376 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:26:21.531 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-13 15:26:21.533 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-13 15:26:21.533 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-13 15:26:21.533 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-13 15:26:21.533 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-13 15:26:21.533 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-13 15:26:21.533 INFO player - __init__: Init Player
+2024-02-13 15:26:21.533 INFO player - __init__: Init Enemigo
+2024-02-13 15:26:21.533 INFO player - __init__: Init Enemigo
+2024-02-13 15:26:21.533 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:26:21.534 INFO Laberinto - calcularCasilla: Valor calculado: 455
+2024-02-13 15:26:21.534 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 433 and Y 524 ==> Casilla: 455
+2024-02-13 15:26:21.534 INFO player - __init__: Init Enemigo
+2024-02-13 15:26:21.534 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:26:21.534 INFO Laberinto - calcularCasilla: Valor calculado: 592
+2024-02-13 15:26:21.534 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 556 and Y 682 ==> Casilla: 592
+2024-02-13 15:26:21.534 INFO player - __init__: Init Enemigo
+2024-02-13 15:26:21.534 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:26:21.534 INFO Laberinto - calcularCasilla: Valor calculado: 586
+2024-02-13 15:26:21.534 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 851 and Y 663 ==> Casilla: 586
+2024-02-13 15:26:21.534 INFO player - __init__: Init Enemigo
+2024-02-13 15:26:21.534 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:26:21.534 INFO Laberinto - calcularCasilla: Valor calculado: 612
+2024-02-13 15:26:21.534 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 555 and Y 705 ==> Casilla: 612
+2024-02-13 15:26:21.534 INFO player - __init__: Init Enemigo
+2024-02-13 15:26:21.534 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:26:21.534 INFO Laberinto - calcularCasilla: Valor calculado: 315
+2024-02-13 15:26:21.534 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 762 and Y 346 ==> Casilla: 315
+2024-02-13 15:26:21.534 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-13 15:26:21.534 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-13 15:26:21.534 INFO Laberinto - __init__: Cargado el escenario
+2024-02-13 15:26:21.914 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:26:21.914 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:26:23.847 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:26:23.847 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:26:23.847 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-13 15:26:23.847 INFO player - pintarJugador: Pintamos Jugador
+2024-02-13 15:26:23.848 INFO Laberinto - on_init: Pintado Jugador
+2024-02-13 15:26:23.848 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:26:23.849 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:26:23.850 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:26:23.850 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:26:23.850 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:26:23.850 INFO Laberinto - on_init: Plot Enemigo
+2024-02-13 15:26:23.851 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:26:23.979 INFO Laberinto - esAlcanzable: Dentro Método alcanzable
+2024-02-13 15:26:23.979 INFO Laberinto - calcularCasilla: Valor calculado: 20
+2024-02-13 15:26:23.979 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 23 ==> Casilla: 20
+2024-02-13 15:26:23.979 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:27:06.361 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-13 15:27:06.363 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-13 15:27:06.363 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-13 15:27:06.363 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-13 15:27:06.363 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-13 15:27:06.363 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-13 15:27:06.363 INFO player - __init__: Init Player
+2024-02-13 15:27:06.363 INFO player - __init__: Init Enemigo
+2024-02-13 15:27:06.363 INFO player - __init__: Init Enemigo
+2024-02-13 15:27:06.363 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:27:06.363 INFO Laberinto - calcularCasilla: Valor calculado: 405
+2024-02-13 15:27:06.363 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 594 and Y 458 ==> Casilla: 405
+2024-02-13 15:27:06.364 INFO player - __init__: Init Enemigo
+2024-02-13 15:27:06.364 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:27:06.364 INFO Laberinto - calcularCasilla: Valor calculado: 86
+2024-02-13 15:27:06.364 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 442 and Y 86 ==> Casilla: 86
+2024-02-13 15:27:06.364 INFO player - __init__: Init Enemigo
+2024-02-13 15:27:06.364 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:27:06.364 INFO Laberinto - calcularCasilla: Valor calculado: 269
+2024-02-13 15:27:06.364 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 130 and Y 315 ==> Casilla: 269
+2024-02-13 15:27:06.364 INFO player - __init__: Init Enemigo
+2024-02-13 15:27:06.364 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:27:06.364 INFO Laberinto - calcularCasilla: Valor calculado: 31
+2024-02-13 15:27:06.364 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 711 and Y 11 ==> Casilla: 31
+2024-02-13 15:27:06.364 INFO player - __init__: Init Enemigo
+2024-02-13 15:27:06.364 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:27:06.364 INFO Laberinto - calcularCasilla: Valor calculado: 705
+2024-02-13 15:27:06.364 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 233 and Y 828 ==> Casilla: 705
+2024-02-13 15:27:06.364 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-13 15:27:06.364 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-13 15:27:06.364 INFO Laberinto - __init__: Cargado el escenario
+2024-02-13 15:27:06.745 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:27:06.745 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:27:08.947 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:27:08.947 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:27:08.947 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-13 15:27:08.947 INFO player - pintarJugador: Pintamos Jugador
+2024-02-13 15:27:08.949 INFO Laberinto - on_init: Pintado Jugador
+2024-02-13 15:27:08.950 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:27:08.950 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:27:08.951 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:27:08.951 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:27:08.951 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:27:08.952 INFO Laberinto - on_init: Plot Enemigo
+2024-02-13 15:27:08.953 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:27:09.096 INFO Laberinto - esAlcanzable: Dentro Método alcanzable
+2024-02-13 15:27:09.096 INFO Laberinto - calcularCasilla: Valor calculado: 20
+2024-02-13 15:27:09.096 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 23 ==> Casilla: 20
+2024-02-13 15:27:09.096 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:31.693 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-13 15:29:31.693 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-13 15:29:31.693 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-13 15:29:31.693 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-13 15:29:31.693 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-13 15:29:31.693 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-13 15:29:31.693 INFO player - __init__: Init Player
+2024-02-13 15:29:31.693 INFO player - __init__: Init Enemigo
+2024-02-13 15:29:31.693 INFO player - __init__: Init Enemigo
+2024-02-13 15:29:31.693 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:29:31.694 INFO Laberinto - calcularCasilla: Valor calculado: 535
+2024-02-13 15:29:31.694 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 164 and Y 629 ==> Casilla: 535
+2024-02-13 15:29:31.694 INFO player - __init__: Init Enemigo
+2024-02-13 15:29:31.694 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:29:31.694 INFO Laberinto - calcularCasilla: Valor calculado: 571
+2024-02-13 15:29:31.694 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 646 and Y 653 ==> Casilla: 571
+2024-02-13 15:29:31.694 INFO player - __init__: Init Enemigo
+2024-02-13 15:29:31.694 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:29:31.694 INFO Laberinto - calcularCasilla: Valor calculado: 229
+2024-02-13 15:29:31.694 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 57 and Y 270 ==> Casilla: 229
+2024-02-13 15:29:31.694 INFO player - __init__: Init Enemigo
+2024-02-13 15:29:31.694 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:29:31.694 INFO Laberinto - calcularCasilla: Valor calculado: 139
+2024-02-13 15:29:31.694 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 451 and Y 149 ==> Casilla: 139
+2024-02-13 15:29:31.694 INFO player - __init__: Init Enemigo
+2024-02-13 15:29:31.694 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:29:31.694 INFO Laberinto - calcularCasilla: Valor calculado: 309
+2024-02-13 15:29:31.694 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 301 and Y 356 ==> Casilla: 309
+2024-02-13 15:29:31.694 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-13 15:29:31.694 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-13 15:29:31.694 INFO Laberinto - __init__: Cargado el escenario
+2024-02-13 15:29:32.057 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:29:32.057 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:29:34.398 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:29:34.399 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:29:34.399 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-13 15:29:34.399 INFO player - pintarJugador: Pintamos Jugador
+2024-02-13 15:29:34.401 INFO Laberinto - on_init: Pintado Jugador
+2024-02-13 15:29:34.401 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:29:34.402 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:29:34.402 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:29:34.402 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:29:34.402 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:29:34.403 INFO Laberinto - on_init: Plot Enemigo
+2024-02-13 15:29:34.403 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:34.539 INFO Laberinto - esAlcanzable: Dentro Método alcanzable
+2024-02-13 15:29:34.539 INFO Laberinto - calcularCasilla: Valor calculado: 20
+2024-02-13 15:29:34.539 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 23 ==> Casilla: 20
+2024-02-13 15:29:34.539 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:34.540 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:34.647 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:34.648 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:34.755 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:34.755 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:34.861 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:34.861 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:34.967 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:34.967 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:35.073 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:35.073 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:35.179 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:35.179 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:35.285 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:35.285 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:35.396 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:35.397 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:35.505 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:35.506 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:35.611 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:35.612 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:35.725 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:35.725 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:35.834 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:35.834 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:35.942 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:35.942 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:36.060 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:36.061 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:36.167 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:36.167 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:36.272 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:36.273 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:36.378 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:36.378 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:36.483 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:36.483 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:36.588 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:36.588 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:36.693 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:36.694 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:36.799 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:36.799 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:36.905 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:36.906 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.012 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.012 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.132 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.132 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.238 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.239 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.344 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.345 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.450 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.450 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.555 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.556 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.661 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.661 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.766 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.767 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.871 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.872 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:37.976 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:37.977 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:38.082 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:38.082 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:38.187 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:38.188 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:38.293 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:38.293 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:38.400 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:38.400 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:38.505 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:38.506 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:38.613 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:38.614 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:38.719 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:38.719 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:38.876 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:38.878 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:38.985 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:38.986 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:39.105 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:39.106 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:39.212 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:39.213 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:39.335 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:39.336 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:39.469 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:39.470 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:39.653 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:39.654 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:39.852 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:39.853 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:39.967 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:39.968 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:40.088 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:40.090 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:40.199 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:40.200 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:40.325 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:40.326 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:40.454 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:40.458 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:40.564 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:40.566 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:40.675 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:40.677 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:40.788 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:40.791 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:40.901 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:40.902 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.012 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:41.012 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.120 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:41.120 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.228 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:41.229 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.335 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:41.335 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.444 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:41.445 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.551 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:41.552 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.657 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:41.658 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.766 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:41.767 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.873 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:41.873 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:41.996 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:29:42.003 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:29:42.121 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:30:03.269 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-13 15:30:03.270 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-13 15:30:03.270 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-13 15:30:03.270 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-13 15:30:03.270 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-13 15:30:03.270 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-13 15:30:03.270 INFO player - __init__: Init Player
+2024-02-13 15:30:03.270 INFO player - __init__: Init Enemigo
+2024-02-13 15:30:03.270 INFO player - __init__: Init Enemigo
+2024-02-13 15:30:03.270 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:30:03.270 INFO Laberinto - calcularCasilla: Valor calculado: 455
+2024-02-13 15:30:03.271 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 655 and Y 515 ==> Casilla: 455
+2024-02-13 15:30:03.271 INFO player - __init__: Init Enemigo
+2024-02-13 15:30:03.271 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:30:03.271 INFO Laberinto - calcularCasilla: Valor calculado: 282
+2024-02-13 15:30:03.271 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 694 and Y 309 ==> Casilla: 282
+2024-02-13 15:30:03.271 INFO player - __init__: Init Enemigo
+2024-02-13 15:30:03.271 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:30:03.271 INFO Laberinto - calcularCasilla: Valor calculado: 531
+2024-02-13 15:30:03.271 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 35 and Y 629 ==> Casilla: 531
+2024-02-13 15:30:03.271 INFO player - __init__: Init Enemigo
+2024-02-13 15:30:03.271 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:30:03.271 INFO Laberinto - calcularCasilla: Valor calculado: 481
+2024-02-13 15:30:03.271 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 621 and Y 548 ==> Casilla: 481
+2024-02-13 15:30:03.271 INFO player - __init__: Init Enemigo
+2024-02-13 15:30:03.271 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:30:03.271 INFO Laberinto - calcularCasilla: Valor calculado: 463
+2024-02-13 15:30:03.271 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 141 and Y 544 ==> Casilla: 463
+2024-02-13 15:30:03.271 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-13 15:30:03.271 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-13 15:30:03.271 INFO Laberinto - __init__: Cargado el escenario
+2024-02-13 15:30:03.647 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:30:03.647 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:30:05.412 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:30:05.413 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:30:05.413 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-13 15:30:05.413 INFO player - pintarJugador: Pintamos Jugador
+2024-02-13 15:30:05.414 INFO Laberinto - on_init: Pintado Jugador
+2024-02-13 15:30:05.414 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:30:05.415 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:30:05.415 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:30:05.416 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:30:05.416 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:30:05.416 INFO Laberinto - on_init: Plot Enemigo
+2024-02-13 15:30:05.417 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:30:05.546 INFO Laberinto - esAlcanzable: Dentro Método alcanzable
+2024-02-13 15:30:05.547 INFO Laberinto - calcularCasilla: Valor calculado: 20
+2024-02-13 15:30:05.547 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 23 ==> Casilla: 20
+2024-02-13 15:30:05.547 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:33:18.053 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-13 15:33:18.056 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-13 15:33:18.056 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-13 15:33:18.056 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-13 15:33:18.056 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-13 15:33:18.056 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-13 15:33:18.056 INFO player - __init__: Init Player
+2024-02-13 15:33:18.056 INFO player - __init__: Init Enemigo
+2024-02-13 15:33:18.056 INFO player - __init__: Init Enemigo
+2024-02-13 15:33:18.056 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:33:18.057 INFO Laberinto - calcularCasilla: Valor calculado: 131
+2024-02-13 15:33:18.057 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 778 and Y 127 ==> Casilla: 131
+2024-02-13 15:33:18.057 INFO player - __init__: Init Enemigo
+2024-02-13 15:33:18.057 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:33:18.057 INFO Laberinto - calcularCasilla: Valor calculado: 290
+2024-02-13 15:33:18.057 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 738 and Y 317 ==> Casilla: 290
+2024-02-13 15:33:18.057 INFO player - __init__: Init Enemigo
+2024-02-13 15:33:18.057 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:33:18.057 INFO Laberinto - calcularCasilla: Valor calculado: 752
+2024-02-13 15:33:18.057 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 745 and Y 864 ==> Casilla: 752
+2024-02-13 15:33:18.057 INFO player - __init__: Init Enemigo
+2024-02-13 15:33:18.057 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:33:18.057 INFO Laberinto - calcularCasilla: Valor calculado: 156
+2024-02-13 15:33:18.057 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 670 and Y 161 ==> Casilla: 156
+2024-02-13 15:33:18.057 INFO player - __init__: Init Enemigo
+2024-02-13 15:33:18.057 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:33:18.057 INFO Laberinto - calcularCasilla: Valor calculado: 491
+2024-02-13 15:33:18.057 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 825 and Y 552 ==> Casilla: 491
+2024-02-13 15:33:18.057 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-13 15:33:18.057 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-13 15:33:18.057 INFO Laberinto - __init__: Cargado el escenario
+2024-02-13 15:33:18.442 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:33:18.442 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:33:20.604 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:33:20.605 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:33:20.605 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-13 15:33:20.605 INFO player - pintarJugador: Pintamos Jugador
+2024-02-13 15:33:20.606 INFO Laberinto - on_init: Pintado Jugador
+2024-02-13 15:33:20.606 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:33:20.607 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:33:20.607 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:33:20.607 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:33:20.608 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:33:20.608 INFO Laberinto - on_init: Plot Enemigo
+2024-02-13 15:33:20.609 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:33:20.742 INFO Laberinto - esAlcanzable: Dentro Método alcanzable
+2024-02-13 15:33:20.742 INFO Laberinto - calcularCasilla: Valor calculado: 20
+2024-02-13 15:33:20.742 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 23 ==> Casilla: 20
+2024-02-13 15:33:20.742 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:53.138 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-13 15:37:53.139 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-13 15:37:53.139 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-13 15:37:53.139 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-13 15:37:53.140 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-13 15:37:53.140 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-13 15:37:53.140 INFO player - __init__: Init Player
+2024-02-13 15:37:53.140 INFO player - __init__: Init Enemigo
+2024-02-13 15:37:53.140 INFO player - __init__: Init Enemigo
+2024-02-13 15:37:53.140 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:37:53.140 INFO Laberinto - calcularCasilla: Valor calculado: 59
+2024-02-13 15:37:53.140 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 586 and Y 49 ==> Casilla: 59
+2024-02-13 15:37:53.140 INFO player - __init__: Init Enemigo
+2024-02-13 15:37:53.140 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:37:53.140 INFO Laberinto - calcularCasilla: Valor calculado: 268
+2024-02-13 15:37:53.140 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 271 and Y 308 ==> Casilla: 268
+2024-02-13 15:37:53.140 INFO player - __init__: Init Enemigo
+2024-02-13 15:37:53.140 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:37:53.140 INFO Laberinto - calcularCasilla: Valor calculado: 584
+2024-02-13 15:37:53.140 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 364 and Y 679 ==> Casilla: 584
+2024-02-13 15:37:53.140 INFO player - __init__: Init Enemigo
+2024-02-13 15:37:53.140 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:37:53.140 INFO Laberinto - calcularCasilla: Valor calculado: 184
+2024-02-13 15:37:53.140 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 81 and Y 216 ==> Casilla: 184
+2024-02-13 15:37:53.140 INFO player - __init__: Init Enemigo
+2024-02-13 15:37:53.140 INFO player - inicio: Inicio Enemigos
+2024-02-13 15:37:53.140 INFO Laberinto - calcularCasilla: Valor calculado: 305
+2024-02-13 15:37:53.140 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 69 and Y 360 ==> Casilla: 305
+2024-02-13 15:37:53.140 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-13 15:37:53.140 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-13 15:37:53.140 INFO Laberinto - __init__: Cargado el escenario
+2024-02-13 15:37:53.516 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:37:53.516 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:37:54.791 INFO Laberinto - on_init: Inicio del juego.
+2024-02-13 15:37:54.791 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-13 15:37:54.791 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-13 15:37:54.791 INFO player - pintarJugador: Pintamos Jugador
+2024-02-13 15:37:54.792 INFO Laberinto - on_init: Pintado Jugador
+2024-02-13 15:37:54.792 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:37:54.793 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:37:54.793 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:37:54.793 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:37:54.794 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:37:54.794 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-13 15:37:54.794 INFO Laberinto - on_init: Plot Enemigo
+2024-02-13 15:37:54.795 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:54.953 INFO Laberinto - esAlcanzable: Dentro Método alcanzable
+2024-02-13 15:37:54.953 INFO Laberinto - calcularCasilla: Valor calculado: 20
+2024-02-13 15:37:54.953 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 23 ==> Casilla: 20
+2024-02-13 15:37:54.953 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:54.954 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:55.061 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:55.061 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:55.168 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:55.169 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:55.275 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:55.275 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:55.381 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:55.381 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:55.497 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:55.497 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:55.603 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:55.604 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:55.709 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:55.710 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:55.815 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:55.816 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:55.921 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:55.921 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:56.026 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:56.027 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:56.132 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:56.132 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:56.244 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:56.244 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:56.376 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:56.377 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:56.484 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:56.485 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:56.591 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:56.592 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:56.697 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:56.698 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:56.803 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:56.804 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:56.909 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:56.909 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.015 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.016 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.121 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.121 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.226 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.227 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.332 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.332 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.437 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.438 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.543 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.544 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.655 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.655 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.763 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.763 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.869 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.870 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:57.979 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:57.980 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:58.085 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:58.085 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:58.190 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:58.191 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:58.296 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:58.297 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:58.401 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:58.402 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:58.506 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:58.507 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:58.612 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:58.613 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:58.730 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:58.731 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:58.837 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:58.838 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:58.943 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:58.944 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:59.050 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:59.051 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:59.157 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:59.158 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:59.264 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:59.265 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:59.371 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:59.372 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:59.479 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:59.479 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:59.590 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:59.590 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:59.696 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:59.696 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:59.803 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:59.803 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:37:59.909 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:37:59.910 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.018 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:38:00.019 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.126 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:38:00.126 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.232 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:38:00.233 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.338 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:38:00.339 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.444 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:38:00.444 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.549 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:38:00.550 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.655 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:38:00.655 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.760 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:38:00.761 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.866 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-13 15:38:00.871 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-13 15:38:00.977 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:31:50.076 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-14 09:31:50.078 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-14 09:31:50.078 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-14 09:31:50.078 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-14 09:31:50.078 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-14 09:31:50.078 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-14 09:31:50.078 INFO player - __init__: Init Player
+2024-02-14 09:31:50.078 INFO player - __init__: Init Enemigo
+2024-02-14 09:33:28.074 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-14 09:33:28.076 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-14 09:33:28.076 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-14 09:33:28.076 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-14 09:33:28.076 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-14 09:33:28.076 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-14 09:33:28.076 INFO player - __init__: Init Player
+2024-02-14 09:33:28.076 INFO player - __init__: Init Enemigo
+2024-02-14 09:50:06.798 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-14 09:50:06.800 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-14 09:50:06.800 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-14 09:50:06.800 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-14 09:50:06.800 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-14 09:50:06.800 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-14 09:50:06.800 INFO player - __init__: Init Player
+2024-02-14 09:50:06.800 INFO player - __init__: Init Enemigo
+2024-02-14 09:51:48.425 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-14 09:51:48.427 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-14 09:51:48.427 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-14 09:51:48.427 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-14 09:51:48.427 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-14 09:51:48.427 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-14 09:51:48.427 INFO player - __init__: Init Player
+2024-02-14 09:51:48.427 INFO player - __init__: Init Enemigo
+2024-02-14 09:51:48.427 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 09:51:48.427 INFO player - __init__: Init Enemigo
+2024-02-14 09:51:48.427 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 09:51:48.427 INFO player - inicio: Inicio Enemigos
+2024-02-14 09:51:48.427 INFO Laberinto - calcularCasilla: Valor calculado: 531
+2024-02-14 09:51:48.427 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 88 and Y 627 ==> Casilla: 531
+2024-02-14 09:51:48.427 INFO player - __init__: Init Enemigo
+2024-02-14 09:51:48.427 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 09:51:48.427 INFO player - inicio: Inicio Enemigos
+2024-02-14 09:51:48.427 INFO Laberinto - calcularCasilla: Valor calculado: 186
+2024-02-14 09:51:48.427 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 851 and Y 190 ==> Casilla: 186
+2024-02-14 09:51:48.427 INFO player - __init__: Init Enemigo
+2024-02-14 09:51:48.427 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 09:51:48.427 INFO player - inicio: Inicio Enemigos
+2024-02-14 09:51:48.427 INFO Laberinto - calcularCasilla: Valor calculado: 581
+2024-02-14 09:51:48.427 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 548 and Y 669 ==> Casilla: 581
+2024-02-14 09:51:48.427 INFO player - __init__: Init Enemigo
+2024-02-14 09:51:48.427 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 09:51:48.427 INFO player - inicio: Inicio Enemigos
+2024-02-14 09:51:48.427 INFO Laberinto - calcularCasilla: Valor calculado: 112
+2024-02-14 09:51:48.427 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 249 and Y 124 ==> Casilla: 112
+2024-02-14 09:51:48.427 INFO player - __init__: Init Enemigo
+2024-02-14 09:51:48.427 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 09:51:48.427 INFO player - inicio: Inicio Enemigos
+2024-02-14 09:51:48.427 INFO Laberinto - calcularCasilla: Valor calculado: 690
+2024-02-14 09:51:48.427 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 288 and Y 808 ==> Casilla: 690
+2024-02-14 09:51:48.427 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-14 09:51:48.427 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-14 09:51:48.427 INFO Laberinto - __init__: Cargado el escenario
+2024-02-14 09:51:48.829 INFO Laberinto - on_init: Inicio del juego.
+2024-02-14 09:51:48.829 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-14 09:51:50.592 INFO Laberinto - on_init: Inicio del juego.
+2024-02-14 09:51:50.592 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-14 09:51:50.592 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-14 09:51:50.592 INFO player - pintarJugador: Pintamos Jugador
+2024-02-14 09:51:50.593 INFO Laberinto - on_init: Pintado Jugador
+2024-02-14 09:51:50.593 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 09:51:50.594 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 09:51:50.594 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 09:51:50.594 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 09:51:50.595 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 09:51:50.595 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 09:51:50.595 INFO Laberinto - on_init: Plot Enemigo
+2024-02-14 09:51:50.596 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:50.732 INFO Laberinto - esAlcanzable: Dentro Método alcanzable
+2024-02-14 09:51:50.732 INFO Laberinto - calcularCasilla: Valor calculado: 20
+2024-02-14 09:51:50.732 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 23 ==> Casilla: 20
+2024-02-14 09:51:50.732 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:50.733 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:50.840 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:50.841 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:50.948 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:50.948 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:51.056 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:51.057 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:51.163 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:51.163 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:51.270 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:51.270 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:51.377 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:51.377 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:51.484 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:51.484 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:51.591 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:51.591 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:51.697 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:51.698 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:51.804 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:51.805 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:51.911 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:51.911 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.018 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.018 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.124 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.125 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.231 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.231 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.338 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.339 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.444 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.445 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.550 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.551 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.661 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.662 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.768 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.768 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.875 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.876 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:52.983 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:52.983 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:53.089 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:53.090 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:53.195 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:53.196 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:53.302 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:53.303 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:53.408 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:53.409 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:53.514 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 09:51:53.522 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 09:51:53.628 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:18.781 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-14 11:06:18.783 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-14 11:06:18.783 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-14 11:06:18.783 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-14 11:06:18.783 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-14 11:06:18.783 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-14 11:06:18.783 INFO player - __init__: Init Player
+2024-02-14 11:06:18.783 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:18.783 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:18.783 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:18.783 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:18.783 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:18.783 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:18.783 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:18.783 INFO Laberinto - calcularCasilla: Valor calculado: 84
+2024-02-14 11:06:18.783 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 539 and Y 80 ==> Casilla: 84
+2024-02-14 11:06:18.784 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:18.784 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:18.784 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:18.784 INFO Laberinto - calcularCasilla: Valor calculado: 111
+2024-02-14 11:06:18.784 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 672 and Y 107 ==> Casilla: 111
+2024-02-14 11:06:18.784 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:18.784 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:18.784 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:18.784 INFO Laberinto - calcularCasilla: Valor calculado: 542
+2024-02-14 11:06:18.784 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 351 and Y 630 ==> Casilla: 542
+2024-02-14 11:06:18.784 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:18.784 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:18.784 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:18.784 INFO Laberinto - calcularCasilla: Valor calculado: 589
+2024-02-14 11:06:18.784 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 652 and Y 675 ==> Casilla: 589
+2024-02-14 11:06:18.784 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:18.784 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:18.784 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:18.784 INFO Laberinto - calcularCasilla: Valor calculado: 148
+2024-02-14 11:06:18.784 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 595 and Y 154 ==> Casilla: 148
+2024-02-14 11:06:18.784 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-14 11:06:18.784 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-14 11:06:18.784 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:18.784 INFO Laberinto - calcularCasilla: Valor calculado: 633
+2024-02-14 11:06:18.784 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 685 and Y 725 ==> Casilla: 633
+2024-02-14 11:06:18.784 INFO Laberinto - __init__: Cargado el escenario
+2024-02-14 11:06:19.175 INFO Laberinto - on_init: Inicio del juego.
+2024-02-14 11:06:19.175 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-14 11:06:21.123 INFO Laberinto - on_init: Inicio del juego.
+2024-02-14 11:06:21.123 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-14 11:06:21.123 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-14 11:06:21.123 INFO player - pintarJugador: Pintamos Jugador
+2024-02-14 11:06:21.126 INFO Laberinto - on_init: Pintado Jugador
+2024-02-14 11:06:21.126 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:21.126 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:21.126 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:21.126 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:21.127 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:21.127 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:21.127 INFO Laberinto - on_init: Plot Enemigo
+2024-02-14 11:06:21.127 INFO Laberinto - on_init: Pintar Jefe Enemigo
+2024-02-14 11:06:21.127 INFO player - pintarJefeEnemigo: Pintamos Enemigo
+2024-02-14 11:06:56.463 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-14 11:06:56.465 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-14 11:06:56.465 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-14 11:06:56.465 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-14 11:06:56.465 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-14 11:06:56.465 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-14 11:06:56.465 INFO player - __init__: Init Player
+2024-02-14 11:06:56.465 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:56.465 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:56.465 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:56.465 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:56.465 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:56.465 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:56.465 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:56.466 INFO Laberinto - calcularCasilla: Valor calculado: 345
+2024-02-14 11:06:56.466 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 594 and Y 387 ==> Casilla: 345
+2024-02-14 11:06:56.466 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:56.466 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:56.466 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:56.466 INFO Laberinto - calcularCasilla: Valor calculado: 523
+2024-02-14 11:06:56.466 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 79 and Y 617 ==> Casilla: 523
+2024-02-14 11:06:56.466 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:56.466 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:56.466 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:56.466 INFO Laberinto - calcularCasilla: Valor calculado: 163
+2024-02-14 11:06:56.466 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 34 and Y 192 ==> Casilla: 163
+2024-02-14 11:06:56.466 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:56.466 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:56.466 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:56.466 INFO Laberinto - calcularCasilla: Valor calculado: 590
+2024-02-14 11:06:56.466 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 466 and Y 683 ==> Casilla: 590
+2024-02-14 11:06:56.466 INFO player - __init__: Init Enemigo
+2024-02-14 11:06:56.466 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-14 11:06:56.466 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:56.466 INFO Laberinto - calcularCasilla: Valor calculado: 307
+2024-02-14 11:06:56.466 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 79 and Y 361 ==> Casilla: 307
+2024-02-14 11:06:56.466 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-14 11:06:56.466 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-14 11:06:56.466 INFO player - inicio: Inicio Enemigos
+2024-02-14 11:06:56.466 INFO Laberinto - calcularCasilla: Valor calculado: 200
+2024-02-14 11:06:56.466 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 27 and Y 237 ==> Casilla: 200
+2024-02-14 11:06:56.466 INFO Laberinto - __init__: Cargado el escenario
+2024-02-14 11:06:56.855 INFO Laberinto - on_init: Inicio del juego.
+2024-02-14 11:06:56.855 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-14 11:06:58.294 INFO Laberinto - on_init: Inicio del juego.
+2024-02-14 11:06:58.294 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-14 11:06:58.294 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-14 11:06:58.294 INFO player - pintarJugador: Pintamos Jugador
+2024-02-14 11:06:58.297 INFO Laberinto - on_init: Pintado Jugador
+2024-02-14 11:06:58.297 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:58.297 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:58.298 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:58.298 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:58.298 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:58.298 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-14 11:06:58.299 INFO Laberinto - on_init: Plot Enemigo
+2024-02-14 11:06:58.299 INFO Laberinto - on_init: Pintar Jefe Enemigo
+2024-02-14 11:06:58.299 INFO player - pintarJefeEnemigo: Pintamos Enemigo
+2024-02-14 11:06:58.322 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:58.452 INFO Laberinto - esAlcanzable: Dentro Método alcanzable
+2024-02-14 11:06:58.452 INFO Laberinto - calcularCasilla: Valor calculado: 20
+2024-02-14 11:06:58.452 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 23 and Y 23 ==> Casilla: 20
+2024-02-14 11:06:58.452 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:58.453 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:58.560 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:58.561 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:58.667 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:58.668 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:58.776 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:58.777 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:58.883 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:58.884 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:58.990 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:58.990 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:59.096 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:59.097 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:59.202 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:59.203 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:59.312 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:59.313 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:59.420 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:59.421 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:59.527 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:59.528 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:59.634 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:59.634 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:59.740 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:59.740 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:59.846 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:59.847 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:06:59.953 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:06:59.953 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:00.059 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:00.059 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:00.165 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:00.166 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:00.271 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:00.272 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:00.377 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:00.378 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:00.483 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:00.484 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:00.589 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:00.590 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:00.696 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:00.697 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:00.807 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:00.808 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:00.916 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:00.916 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.022 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.023 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.129 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.129 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.235 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.235 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.341 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.341 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.447 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.447 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.552 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.553 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.659 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.659 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.765 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.765 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.871 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.872 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:01.977 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:01.978 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:02.086 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:02.087 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:02.194 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:02.195 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:02.307 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:02.308 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:02.414 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:02.414 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:02.520 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:02.520 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:02.626 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:02.626 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:02.732 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:02.732 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:02.837 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:02.838 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:02.943 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:02.944 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:03.049 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:03.049 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:03.155 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:03.155 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:03.261 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:03.261 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:03.366 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:03.367 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:03.472 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:03.473 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:03.578 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:03.578 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:03.684 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:03.684 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:03.790 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:03.790 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:03.895 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:03.896 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.001 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.002 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.109 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.109 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.215 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.215 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.320 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.321 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.426 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.427 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.532 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.533 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.638 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.639 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.744 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.745 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.850 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.850 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:04.955 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:04.956 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:05.061 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:05.062 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:05.168 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:05.169 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:05.275 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:05.276 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:05.383 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:05.383 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:05.490 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:05.491 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:05.614 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:05.615 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:05.733 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:05.734 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:05.840 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:05.840 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:05.958 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:05.959 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:06.065 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:06.066 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:06.172 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:06.172 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:06.278 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:06.279 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:06.385 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:06.386 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:06.492 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:06.493 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:06.599 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:06.600 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:06.707 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:06.707 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:06.813 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:06.814 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:06.920 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:06.920 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:07.027 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:07.028 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:07.137 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:07.138 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:07.257 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:07.257 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:07.366 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:07.366 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:07.473 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:07.473 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:07.579 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:07.580 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:07.686 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:07.686 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:07.792 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:07.793 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:07.898 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:07.899 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.005 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.005 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.111 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.112 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.219 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.219 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.325 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.326 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.431 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.432 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.537 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.538 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.644 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.644 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.750 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.750 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.856 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.857 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:08.962 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:08.963 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:09.069 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:09.069 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:09.175 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:09.176 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:09.283 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:09.284 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:09.392 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:09.392 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:09.498 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:09.498 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:09.604 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:09.605 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:09.710 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:09.711 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:09.817 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:09.817 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:09.923 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:09.924 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.032 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.033 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.139 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.139 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.245 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.245 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.351 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.351 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.457 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.457 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.563 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.564 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.669 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.670 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.775 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.776 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.881 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.882 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:10.988 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:10.988 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:11.094 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:11.094 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:11.200 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:11.201 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:11.306 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:11.307 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:11.413 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:11.413 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:11.519 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:11.520 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:11.625 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:11.626 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:11.732 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:11.732 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:11.849 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:11.849 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:11.955 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:11.956 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:12.065 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:12.066 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:12.171 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:12.172 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:12.280 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:12.280 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:12.386 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:12.387 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:12.493 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:12.493 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:12.598 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:12.599 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:12.704 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:12.705 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:12.811 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:12.811 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:12.931 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:12.932 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.038 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.038 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.144 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.144 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.251 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.252 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.357 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.361 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.466 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.467 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.573 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.573 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.679 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.679 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.785 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.785 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.891 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.891 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:13.997 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:13.998 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:14.103 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:14.103 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:14.209 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:14.209 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:14.315 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:14.315 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:14.421 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:14.421 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:14.527 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:14.527 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:14.633 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:14.633 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:14.738 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:14.739 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:14.844 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:14.845 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:14.950 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:14.950 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:15.056 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:15.057 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:15.163 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:15.163 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:15.269 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:15.270 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:15.376 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:15.377 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:15.483 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:15.484 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:15.590 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:15.591 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:15.697 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:15.698 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:15.804 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:15.806 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:15.912 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:15.913 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.019 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.019 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.125 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.126 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.232 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.233 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.338 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.347 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.452 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.454 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.559 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.560 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.665 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.666 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.771 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.771 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.877 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.881 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:16.986 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:16.987 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:17.093 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:17.094 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:17.201 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:17.202 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:17.308 DEBUG Laberinto - on_render: Pintamos los enemigos.
+2024-02-14 11:07:17.314 DEBUG Laberinto - on_render: Pintamos laberinto.
+2024-02-14 11:07:17.425 DEBUG Laberinto - on_render: Pintamos los enemigos.
