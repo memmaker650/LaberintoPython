@@ -378,10 +378,9 @@ class App:
         logging.info('Pintar Jefe Enemigo')
         self.JefeEnemigo.pintarJefeEnemigo()
         self.rect = self.JefeEnemigo.image.get_rect()  # rectángulo Sprite Jefe Enemigo
-        self.JefeEnemigo.vision()
+        self.JefeEnemigo.vision(self.JefeEnemigo.image.get_rect().center)
 
         self._block_surf = pygame.image.load("../Resources/floor.png").convert()
-
 
     def on_event(self, event):
         if event.type == QUIT:
@@ -397,6 +396,7 @@ class App:
             pygame.quit()
 
     def on_loop(self):
+        self.JefeEnemigo.visionRotar()
         pass
 
     def on_render(self):
@@ -430,11 +430,11 @@ class App:
                 self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
 
             #self.enemigosSprites.draw(self.pantalla)
-        logging.debug('Pintamos el JEFE enemigo.')
-        self.pantalla.blit(self.JefeEnemigo.image, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+            logging.debug('Pintamos el JEFE enemigo.')
+            self.pantalla.blit(self.JefeEnemigo.image, (self.JefeEnemigo.x, self.JefeEnemigo.y))
 
-        if (self.visionEnemigos == True):
-            self.pantalla.blit(self.JefeEnemigo.visionImage, (self.JefeEnemigo.x, self.JefeEnemigo.y-40))
+            if (self.visionEnemigos == True):
+                self.pantalla.blit(self.JefeEnemigo.visionImage, (self.JefeEnemigo.x, self.JefeEnemigo.y - 40))
 
         pygame.display.flip()
 

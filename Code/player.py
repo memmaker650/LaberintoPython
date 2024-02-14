@@ -10,6 +10,9 @@ import sys
 import pygame
 from pygame.locals import *
 
+import pygame as pg
+from pygame.math import Vector2
+
 IMG_DIR = "Resources"
 # Especificación de la paleta de colores
 BLANCO = (255, 255, 255)
@@ -165,12 +168,21 @@ class Enemigo(pygame.sprite.Sprite):
     def getPosicion(self):
         return self.casilla
 
-    def vision(self):
+    def vision(self, pos):
         logging.info("Pintamos cono de visión")
         self.visionImage = load_image("linterna.png", '/Code/assets/', alpha=True)
         self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
         self.visionImage.set_alpha(128)
-        self.rect = self.visionImage.get_rect()
+        self.rect = self.visionImage.get_rect(center=pos)
+        self.pos = Vector2(pos)
+        self.offset = Vector2(200, 0)
+        self.angle = -45
+
+    def visionRotar(self):
+        logging.info("Pintamos cono de visión")
+        self.angle -= 2
+        # Add the rotated offset vector to the pos vector to get the rect.center.
+        self.rect.center = self.pos + self.offset.rotate(self.angle)
 
     def logMovimiento(self, direccion, finalx, finaly):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
