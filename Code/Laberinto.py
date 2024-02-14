@@ -196,6 +196,7 @@ class App:
     numEnemigos = 5
     enemigosArray = []
     enemigosSprites = pygame.sprite.Group()
+    visionEnemigos = bool
 
     salir = bool = False
 
@@ -219,6 +220,8 @@ class App:
         self.player = player.Player()  # damos los valores por defecto.
         self.enemigo = player.Enemigo()
         self.JefeEnemigo = player.Enemigo()
+
+        self.visionEnemigos = True
         self.salir = False
 
         # Llenar el vector de enemigos
@@ -302,6 +305,7 @@ class App:
 
                     # Botón 4 - Salir del juego
                     if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 100, 230, 40):
+                        self.tocaMenu = False
                         self.salir = True
                         pygame.quit()
 
@@ -374,6 +378,7 @@ class App:
         logging.info('Pintar Jefe Enemigo')
         self.JefeEnemigo.pintarJefeEnemigo()
         self.rect = self.JefeEnemigo.image.get_rect()  # rectángulo Sprite Jefe Enemigo
+        self.JefeEnemigo.vision()
 
         self._block_surf = pygame.image.load("../Resources/floor.png").convert()
 
@@ -425,8 +430,11 @@ class App:
                 self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
 
             #self.enemigosSprites.draw(self.pantalla)
-
+        logging.debug('Pintamos el JEFE enemigo.')
         self.pantalla.blit(self.JefeEnemigo.image, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+
+        if (self.visionEnemigos == True):
+            self.pantalla.blit(self.JefeEnemigo.visionImage, (self.JefeEnemigo.x, self.JefeEnemigo.y-40))
 
         pygame.display.flip()
 

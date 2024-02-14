@@ -96,6 +96,7 @@ class Player(pygame.sprite.Sprite):
         self.balas.add(bala)
 
 class Disparos(pygame.sprite.Sprite):
+    municion = int
     def __init__(self, x, y):
         super().__init__()
         self.image = pygame.transform.scale(pygame.image.load("../assets/disparo.png").convert(),(10,20))
@@ -103,6 +104,15 @@ class Disparos(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.bottom = y
         self.rect.centerx = x
+
+    def definirMunicion(self, valor):
+        self.municion = valor
+
+    def updateMunicion(self, valor, sentido):  # 0 restar y 1 sumar
+        if (sentido == 0):
+            self.municion -= valor
+        elif (sentido == 1):
+            self.municion += valor
 
 class Enemigo(pygame.sprite.Sprite):
     x = 12
@@ -131,7 +141,7 @@ class Enemigo(pygame.sprite.Sprite):
         self.y = random.randint(0, vy)
 
     def inicioCelda(self, cell):
-        casilla = cell
+        self.casilla = cell
 
     def logPosicionEnemigo(self):
         logging.info('Posición Enemigo: x: %s e y: %s con casilla --> %s', self.x, self.y, self.casilla)
@@ -157,9 +167,10 @@ class Enemigo(pygame.sprite.Sprite):
 
     def vision(self):
         logging.info("Pintamos cono de visión")
-        self.image = load_image("wilber-eeek.png", '/assets/linterna.png', alpha=True)
-        self.image = pygame.transform.scale(self.image, (40, 40))
-        self.rect = self.image.get_rect()
+        self.visionImage = load_image("linterna.png", '/Code/assets/', alpha=True)
+        self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
+        self.visionImage.set_alpha(128)
+        self.rect = self.visionImage.get_rect()
 
     def logMovimiento(self, direccion, finalx, finaly):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
