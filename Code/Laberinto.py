@@ -397,6 +397,12 @@ class App:
 
     def on_loop(self):
         self.JefeEnemigo.visionRotar()
+        self.JefeEnemigo.update()
+        self.enemigo.update()
+
+        # Colisiones entre enemigo y escenario.
+        pygame.sprite.groupcollide(self.maze.MazeSprite, self.enemigosSprites, False, False)
+        pygame.sprite.groupcollide(self.maze.MazeSprite, self.JefeEnemigo, False, False)
         pass
 
     def on_render(self):
