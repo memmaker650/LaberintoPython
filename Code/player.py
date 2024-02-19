@@ -230,8 +230,10 @@ class Enemigo(pygame.sprite.Sprite):
 
     orientacion = str
     visionImage = None
+    visionPos = Vector2
     speedV = 1
     speedH = 1
+    angle = int
     image = None
     rect = None
     balas = pygame.sprite.Group
@@ -244,6 +246,8 @@ class Enemigo(pygame.sprite.Sprite):
         self.orientacion = 'N'
         self.kia = KerberosIA.KerberosIA()
         self.vida = 100
+        self.visionPos = Vector2 (0, 0)
+        self.angle = 0
 
     def inicio(self, vx, vy):
         logging.info("Inicio Enemigos")
@@ -281,19 +285,21 @@ class Enemigo(pygame.sprite.Sprite):
         self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
         self.visionImage.set_alpha(128)
         self.rect = self.visionImage.get_rect(center=pos)
-        self.pos = Vector2(pos)
+        self.visionPos = Vector2(pos)
         self.offset = Vector2(200, 0)
         self.angle = -45
-
-    def update(self):
-        logging.debug('Dentro Update ENEMIGOS.')
 
     # TODO Crear el método UPDATE para gestionar todos los movimientos.
     def visionRotar(self):
         logging.info("Pintamos cono de visión")
-        self.angle -= 2
+        self.angle = self.angle - 2
         # Add the rotated offset vector to the pos vector to get the rect.center.
-        self.rect.center = self.pos + self.offset.rotate(self.angle)
+        self.rect.center = self.visionPos.rotate(self.angle)
+
+    def update(self):
+        logging.debug('Dentro Update ENEMIGOS.')
+        self.visionRotar()
+        self.moveDown()
 
     def logMovimiento(self, direccion, finalx, finaly):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)

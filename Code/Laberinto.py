@@ -78,7 +78,6 @@ class estadisticasSquid:
     EnemigosMuertos = 0
     puntos = 0
 
-
 class partidaGuardada:
     nivel = 0
     puntos = 0
@@ -398,11 +397,14 @@ class App:
     def on_loop(self):
         self.JefeEnemigo.visionRotar()
         self.JefeEnemigo.update()
-        self.enemigo.update()
+        i = 0
+        for i in range(0, self.numEnemigos):
+            self.enemigo = self.enemigosArray[i]
+            self.enemigo.update()
 
         # Colisiones entre enemigo y escenario.
-        pygame.sprite.groupcollide(self.maze.MazeSprite, self.enemigosSprites, False, False)
-        pygame.sprite.groupcollide(self.maze.MazeSprite, self.JefeEnemigo, False, False)
+        #pygame.sprite.groupcollide(self.maze.MazeSprite, self.enemigosSprites, False, False)
+        #pygame.sprite.groupcollide(self.maze.MazeSprite, self.JefeEnemigo, False, False)
         pass
 
     def on_render(self):
