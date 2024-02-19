@@ -101,6 +101,36 @@ class panelPuntuacion(pygame.sprite.Sprite):
         self.arma = 1
         self.balasContador = 0
 
+class Disparos(pygame.sprite.Sprite):
+    x = int
+    y = int
+    municion = int
+
+    def __init__(self, dx, dy):
+        super().__init__()
+        self.image = pygame.transform.scale(pygame.image.load("assets/disparo.png").convert(),(10,20))
+        self.image = pygame.transform.scale(self.image, (25, 25))
+        self.rect = self.image.get_rect()
+        self.rect.x = dx
+        self.rect.y = dy
+        self.y = dy
+        self.x = dx
+        self.municion = 10
+
+    def definirMunicion(self, valor):
+        self.municion = valor
+
+    def actualizarMunicion(self, valor, sentido):  # 0 restar y 1 sumar
+        if (sentido == 0):
+            self.municion -= valor
+        elif (sentido == 1):
+            self.municion += valor
+
+    def update(self):
+        logging.info('Dentro UPDATE BALA.')
+        self.y -= 5
+        if self.x < 0:
+            self.kill()
 
 class Player(pygame.sprite.Sprite):
     x = 23
@@ -109,16 +139,18 @@ class Player(pygame.sprite.Sprite):
 
     vida = int
 
+    flagDisparo = False
     speedV = 1
     speedH = 1
     image = None
     rect = None
+    bala = Disparos
     balas = pygame.sprite.Group
 
     def __init__(self):
         logging.info("Init Player")
         super().__init__()
-
+        self.flagDisparo = False
 
     def stop(self):
         self.speedH = 0
@@ -168,34 +200,9 @@ class Player(pygame.sprite.Sprite):
         return pygame.transform.grayscale(self.imagen)
 
     def disparo(self):
-        bala = Disparos(self.rect.centerx, self.rect.top)
-        self.balas.add(bala)
-
-class Disparos(pygame.sprite.Sprite):
-    municion = int
-
-    def __init__(self, x, y):
-        super().__init__()
-        self.image = pygame.transform.scale(pygame.image.load("../assets/disparo.png").convert(),(10,20))
-        self.image.set_colorkey(NEGRO)
-        self.rect = self.image.get_rect()
-        self.rect.bottom = y
-        self.rect.centerx = x
-        self.municion = 10
-
-    def definirMunicion(self, valor):
-        self.municion = valor
-
-    def actualizarMunicion(self, valor, sentido):  # 0 restar y 1 sumar
-        if (sentido == 0):
-            self.municion -= valor
-        elif (sentido == 1):
-            self.municion += valor
-
-    def update(self):
-        self.rect.y -= 25
-        if self.rect.bottom < 0:
-            self.kill()
+        self.bala = Disparos(self.rect.centerx, self.rect.top)
+        self.balas.add(self.bala)
+        self.flagDisparo = True
 
 class Explosiones(pygame.sprite.Sprite):
     def __init__(self, centro, dimensiones):
@@ -227,6 +234,7 @@ class Enemigo(pygame.sprite.Sprite):
     casilla = 0
 
     vida = int
+    flagDisparo = bool
 
     orientacion = str
     visionImage = None
@@ -236,6 +244,7 @@ class Enemigo(pygame.sprite.Sprite):
     angle = int
     image = None
     rect = None
+    bala = Disparos
     balas = pygame.sprite.Group
     balasArray = []
     kia = None
@@ -248,6 +257,7 @@ class Enemigo(pygame.sprite.Sprite):
         self.vida = 100
         self.visionPos = Vector2 (0, 0)
         self.angle = 0
+        self.flagDisparo = False
 
     def inicio(self, vx, vy):
         logging.info("Inicio Enemigos")
@@ -323,8 +333,8 @@ class Enemigo(pygame.sprite.Sprite):
         return pygame.transform.grayscale(self.imagen)
 
     def disparo(self):
-        bala = Disparos(self.rect.centerx, self.rect.top)
-        self.balas.add(bala)
-
+        self.bala = Disparos(self.rect.centerx, self.rect.top)
+        self.balas.add(self.bala)
+        self.flagDisparo = True
 
 

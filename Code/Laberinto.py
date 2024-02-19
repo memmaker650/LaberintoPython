@@ -277,7 +277,6 @@ class App:
         text3 = smallfont.render('salir', True, color)
 
         while True:
-
             for ev in pygame.event.get():
 
                 if ev.type == pygame.QUIT:
@@ -323,6 +322,8 @@ class App:
                         pygame.draw.rect(self.pantalla, color_light, [width / 2, (height / 2) - 50, 230, 40])
 
                         # Botón 2 - Cargar partida
+                        if mates.dentroBoton(mouse, width / 2, height / 2, 230, 40):
+                            pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int(height / 2), 230, 40])
 
                         # Botón 3 - Opciones
                         if mates.dentroBoton(mouse, width / 2, height / 2, 230, 40):
@@ -330,17 +331,19 @@ class App:
 
                         # Botón 4 - Salir del juego
                         if mates.dentroBoton(mouse, width / 2, (height / 2) + 100, 230, 40):
-                            pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int((height / 2))+100, 230, 40])
+                            pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int((height / 2)) + 200, 230, 40])
 
                         else:
                             pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) - 50, 230, 40])
                             pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)), 230, 40])
-                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) + 100, 230, 40])
+                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) + 50, 230, 40])
+                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) + 200, 230, 40])
 
                 # superimposing the text onto our button
                 self.pantalla.blit(text1, (width / 2 + 50, (height / 2) - 50))
                 self.pantalla.blit(text2, (width / 2 + 50, (height / 2)))
-                self.pantalla.blit(text3, (width / 2 + 50, (height / 2) + 100))
+                self.pantalla.blit(text3, (width / 2 + 50, (height / 2) + 200))
+                self.pantalla.blit(text4, (width / 2 + 50, (height / 2) + 50))
 
                 # updates the frames of the game
                 pygame.display.update()
@@ -396,11 +399,20 @@ class App:
 
     def on_loop(self):
         self.JefeEnemigo.visionRotar()
+        self.player.update()
         self.JefeEnemigo.update()
         i = 0
         for i in range(0, self.numEnemigos):
             self.enemigo = self.enemigosArray[i]
             self.enemigo.update()
+            if self.enemigo.flagDisparo == True:
+                self.enemigo.bala.update()
+
+        if self.player.flagDisparo == True:
+            self.player.bala.update()
+
+        if self.JefeEnemigo.flagDisparo == True:
+            self.JefeEnemigo.bala.update()
 
         # Colisiones entre enemigo y escenario.
         #pygame.sprite.groupcollide(self.maze.MazeSprite, self.enemigosSprites, False, False)
@@ -437,12 +449,23 @@ class App:
                 self.enemigo = self.enemigosArray[i]
                 self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
 
-            #self.enemigosSprites.draw(self.pantalla)
+                if (self.enemigo.flagDisparo == True):
+                    self.pantalla.blit(self.enemigo.bala.image, (self.enemigo.bala.x, self.enemigo.bala.y))
+
+            # Jefe Enemigo
             logging.debug('Pintamos el JEFE enemigo.')
             self.pantalla.blit(self.JefeEnemigo.image, (self.JefeEnemigo.x, self.JefeEnemigo.y))
 
             if (self.visionEnemigos == True):
                 self.pantalla.blit(self.JefeEnemigo.visionImage, (self.JefeEnemigo.x, self.JefeEnemigo.y - 40))
+
+            # Pintar disparos del Player
+            if(self.player.flagDisparo == True):
+                self.pantalla.blit(self.player.bala.image, (self.player.bala.x, self.player.bala.y))
+
+            # Pintar disparos de Jefe Enemigo
+            if (self.JefeEnemigo.flagDisparo == True):
+                self.pantalla.blit(self.self.JefeEnemigo.bala.image, (self.JefeEnemigo.bala.x, self.JefeEnemigo.bala.y))
 
         pygame.display.flip()
 
@@ -487,6 +510,7 @@ class App:
                         logging.info('¡¡¡ Pulsado cursor ABAJO !!!')
                         self.player.moveDown()
                     if event.key == pygame.K_SPACE:
+                        logging.info('¡¡¡ BARRA ESPACIADORA !!!')
                         self.player.disparo()
                     if event.key == pygame.K_p:
                         if self.Pause == False:
