@@ -8519,3 +8519,161 @@
 2024-02-19 17:14:12.251 DEBUG Laberinto - on_render: Pintamos laberinto.
 2024-02-19 17:14:12.358 DEBUG Laberinto - on_render: Pintamos los enemigos.
 2024-02-19 17:14:12.358 DEBUG Laberinto - on_render: Pintamos el JEFE enemigo.
+2024-02-20 12:53:55.402 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-20 12:53:55.405 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-20 12:53:55.405 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-20 12:53:55.405 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-20 12:53:55.405 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-20 12:53:55.405 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-20 12:53:55.405 INFO player - __init__: Init Player
+2024-02-20 12:53:55.405 INFO player - __init__: Init Enemigo
+2024-02-20 12:53:55.405 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 12:53:55.405 INFO player - __init__: Init Enemigo
+2024-02-20 12:53:55.406 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 12:53:55.406 INFO player - __init__: Init Enemigo
+2024-02-20 12:53:55.406 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 12:53:55.406 INFO player - inicio: Inicio Enemigos
+2024-02-20 12:53:55.406 INFO Laberinto - calcularCasilla: Valor calculado: 177
+2024-02-20 12:53:55.406 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 139 and Y 205 ==> Casilla: 177
+2024-02-20 12:53:55.406 INFO player - __init__: Init Enemigo
+2024-02-20 12:53:55.406 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 12:53:55.406 INFO player - inicio: Inicio Enemigos
+2024-02-20 12:53:55.406 INFO Laberinto - calcularCasilla: Valor calculado: 74
+2024-02-20 12:53:55.406 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 586 and Y 67 ==> Casilla: 74
+2024-02-20 12:53:55.406 INFO player - __init__: Init Enemigo
+2024-02-20 12:53:55.406 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 12:53:55.406 INFO player - inicio: Inicio Enemigos
+2024-02-20 12:53:55.406 INFO Laberinto - calcularCasilla: Valor calculado: 713
+2024-02-20 12:53:55.406 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 55 and Y 844 ==> Casilla: 713
+2024-02-20 12:53:55.406 INFO player - __init__: Init Enemigo
+2024-02-20 12:53:55.406 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 12:53:55.406 INFO player - inicio: Inicio Enemigos
+2024-02-20 12:53:55.406 INFO Laberinto - calcularCasilla: Valor calculado: 661
+2024-02-20 12:53:55.406 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 369 and Y 770 ==> Casilla: 661
+2024-02-20 12:53:55.406 INFO player - __init__: Init Enemigo
+2024-02-20 12:53:55.406 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 12:53:55.406 INFO player - inicio: Inicio Enemigos
+2024-02-20 12:53:55.406 INFO Laberinto - calcularCasilla: Valor calculado: 179
+2024-02-20 12:53:55.406 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 446 and Y 196 ==> Casilla: 179
+2024-02-20 12:53:55.406 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-20 12:53:55.406 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-20 12:53:55.406 INFO player - inicio: Inicio Enemigos
+2024-02-20 12:53:55.406 INFO Laberinto - calcularCasilla: Valor calculado: 189
+2024-02-20 12:53:55.406 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 354 and Y 212 ==> Casilla: 189
+2024-02-20 12:53:55.406 INFO Laberinto - __init__: Cargado el escenario
+2024-02-20 12:53:55.851 INFO Laberinto - on_init: Inicio del juego.
+2024-02-20 12:53:55.851 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-20 12:53:57.116 INFO Laberinto - on_init: Inicio del juego.
+2024-02-20 12:53:57.116 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-20 12:53:57.116 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-20 12:53:57.116 INFO player - pintarJugador: Pintamos Jugador
+2024-02-20 12:53:57.118 INFO Laberinto - on_init: Pintado Jugador
+2024-02-20 12:53:57.118 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 12:53:57.118 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 12:53:57.119 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 12:53:57.119 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 12:53:57.119 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 12:53:57.119 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 12:53:57.119 INFO Laberinto - on_init: Plot Enemigo
+2024-02-20 12:53:57.119 INFO Laberinto - on_init: Pintar Jefe Enemigo
+2024-02-20 12:53:57.119 INFO player - pintarJefeEnemigo: Pintamos Enemigo
+2024-02-20 12:53:57.132 INFO player - vision: Pintamos cono de visión
+2024-02-20 12:53:57.133 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 12:53:57.134 DEBUG player - update: Dentro Update JUGADOR.
+2024-02-20 12:53:57.134 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 12:53:57.134 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 12:53:57.134 INFO player - logMovimiento: Movimiento Abajo hasta x: 354, y 213
+2024-02-20 12:53:57.134 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 12:53:57.134 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 12:53:57.134 INFO player - logMovimiento: Movimiento Abajo hasta x: 139, y 206
+2024-02-20 12:53:57.134 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 12:53:57.134 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 12:53:57.134 INFO player - logMovimiento: Movimiento Abajo hasta x: 586, y 68
+2024-02-20 12:53:57.134 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 12:53:57.134 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 12:53:57.134 INFO player - logMovimiento: Movimiento Abajo hasta x: 55, y 845
+2024-02-20 12:53:57.134 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 12:53:57.134 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 12:53:57.134 INFO player - logMovimiento: Movimiento Abajo hasta x: 369, y 771
+2024-02-20 12:53:57.134 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 12:53:57.134 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 12:53:57.134 INFO player - logMovimiento: Movimiento Abajo hasta x: 446, y 197
+2024-02-20 15:43:55.538 WARNING Laberinto - <module>: Inicio LaberintoPy!!!
+2024-02-20 15:43:55.549 INFO Laberinto - <module>: Successfully Connected to SQLite
+2024-02-20 15:43:55.549 INFO Laberinto - <module>: Creación Base de Datos y Tablas principales.
+2024-02-20 15:43:55.549 INFO Laberinto - <module>: Ejecución SQL creación tablas.
+2024-02-20 15:43:55.549 INFO Laberinto - <module>: Tablas DB creadas
+2024-02-20 15:43:55.549 INFO Laberinto - <module>: Fin acciones Base de Datos
+2024-02-20 15:43:55.549 INFO player - __init__: Init Player
+2024-02-20 15:43:55.549 INFO player - __init__: Init Enemigo
+2024-02-20 15:43:55.549 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 15:43:55.549 INFO player - __init__: Init Enemigo
+2024-02-20 15:43:55.549 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 15:43:55.549 INFO player - __init__: Init Enemigo
+2024-02-20 15:43:55.549 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 15:43:55.549 INFO player - inicio: Inicio Enemigos
+2024-02-20 15:43:55.549 INFO Laberinto - calcularCasilla: Valor calculado: 277
+2024-02-20 15:43:55.550 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 137 and Y 324 ==> Casilla: 277
+2024-02-20 15:43:55.550 INFO player - __init__: Init Enemigo
+2024-02-20 15:43:55.550 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 15:43:55.550 INFO player - inicio: Inicio Enemigos
+2024-02-20 15:43:55.550 INFO Laberinto - calcularCasilla: Valor calculado: 610
+2024-02-20 15:43:55.550 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 704 and Y 698 ==> Casilla: 610
+2024-02-20 15:43:55.550 INFO player - __init__: Init Enemigo
+2024-02-20 15:43:55.550 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 15:43:55.550 INFO player - inicio: Inicio Enemigos
+2024-02-20 15:43:55.550 INFO Laberinto - calcularCasilla: Valor calculado: 79
+2024-02-20 15:43:55.550 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 808 and Y 64 ==> Casilla: 79
+2024-02-20 15:43:55.550 INFO player - __init__: Init Enemigo
+2024-02-20 15:43:55.550 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 15:43:55.550 INFO player - inicio: Inicio Enemigos
+2024-02-20 15:43:55.550 INFO Laberinto - calcularCasilla: Valor calculado: 539
+2024-02-20 15:43:55.550 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 835 and Y 609 ==> Casilla: 539
+2024-02-20 15:43:55.550 INFO player - __init__: Init Enemigo
+2024-02-20 15:43:55.550 INFO KerberosIA - __init__: Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega
+2024-02-20 15:43:55.550 INFO player - inicio: Inicio Enemigos
+2024-02-20 15:43:55.550 INFO Laberinto - calcularCasilla: Valor calculado: 287
+2024-02-20 15:43:55.550 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 154 and Y 335 ==> Casilla: 287
+2024-02-20 15:43:55.550 INFO Laberinto - __init__: Contenido grupo Sprites: 5
+2024-02-20 15:43:55.550 INFO Laberinto - __init__: Cagados todos los enemigos
+2024-02-20 15:43:55.550 INFO player - inicio: Inicio Enemigos
+2024-02-20 15:43:55.550 INFO Laberinto - calcularCasilla: Valor calculado: 642
+2024-02-20 15:43:55.550 DEBUG Laberinto - calcularCasilla: calcularCasilla:posición: X 97 and Y 758 ==> Casilla: 642
+2024-02-20 15:43:55.550 INFO Laberinto - __init__: Cargado el escenario
+2024-02-20 15:43:56.031 INFO Laberinto - on_init: Inicio del juego.
+2024-02-20 15:43:56.031 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-20 15:44:00.321 INFO Laberinto - on_init: Inicio del juego.
+2024-02-20 15:44:00.321 INFO Laberinto - on_init: Pintamos el menú del juego.
+2024-02-20 15:44:00.321 INFO Laberinto - on_init: Empezamos un juego nuevo.
+2024-02-20 15:44:00.321 INFO player - pintarJugador: Pintamos Jugador
+2024-02-20 15:44:00.322 INFO Laberinto - on_init: Pintado Jugador
+2024-02-20 15:44:00.322 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 15:44:00.323 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 15:44:00.323 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 15:44:00.323 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 15:44:00.323 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 15:44:00.323 INFO player - pintarEnemigo: Pintamos Enemigo
+2024-02-20 15:44:00.323 INFO Laberinto - on_init: Plot Enemigo
+2024-02-20 15:44:00.323 INFO Laberinto - on_init: Pintar Jefe Enemigo
+2024-02-20 15:44:00.323 INFO player - pintarJefeEnemigo: Pintamos Enemigo
+2024-02-20 15:44:00.335 INFO player - vision: Pintamos cono de visión
+2024-02-20 15:44:00.337 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 15:44:00.337 DEBUG player - update: Dentro Update JUGADOR.
+2024-02-20 15:44:00.337 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 15:44:00.337 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 15:44:00.337 INFO player - logMovimiento: Movimiento Abajo hasta x: 97, y 759
+2024-02-20 15:44:00.337 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 15:44:00.337 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 15:44:00.337 INFO player - logMovimiento: Movimiento Abajo hasta x: 137, y 325
+2024-02-20 15:44:00.337 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 15:44:00.337 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 15:44:00.337 INFO player - logMovimiento: Movimiento Abajo hasta x: 704, y 699
+2024-02-20 15:44:00.337 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 15:44:00.337 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 15:44:00.337 INFO player - logMovimiento: Movimiento Abajo hasta x: 808, y 65
+2024-02-20 15:44:00.337 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 15:44:00.337 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 15:44:00.337 INFO player - logMovimiento: Movimiento Abajo hasta x: 835, y 610
+2024-02-20 15:44:00.337 DEBUG player - update: Dentro Update ENEMIGOS.
+2024-02-20 15:44:00.337 INFO player - visionRotar: Pintamos cono de visión
+2024-02-20 15:44:00.337 INFO player - logMovimiento: Movimiento Abajo hasta x: 154, y 336

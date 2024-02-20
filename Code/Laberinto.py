@@ -415,7 +415,13 @@ class App:
             self.JefeEnemigo.bala.update()
 
         # Colisiones entre enemigo y escenario.
-        #pygame.sprite.groupcollide(self.maze.MazeSprite, self.enemigosSprites, False, False)
+        colision = pygame.sprite.spritecollide(self.maze.MazeSprite, self.enemigosSprites, False, False)
+        if colision:
+            logging.info('COLISION DETECTADA')
+            self.enemigo.image = pygame.image.load("principal/explosion.png")
+            self.enemigo.velocidad_y += 20
+        else:
+            self.enemigo.kill()
         #pygame.sprite.groupcollide(self.maze.MazeSprite, self.JefeEnemigo, False, False)
         pass
 
@@ -544,6 +550,7 @@ class App:
 
         self.on_cleanup()
         pygame.quit()
+        sys.exit()
 
 
 if __name__ == "__main__":
