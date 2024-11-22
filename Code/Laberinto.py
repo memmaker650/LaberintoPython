@@ -140,7 +140,6 @@ class Maze:
         by = 0
         for i in range(0, self.M * self.N):
             if self.maze[bx + (by * self.M)] == 1:
-                #pygame.sprite.Sprite.__init__(self)
                 display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
                 self.rect = image_surf.get_rect()
             else:
@@ -212,7 +211,7 @@ class App:
         self.tocaMenu = True
         self.movimiento = True
         self.pause = False
-        self.pantalla = 1
+        self.pantalla = pygame.surface
         self._jugador = None
         self._enemigo = None
         self._block_surf = None
@@ -401,6 +400,7 @@ class App:
         self.JefeEnemigo.visionRotar()
         self.player.update()
         self.JefeEnemigo.update()
+
         i = 0
         for i in range(0, self.numEnemigos):
             self.enemigo = self.enemigosArray[i]
@@ -467,13 +467,14 @@ class App:
 
             # Pintar disparos del Player
             if(self.player.flagDisparo == True):
-                self.pantalla.blit(self.player.bala.image, (self.player.bala.x, self.player.bala.y))
+                # self.pantalla.blit(self.player.bala.image, (self.player.bala.x, self.player.bala.y))
+                 self.player.balas.draw(self.pantalla)
 
             # Pintar disparos de Jefe Enemigo
             if (self.JefeEnemigo.flagDisparo == True):
                 self.pantalla.blit(self.self.JefeEnemigo.bala.image, (self.JefeEnemigo.bala.x, self.JefeEnemigo.bala.y))
 
-        pygame.display.flip()
+        pygame.display.flip() # Aquí es donde ploteamos todo.
 
     def on_cleanup(self):
         pygame.quit()
@@ -490,7 +491,6 @@ class App:
         seconds = milliseconds / 1000.0  # seconds passed since last frame
 
         while (self._running):
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self._running = False # pygame window closed by user
@@ -517,6 +517,7 @@ class App:
                         self.player.moveDown()
                     if event.key == pygame.K_SPACE:
                         logging.info('¡¡¡ BARRA ESPACIADORA !!!')
+                        logging.info('¡Disparo jugador!')
                         self.player.disparo()
                     if event.key == pygame.K_p:
                         if self.Pause == False:

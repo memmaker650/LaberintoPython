@@ -49,7 +49,7 @@ carpeta_imagenes = os.path.join(IMG_DIR, "imagenes")
 # 	imagenes_t4 = pygame.transform.scale(imagenes, (256, 256))
 # 	animacion_explosion1['t4'].append(imagenes_t4)
 
-IMG_DIR = "Resources"
+IMG_DIR = "../Resources"
 # Especificación de la paleta de colores
 BLANCO = (255, 255, 255)
 NEGRO = (0, 0, 0)
@@ -63,7 +63,7 @@ def load_image(nombre, dir_imagen, alpha=False):
     # Encontramos la ruta completa de la imagen
     ruta = os.path.join(dir_imagen, nombre)
     try:
-        image = pygame.image.load("../" + ruta)
+        image = pygame.image.load(ruta)
     except:
         print("Error, no se puede cargar la imagen: " + ruta)
         logging.error("Error, no se puede cargar la imagen: " + ruta)
@@ -108,8 +108,9 @@ class Disparos(pygame.sprite.Sprite):
 
     def __init__(self, dx, dy):
         super().__init__()
-        self.image = pygame.transform.scale(pygame.image.load("assets/disparo.png").convert(),(10,20))
-        self.image = pygame.transform.scale(self.image, (25, 25))
+        self.image = load_image("disparo.png", "assets", alpha=True)
+        #self.image = pygame.transform.scale(pygame.image.load("assets/disparo.png").convert(), (10, 20))
+        self.image = pygame.transform.scale(self.image, (10, 20))
         self.rect = self.image.get_rect()
         self.rect.x = dx
         self.rect.y = dy
@@ -140,12 +141,13 @@ class Player(pygame.sprite.Sprite):
     vida = int
 
     flagDisparo = False
+    horientación = 1  # 1 arriba, 2 derecha, 3 abajo y 4 izquierda.
     speedV = 1
     speedH = 1
     image = None
     rect = None
     bala = Disparos
-    balas = pygame.sprite.Group
+    balas = pygame.sprite.Group()
 
     def __init__(self):
         logging.info("Init Player")
@@ -156,19 +158,30 @@ class Player(pygame.sprite.Sprite):
         self.speedH = 0
         self.speedV = 0
 
+    def andar(self):
+        if(self.speedH < 6):
+            self.speedH = self.speedH + 1
+
+        if (self.speedV < 6):
+            self.speedV = self.speedV + 1
+
     def moveRight(self):
+        self.andar()
         self.x = self.x + self.speedH
-        self.logMovimiento('Derecha', self.x, self.y)
+        self.logMovimiento("Derecha", self.x, self.y)
 
     def moveLeft(self):
+        self.andar()
         self.x = self.x - self.speedH
         self.logMovimiento('Izquierda', self.x, self.y)
 
     def moveUp(self):
+        self.andar()
         self.y = self.y - self.speedV
         self.logMovimiento('Arriba', self.x, self.y)
 
     def moveDown(self):
+        self.andar()
         self.y = self.y + self.speedV
         self.logMovimiento('Abajo', self.x, self.y)
 
@@ -200,9 +213,10 @@ class Player(pygame.sprite.Sprite):
         return pygame.transform.grayscale(self.imagen)
 
     def disparo(self):
-        self.bala = Disparos(self.rect.centerx, self.rect.top)
+        self.bala = Disparos(self.x, self.y)
         self.balas.add(self.bala)
         self.flagDisparo = True
+        self.bala.municion -= 1
 
 class Explosiones(pygame.sprite.Sprite):
     def __init__(self, centro, dimensiones):
@@ -291,7 +305,7 @@ class Enemigo(pygame.sprite.Sprite):
 
     def vision(self, pos):
         logging.info("Pintamos cono de visión")
-        self.visionImage = load_image("linterna.png", '/Code/assets/', alpha=True)
+        self.visionImage = load_image("linterna.png", "assets", alpha=True)
         self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
         self.visionImage.set_alpha(128)
         self.rect = self.visionImage.get_rect(center=pos)
