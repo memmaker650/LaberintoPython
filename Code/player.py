@@ -30,6 +30,9 @@ MAGENTA = (255, 0, 255)
 HC74225 = (199, 66, 37)
 H61CD35 = (97, 205, 53)
 
+SCREEN_WIDTH = 864
+SCREEN_HEIGHT = 864
+
 # Directorio de imágenes principal
 carpeta_imagenes = os.path.join(IMG_DIR, "imagenes")
 
@@ -129,9 +132,17 @@ class Disparos(pygame.sprite.Sprite):
 
     def update(self):
         logging.info('Dentro UPDATE BALA.')
-        self.y -= 5
-        if self.x < 0:
+        self.rect.y -= 5
+
+        if self.rect.x < 0:
             self.kill()
+        elif self.rect.y < 0:
+            self.kill()
+        elif self.rect.x > SCREEN_WIDTH:
+            self.kill()
+        elif self.rect.y > SCREEN_HEIGHT:
+            self.kill()
+
 
 class Player(pygame.sprite.Sprite):
     x = 23
@@ -141,7 +152,7 @@ class Player(pygame.sprite.Sprite):
     vida = int
 
     flagDisparo = False
-    horientación = 1  # 1 arriba, 2 derecha, 3 abajo y 4 izquierda.
+    orientacion = 1  # 1 arriba, 2 derecha, 3 abajo y 4 izquierda.
     speedV = 1
     speedH = 1
     image = None
@@ -169,21 +180,24 @@ class Player(pygame.sprite.Sprite):
         self.andar()
         self.x = self.x + self.speedH
         self.logMovimiento("Derecha", self.x, self.y)
+        self.orientacion = 3
 
     def moveLeft(self):
         self.andar()
         self.x = self.x - self.speedH
         self.logMovimiento('Izquierda', self.x, self.y)
+        self.orientacion = 1
 
     def moveUp(self):
         self.andar()
         self.y = self.y - self.speedV
         self.logMovimiento('Arriba', self.x, self.y)
-
+        self.orientacion = 2
     def moveDown(self):
         self.andar()
         self.y = self.y + self.speedV
         self.logMovimiento('Abajo', self.x, self.y)
+        self.orientacion = 4
 
     def asignarVida(self, valor):
         self.vida = valor

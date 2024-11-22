@@ -135,7 +135,7 @@ class Maze:
                      0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-    def draw(self, display_surf, image_surf):
+    def draw(self, display_surf, image_surf, w_surf):
         bx = 0
         by = 0
         for i in range(0, self.M * self.N):
@@ -143,6 +143,9 @@ class Maze:
                 display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
                 self.rect = image_surf.get_rect()
             else:
+                display_surf.blit(w_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                self.rect = w_surf.get_rect()
+
                 self.rectSuelo.image = pygame.Surface([CASILLA_PIXEL, CASILLA_PIXEL])
                 self.rectSuelo.rect = self.rectSuelo.image.get_rect()
                 self.addText(str(i), self.rectSuelo.rect.centerx, self.rectSuelo.rect.centery)
@@ -214,7 +217,8 @@ class App:
         self.pantalla = pygame.surface
         self._jugador = None
         self._enemigo = None
-        self._block_surf = None
+        self.floor_surf = None
+        self.wall_surf = None
         self.player = player.Player()  # damos los valores por defecto.
         self.enemigo = player.Enemigo()
         self.JefeEnemigo = player.Enemigo()
@@ -381,7 +385,8 @@ class App:
         self.rect = self.JefeEnemigo.image.get_rect()  # rectángulo Sprite Jefe Enemigo
         self.JefeEnemigo.vision(self.JefeEnemigo.image.get_rect().center)
 
-        self._block_surf = pygame.image.load("../Resources/floor.png").convert()
+        self.floor_surf = pygame.image.load("../Resources/floor.png").convert()
+        self.wall_surf = pygame.image.load("../Resources/WallBricks.png").convert()
 
     def on_event(self, event):
         if event.type == QUIT:
@@ -431,8 +436,7 @@ class App:
         if self.pause == False:
             #Defino el laberinto
             logging.debug("Pintamos laberinto.")
-            self.maze.draw(self.pantalla, self._block_surf)
-            #self.maze.MazeSprite.draw(self.pantalla, self._block_surf)
+            self.maze.draw(self.pantalla, self.floor_surf, self.wall_surf)
 
             # Aquí busco lugar suelo para Jugador
             # Llamada a la IA
