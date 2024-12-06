@@ -12,6 +12,8 @@ import pygame
 from pygame.locals import *
 import sqlite3
 
+from plyer import notification
+
 # -----------
 # Constantes
 # -----------
@@ -97,8 +99,8 @@ class posicion:
 class Maze:
     M = NUM_CASILLAS
     N = NUM_CASILLAS
-    rectSuelo = pygame.sprite.Sprite
-    MazeSprite = pygame.sprite.Group
+    rectSuelo = pygame.sprite.Sprite()
+    MazeParedes = pygame.sprite.Group()
 
     def addText(self, texto, x, y):
         self.font = pygame.font.SysFont('Arial', 25)
@@ -149,13 +151,15 @@ class Maze:
                 self.rectSuelo.image = pygame.Surface([CASILLA_PIXEL, CASILLA_PIXEL])
                 self.rectSuelo.rect = self.rectSuelo.image.get_rect()
                 self.addText(str(i), self.rectSuelo.rect.centerx, self.rectSuelo.rect.centery)
-                self.MazeSprite.add(self.rectSuelo)
+                self.MazeParedes.add(self.rectSuelo)
                 #pygame.draw.rect(self.pantalla, ROJO, self.rectSuelo)
 
             bx = bx + 1
             if bx > self.M - 1:
                 bx = 0
                 by = by + 1
+
+        notification.notify(title='Hola', message='Maze created', app_name='OctoPussy', app_icon='../Resources/player.png')
 
     @staticmethod
     def calcularCasilla(valorX, valorY):
@@ -196,7 +200,9 @@ class App:
     flagInit = True
     numEnemigos = 5
     enemigosArray = []
-    enemigosSprites = pygame.sprite.Group()
+    MazeSprite = pygame.sprite.Group
+    enemigosGroup = pygame.sprite.Group()
+    LieutenantGroup = pygame.sprite.Group()
     visionEnemigos = bool
 
     salir = bool = False
@@ -232,9 +238,9 @@ class App:
             self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
             self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
             self.enemigosArray.append(self.enemigo)
-            self.enemigosSprites.add(self.enemigo)
+            self.enemigosGroup.add(self.enemigo)
 
-        logging.info('Contenido grupo Sprites: %s', len(self.enemigosSprites))
+        logging.info('Contenido grupo Sprites: %s', len(self.enemigosGroup))
         logging.info("Cagados todos los enemigos")
 
         self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -256,11 +262,14 @@ class App:
 
         print("Dentro del Menú!!")
 
+        # Color for the buttons
         # light shade of the button
         color_light = (170, 170, 170)
-
         # dark shade of the button
         color_dark = (100, 100, 100)
+        color_darkorange = (255, 140, 0)
+        color_otherorange = (216,75, 32)
+        color_darkgreen = (0, 64, 0)
 
         # stores the width of the
         # screen into a variable
@@ -272,12 +281,14 @@ class App:
 
         # defining a font
         smallfont = pygame.font.SysFont('Corbel', 35)
+        Titlefont = pygame.font.SysFont('Impact', 150)
 
         # rendering a text written in Corbel font.
+        textTitle = Titlefont.render('Octopussy', True, color_otherorange)
         text1 = smallfont.render('Nuevo Juego', True, color)
         text2 = smallfont.render('Opciones', True, color)
-        text4 = smallfont.render('Cargar Partida', True, color)
-        text3 = smallfont.render('salir', True, color)
+        text3 = smallfont.render('Cargar Partida', True, color)
+        text4 = smallfont.render('Salir', True, color)
 
         while True:
             for ev in pygame.event.get():
@@ -300,12 +311,12 @@ class App:
 
                     # Botón 3 - Opciones
                     if mates.dentroBoton(mouse, int(width / 2), int(height / 2), 230, 40):
-                        print ("Opciones del juego, pulsada.")
+                        print("Opciones del juego, pulsada.")
                         self.tocaMenu = False
                         self.on_execute()
 
                     # Botón 4 - Salir del juego
-                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 100, 230, 40):
+                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 190, 230, 40):
                         self.tocaMenu = False
                         self.salir = True
                         pygame.quit()
@@ -320,33 +331,29 @@ class App:
 
                 # Compruebo si el ratón está dentro de botón.
                 # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
-                if mates.dentroBoton(mouse, width / 2, (height / 2) - 50, 230, 40) or mates.dentroBoton(mouse, width / 2, height / 2, 230, 40) or mates.dentroBoton(mouse,  width / 2, (height / 2) + 100, 230, 40):
-                    if mates.dentroBoton(mouse, width / 2, (height / 2) - 50, 230, 40):
-                        pygame.draw.rect(self.pantalla, color_light, [width / 2, (height / 2) - 50, 230, 40])
-
-                        # Botón 2 - Cargar partida
-                        if mates.dentroBoton(mouse, width / 2, height / 2, 230, 40):
-                            pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int(height / 2), 230, 40])
-
-                        # Botón 3 - Opciones
-                        if mates.dentroBoton(mouse, width / 2, height / 2, 230, 40):
-                            pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int(height / 2), 230, 40])
-
-                        # Botón 4 - Salir del juego
-                        if mates.dentroBoton(mouse, width / 2, (height / 2) + 100, 230, 40):
-                            pygame.draw.rect(self.pantalla, color_light, [int(width / 2), int((height / 2)) + 200, 230, 40])
-
-                        else:
-                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) - 50, 230, 40])
-                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)), 230, 40])
-                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) + 50, 230, 40])
-                            pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) + 200, 230, 40])
+                if mates.dentroBoton(mouse, width / 2, (height / 2) - 60, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [width / 2, (height / 2) - 60, 230, 40])
+                # Botón 2 - Cargar partida
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
+                # Botón 3 - Opciones
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
+                # Botón 4 - Salir del juego
+                elif mates.dentroBoton(mouse, width / 2, (height / 2) +190, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 190, 230, 40])
+                else:
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
 
                 # superimposing the text onto our button
-                self.pantalla.blit(text1, (width / 2 + 50, (height / 2) - 50))
-                self.pantalla.blit(text2, (width / 2 + 50, (height / 2)))
-                self.pantalla.blit(text3, (width / 2 + 50, (height / 2) + 200))
-                self.pantalla.blit(text4, (width / 2 + 50, (height / 2) + 50))
+                self.pantalla.blit(textTitle, ((width / 2) - 400, (height / 2) - 400))
+                self.pantalla.blit(text1, ((width / 2) + 50, (height / 2) - 50))
+                self.pantalla.blit(text2, ((width / 2) + 50, (height / 2)))
+                self.pantalla.blit(text3, ((width / 2) + 50, (height / 2) + 50))
+                self.pantalla.blit(text4, ((width / 2) + 50, (height / 2) + 200))
 
                 # updates the frames of the game
                 pygame.display.update()
@@ -419,6 +426,19 @@ class App:
         if self.JefeEnemigo.flagDisparo == True:
             self.JefeEnemigo.bala.update()
 
+        if self.movimiento == True:
+            match self.player.orientacion:
+                case 1:
+                    self.player.moveLeft()
+                case 2:
+                    self.player.moveUp()
+                case 3:
+                    self.player.moveRight()
+                case 4:
+                    self.player.moveDown()
+                case _:
+                    print("Valor desconocido !")
+
         # Colisiones entre enemigo y escenario.
         # colision = pygame.sprite.spritecollide(self.maze.MazeSprite, self.enemigosSprites, False, False)
         # if colision:
@@ -487,6 +507,7 @@ class App:
         # clock.tick(60)
 
         print("Dentro de on_execute.")
+        pygame.init()
 
         if self.on_init() == False:
             self._running = False
@@ -505,19 +526,19 @@ class App:
                         self._running = False  # user pressed ESC
                     if event.key == pygame.K_RIGHT:
                         self.movimiento = True
-                        logging.info('¡¡¡ Pulsado cursor DERECHO !!!')
+                        logging.info('¡¡¡ Pulsado flecha DERECHO !!!')
                         self.player.moveRight()
                     if event.key == pygame.K_LEFT:
                         self.movimiento = True
-                        logging.info('¡¡¡ Pulsado cursor IZQUIERDO !!!')
+                        logging.info('¡¡¡ Pulsado flecha IZQUIERDO !!!')
                         self.player.moveLeft()
                     if event.key == pygame.K_UP:
                         self.movimiento = True
-                        logging.info('¡¡¡ Pulsado cursor ARRIBA !!!')
+                        logging.info('¡¡¡ Pulsado flecha ARRIBA !!!')
                         self.player.moveUp()
                     if event.key == pygame.K_DOWN:
                         self.movimiento = True
-                        logging.info('¡¡¡ Pulsado cursor ABAJO !!!')
+                        logging.info('¡¡¡ Pulsado flecha ABAJO !!!')
                         self.player.moveDown()
                     if event.key == pygame.K_SPACE:
                         logging.info('¡¡¡ BARRA ESPACIADORA !!!')
@@ -532,24 +553,29 @@ class App:
 
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_RIGHT:
-                        self.movimiento = True
+                        self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor DERECHO !!!')
+                        # print('¡¡¡ SOLtado cursor DERECHO !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_LEFT:
-                        self.movimiento = True
+                        self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor IZQUIERDO !!!')
+                        # print('¡¡¡ SOLtado cursor IZQUIERDO !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_UP:
-                        self.movimiento = True
+                        self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor ARRIBA !!!')
+                        # print('¡¡¡ SOLtado cursor ARRIBA !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_DOWN:
-                        self.movimiento = True
+                        self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor ABAJO !!!')
+                        # print('¡¡¡ SOLtado cursor ABAJO !!!')
                         self.player.stop()
+
             self.on_loop()
             self.on_render()
 
@@ -559,7 +585,6 @@ class App:
 
 
 if __name__ == "__main__":
-
     logging.basicConfig(filename="../log/squidcastle.log", level=logging.DEBUG,
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
     logging.warning("Inicio LaberintoPy!!!")
@@ -581,6 +606,8 @@ if __name__ == "__main__":
         logging.info('Tablas DB creadas')
 
     logging.info('Fin acciones Base de Datos')
+
+    notification.notify(title='Inicio', message='Inicio Juego', app_name='OctoPussy', app_icon='/assets/player.png')
 
     # App principal
     theApp = App()

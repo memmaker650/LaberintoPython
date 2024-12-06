@@ -107,7 +107,7 @@ class panelPuntuacion(pygame.sprite.Sprite):
 class Disparos(pygame.sprite.Sprite):
     x = int
     y = int
-    municion = int
+    municion = 0
 
     def __init__(self, dx, dy):
         super().__init__()
@@ -129,6 +129,9 @@ class Disparos(pygame.sprite.Sprite):
             self.municion -= valor
         elif (sentido == 1):
             self.municion += valor
+
+    def rotarBala(self, angulo):
+        return pygame.transform.rotate(self.imagen, angulo)
 
     def update(self):
         logging.info('Dentro UPDATE BALA.')
@@ -193,6 +196,7 @@ class Player(pygame.sprite.Sprite):
         self.y = self.y - self.speedV
         self.logMovimiento('Arriba', self.x, self.y)
         self.orientacion = 2
+
     def moveDown(self):
         self.andar()
         self.y = self.y + self.speedV
@@ -227,10 +231,11 @@ class Player(pygame.sprite.Sprite):
         return pygame.transform.grayscale(self.imagen)
 
     def disparo(self):
-        self.bala = Disparos(self.x, self.y)
-        self.balas.add(self.bala)
-        self.flagDisparo = True
-        self.bala.municion -= 1
+        if self.bala.municion > 0:
+            self.bala = Disparos(self.x, self.y)
+            self.balas.add(self.bala)
+            self.flagDisparo = True
+            self.bala.municion -= 1
 
 class Explosiones(pygame.sprite.Sprite):
     def __init__(self, centro, dimensiones):
