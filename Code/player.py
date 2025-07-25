@@ -167,6 +167,9 @@ class Player(pygame.sprite.Sprite):
         logging.info("Init Player")
         super().__init__()
         self.flagDisparo = False
+        self.image = load_image("player_modif.png", IMG_DIR, alpha=True)
+        self.image = pygame.transform.scale(self.image, (25, 25))
+        self.rect = self.image.get_rect()
 
     def stop(self):
         self.speedH = 0
@@ -217,9 +220,6 @@ class Player(pygame.sprite.Sprite):
 
     def pintarJugador(self):
         logging.info("Pintamos Jugador")
-        self.image = load_image("player_modif.png", IMG_DIR, alpha=True)
-        self.image = pygame.transform.scale(self.image, (25, 25))
-        self.rect = self.image.get_rect()
 
     def update(self):
         logging.debug('Dentro Update JUGADOR.')
@@ -275,7 +275,8 @@ class Enemigo(pygame.sprite.Sprite):
     speedV = 1
     speedH = 1
     angle = int
-    image = None
+    imageEnemigo = None
+    imageJefeEnemigo = None
     rect = None
     bala = Disparos
     balas = pygame.sprite.Group
@@ -291,6 +292,15 @@ class Enemigo(pygame.sprite.Sprite):
         self.visionPos = Vector2 (0, 0)
         self.angle = 0
         self.flagDisparo = False
+        self.imageJefeEnemigo = load_image("Chainsaw.png", IMG_DIR, alpha=True)
+        self.image = pygame.transform.scale(self.imageJefeEnemigo, (40, 40))
+        self.rect = self.imageJefeEnemigo.get_rect()
+        self.imageEnemigo = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
+        self.image = pygame.transform.scale(self.image, (40, 40))
+        self.rect = self.imageEnemigo.get_rect()
+        self.visionImage = load_image("linterna.png", "assets", alpha=True)
+        self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
+        self.visionImage.set_alpha(128)
 
     def inicio(self, vx, vy):
         logging.info("Inicio Enemigos")
@@ -324,9 +334,6 @@ class Enemigo(pygame.sprite.Sprite):
 
     def vision(self, pos):
         logging.info("Pintamos cono de visión")
-        self.visionImage = load_image("linterna.png", "assets", alpha=True)
-        self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
-        self.visionImage.set_alpha(128)
         self.rect = self.visionImage.get_rect(center=pos)
         self.visionPos = Vector2(pos)
         self.offset = Vector2(200, 0)
@@ -349,15 +356,11 @@ class Enemigo(pygame.sprite.Sprite):
 
     def pintarEnemigo(self):
         logging.info("Pintamos Enemigo")
-        self.image = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
-        self.image = pygame.transform.scale(self.image, (40, 40))
-        self.rect = self.image.get_rect()
+        
 
     def pintarJefeEnemigo(self):
         logging.info("Pintamos Enemigo")
-        self.image = load_image("Chainsaw.png", IMG_DIR, alpha=True)
-        self.image = pygame.transform.scale(self.image, (40, 40))
-        self.rect = self.image.get_rect()
+        
 
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)

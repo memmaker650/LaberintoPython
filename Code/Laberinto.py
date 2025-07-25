@@ -99,67 +99,94 @@ class posicion:
 class Maze:
     M = NUM_CASILLAS
     N = NUM_CASILLAS
-    rectSuelo = pygame.sprite.Sprite()
     MazeParedes = pygame.sprite.Group()
-
-    def addText(self, texto, x, y):
-        self.font = pygame.font.SysFont('Arial', 25)
-        self.font.render(texto, True, (255, 0, 0))
+    
 
     def __init__(self):
         self.M = NUM_CASILLAS
         self.N = NUM_CASILLAS
-        self.maze = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
-                     0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
-                     0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0,
-                     0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0,
-                     0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0,
-                     0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0,
-                     0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0,
-                     0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
-                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                     0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
-                     0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                     0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.maze = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+            0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0,
+            0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0,
+            0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0,
+            0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0,
+            0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+        self.MazeParedes = pygame.sprite.Group()
+        self._crear_paredes()
+        notification.notify(title='Hola', message='Maze created', app_name='OctoPussy', app_icon='../Resources/player.png')
 
-    def draw(self, display_surf, image_surf, w_surf):
+    def _crear_paredes(self):
         bx = 0
         by = 0
         for i in range(0, self.M * self.N):
-            if self.maze[bx + (by * self.M)] == 1:
-                display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
-                self.rect = image_surf.get_rect()
-            else:
-                display_surf.blit(w_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
-                self.rect = w_surf.get_rect()
-
-                self.rectSuelo.image = pygame.Surface([CASILLA_PIXEL, CASILLA_PIXEL])
-                self.rectSuelo.rect = self.rectSuelo.image.get_rect()
-                self.addText(str(i), self.rectSuelo.rect.centerx, self.rectSuelo.rect.centery)
-                self.MazeParedes.add(self.rectSuelo)
-                #pygame.draw.rect(self.pantalla, ROJO, self.rectSuelo)
+            if self.maze[bx + (by * self.M)] == 0:
+                rectSuelo = pygame.sprite.Sprite()
+                rectSuelo.image = pygame.Surface([CASILLA_PIXEL, CASILLA_PIXEL])
+                rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, CASILLA_PIXEL, CASILLA_PIXEL)
+                self.MazeParedes.add(rectSuelo)
 
             bx = bx + 1
             if bx > self.M - 1:
                 bx = 0
                 by = by + 1
 
-        notification.notify(title='Hola', message='Maze created', app_name='OctoPussy', app_icon='../Resources/player.png')
+    def addText(self, texto, x, y):
+        self.font = pygame.font.SysFont('Arial', 25)
+        self.font.render(texto, True, (255, 0, 0))
+
+    def draw(self, display_surf, image_surf, w_surf):
+        bx = 0
+        by = 0
+
+        xfont = pygame.font.SysFont('Corbel', 13)
+
+        textWallDebug = pygame.sprite.Group()
+        # rendering a text written in Corbel font.
+
+
+        for i in range(0, self.M * self.N):
+            if self.maze[bx + (by * self.M)] == 1:
+                display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                self.rect = image_surf.get_rect()
+            else:
+                display_surf.blit(w_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                rectSuelo = pygame.sprite.Sprite()
+                rectSuelo.image = pygame.Surface([bx * CASILLA_PIXEL, by * CASILLA_PIXEL])
+                rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
+                pygame.draw.rect(display_surf, ROJO, rectSuelo)
+                textWallMark = xfont.render(str(i), True, (0, 80, 0))
+                # X = pygame.sprite
+                # X = textWallMark
+                # textWallDebug.add(X)
+
+            bx = bx + 1
+            if bx > self.M - 1:
+                bx = 0
+                by = by + 1
+        #return textWallDebug
 
     @staticmethod
     def calcularCasilla(valorX, valorY):
@@ -212,15 +239,15 @@ class App:
     pygame.mixer.init()
 
     #Definimos el icono del juego.
-    gameIcon = pygame.image.load('../Resources/player.png')
+    gameIcon = pygame.image.load("../Resources/player.png")
     pygame.display.set_icon(gameIcon)
 
     def __init__(self):
+        self.pantalla = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
         self._running = True
         self.tocaMenu = True
-        self.movimiento = True
+        self.movimiento = False
         self.pause = False
-        self.pantalla = pygame.surface
         self._jugador = None
         self._enemigo = None
         self.floor_surf = None
@@ -240,7 +267,7 @@ class App:
             self.enemigosArray.append(self.enemigo)
             self.enemigosGroup.add(self.enemigo)
 
-        logging.info('Contenido grupo Sprites: %s', len(self.enemigosGroup))
+        logging.info("Contenido grupo Sprites: %s", len(self.enemigosGroup))
         logging.info("Cagados todos los enemigos")
 
         self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -360,9 +387,8 @@ class App:
 
     def on_init(self):
         pygame.init()
-        self.pantalla = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
 
-        pygame.display.set_caption('Laberinto SquidCastle 2024, Aurora.')
+        pygame.display.set_caption('Laberinto SquidCastle 2025, DAurora.')
         logging.info("Inicio del juego.")
 
         logging.info("Pintamos el menú del juego.")
@@ -440,23 +466,23 @@ class App:
                     print("Valor desconocido !")
 
         # Colisiones entre enemigo y escenario.
-        # colision = pygame.sprite.spritecollide(self.maze.MazeSprite, self.enemigosSprites, False, False)
-        # if colision:
-        #     logging.info('COLISION DETECTADA')
-        #     self.enemigo.image = pygame.image.load("principal/explosion.png")
-        #     self.enemigo.velocidad_y += 20
+        colision = pygame.sprite.spritecollide(self.player, self.maze.MazeParedes, False)
+        if colision:
+            logging.info('COLISION DETECTADA')
+            print('COLISION DETECTADA')
+            # Aquí podrías manejar la colisión (por ejemplo, detener al jugador)
         # else:
-        #     self.enemigo.kill()
+        #     self.enemigo.kill()  # No elimines al enemigo si no hay colisión
         #pygame.sprite.groupcollide(self.maze.MazeSprite, self.JefeEnemigo, False, False)
         pass
 
     def on_render(self):
-        self.pantalla.fill((0, 0, 0))
-
         if self.pause == False:
+            self.pantalla.fill((0, 0, 0))
             #Defino el laberinto
             logging.debug("Pintamos laberinto.")
             self.maze.draw(self.pantalla, self.floor_surf, self.wall_surf)
+
 
             # Aquí busco lugar suelo para Jugador
             # Llamada a la IA
@@ -496,7 +522,13 @@ class App:
 
             # Pintar disparos de Jefe Enemigo
             if (self.JefeEnemigo.flagDisparo == True):
-                self.pantalla.blit(self.self.JefeEnemigo.bala.image, (self.JefeEnemigo.bala.x, self.JefeEnemigo.bala.y))
+                self.pantalla.blit(self.JefeEnemigo.bala.image, (self.JefeEnemigo.bala.x, self.JefeEnemigo.bala.y))
+
+        fps = int(self.clock.get_fps())
+        font = pygame.font.SysFont('Arial', 20)
+        fps_text = font.render(f"FPS: {fps}", True, (255, 255, 0))  # Amarillo
+        logging.debug("FPS de pintado : %i", fps)
+        self.pantalla.blit(fps_text, (10, 10))
 
         pygame.display.flip() # Aquí es donde ploteamos todo.
 
@@ -504,7 +536,7 @@ class App:
         pygame.quit()
 
     def on_execute(self):
-        # clock.tick(60)
+        self.clock.tick(60)
 
         print("Dentro de on_execute.")
         pygame.init()
@@ -578,6 +610,7 @@ class App:
 
             self.on_loop()
             self.on_render()
+            self.clock.tick(FPS)  # <--- Aquí, después de renderizar
 
         self.on_cleanup()
         pygame.quit()
