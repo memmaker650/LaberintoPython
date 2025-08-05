@@ -52,7 +52,7 @@ carpeta_imagenes = os.path.join(IMG_DIR, "imagenes")
 # 	imagenes_t4 = pygame.transform.scale(imagenes, (256, 256))
 # 	animacion_explosion1['t4'].append(imagenes_t4)
 
-IMG_DIR = "../Resources"
+IMG_DIR = "./Resources"
 # Especificación de la paleta de colores
 BLANCO = (255, 255, 255)
 NEGRO = (0, 0, 0)
@@ -298,7 +298,7 @@ class Enemigo(pygame.sprite.Sprite):
         self.imageEnemigo = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
         self.image = pygame.transform.scale(self.image, (40, 40))
         self.rect = self.imageEnemigo.get_rect()
-        self.visionImage = load_image("linterna.png", "assets", alpha=True)
+        self.visionImage = load_image("linterna.png", "Code/assets", alpha=True)
         self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
         self.visionImage.set_alpha(128)
 
