@@ -162,6 +162,7 @@ class Player(pygame.sprite.Sprite):
     rect = None
     bala = Disparos
     balas = pygame.sprite.Group()
+    MazeParedes = pygame.sprite.Group
 
     def __init__(self):
         logging.info("Init Player")
@@ -223,6 +224,16 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         logging.debug('Dentro Update JUGADOR.')
+        # Actualizar el rectángulo de colisión con la posición actual
+        self.rect.x = self.x
+        self.rect.y = self.y
+        
+        vieja_pos = self.rect.topleft
+
+        # Si hay colisión, volvemos a la posición anterior
+        #if pygame.sprite.spritecollideany(self, self.MazeParedes):
+        #    logging.debug('Colisión JUGADOR con LABERINTO.')
+        #    self.rect.topleft = vieja_pos
 
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)
@@ -268,6 +279,7 @@ class Enemigo(pygame.sprite.Sprite):
 
     vida = int
     flagDisparo = bool
+    isJefeEnemigo = bool
 
     orientacion = str
     visionImage = None
@@ -280,6 +292,7 @@ class Enemigo(pygame.sprite.Sprite):
     rect = None
     bala = Disparos
     balas = pygame.sprite.Group
+    MazeParedes = pygame.sprite.Group
     balasArray = []
     kia = None
 
@@ -292,20 +305,24 @@ class Enemigo(pygame.sprite.Sprite):
         self.visionPos = Vector2 (0, 0)
         self.angle = 0
         self.flagDisparo = False
-        self.imageJefeEnemigo = load_image("Chainsaw.png", IMG_DIR, alpha=True)
-        self.image = pygame.transform.scale(self.imageJefeEnemigo, (40, 40))
-        self.rect = self.imageJefeEnemigo.get_rect()
-        self.imageEnemigo = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
-        self.image = pygame.transform.scale(self.image, (40, 40))
+        self.imageEnemigo = load_image("Chainsaw.png", IMG_DIR, alpha=True)
+        self.imageEnemigo = pygame.transform.scale(self.imageEnemigo, (40, 40))
         self.rect = self.imageEnemigo.get_rect()
+        self.imageJefeEnemigo = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
+        self.imageJefeEnemigo = pygame.transform.scale(self.imageJefeEnemigo, (40, 40))
+        self.rect = self.imageJefeEnemigo.get_rect()
         self.visionImage = load_image("linterna.png", "Code/assets", alpha=True)
         self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
         self.visionImage.set_alpha(128)
+        self.isJefeEnemigo = False
 
     def inicio(self, vx, vy):
         logging.info("Inicio Enemigos")
         self.x = random.randint(0, vx)
         self.y = random.randint(0, vy)
+
+    def definirJefeEnemigo(self):
+        self.isJefeEnemigo = True
 
     def inicioCelda(self, cell):
         self.casilla = cell
@@ -339,17 +356,28 @@ class Enemigo(pygame.sprite.Sprite):
         self.offset = Vector2(200, 0)
         self.angle = -45
 
-    # TODO Crear el método UPDATE para gestionar todos los movimientos.
+
     def visionRotar(self):
-        logging.info("Pintamos cono de visión")
+        logging.info("visión Rotar")
         self.angle = self.angle - 2
         # Add the rotated offset vector to the pos vector to get the rect.center.
         self.rect.center = self.visionPos.rotate(self.angle)
 
     def update(self):
         logging.debug('Dentro Update ENEMIGOS.')
+        # Actualizar el rectángulo de colisión con la posición actual
+        self.rect.x = self.x
+        self.rect.y = self.y
+        
         self.visionRotar()
         self.moveDown()
+        vieja_pos = self.rect.topleft
+
+        # Si hay colisión, volvemos a la posición anterior
+        #if pygame.sprite.spritecollideany(self, self.MazeParedes):
+        #    logging.debug('Colisión ENEmigo con LABERINTO.')
+        #    self.rect.topleft = vieja_pos
+        
 
     def logMovimiento(self, direccion, finalx, finaly):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)

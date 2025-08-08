@@ -135,8 +135,8 @@ class Maze:
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 2, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ]
         self.mazeDataExtra = [
@@ -176,7 +176,7 @@ class Maze:
         bx = 0
         by = 0
         for i in range(0, self.M * self.N):
-            if self.maze[bx + (by * self.M)] > 1:
+            if self.maze[bx + (by * self.M)] == 1:
                 rectSuelo = pygame.sprite.Sprite()
                 rectSuelo.image = pygame.Surface([CASILLA_PIXEL, CASILLA_PIXEL])
                 rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, CASILLA_PIXEL, CASILLA_PIXEL)
@@ -282,9 +282,9 @@ class App:
     flagInit = True
     numEnemigos = 5
     enemigosArray = []
-    MazeSprite = pygame.sprite.Group
-    enemigosGroup = pygame.sprite.Group()
-    LieutenantGroup = pygame.sprite.Group()
+    PlayerGroup = pygame.sprite.Group()
+    EnemigosGroup = pygame.sprite.Group() #Incluirá también al jefe Enemigo.
+    paredesGroup = pygame.sprite.Group()
     visionEnemigos = bool
 
     salir = bool = False
@@ -305,6 +305,7 @@ class App:
         self.pause = False
         self._jugador = None
         self._enemigo = None
+        self._JefeEnemigo = None
         self.floor_surf = None
         self.wall_surf = None
         self.player = player.Player()  # damos los valores por defecto.
@@ -320,17 +321,26 @@ class App:
             self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
             self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
             self.enemigosArray.append(self.enemigo)
-            self.enemigosGroup.add(self.enemigo)
+            self.EnemigosGroup.add(self.enemigo)
 
-        logging.info("Contenido grupo Sprites: %s", len(self.enemigosGroup))
+        logging.info("Contenido grupo Sprites: %s", len(self.EnemigosGroup))
         logging.info("Cagados todos los enemigos")
 
         self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
         self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
         # Cargamos Jefe enemigo
+        
 
         self.maze = Maze()
+        self.paredesGroup = self.maze.MazeParedes
         logging.info("Cargado el escenario")
+        logging.info(f"Número de paredes creadas: {len(self.maze.MazeParedes)}")
+        
+        # Debug: imprimir algunas posiciones de paredes
+        paredes_list = list(self.maze.MazeParedes)
+        if paredes_list:
+            logging.info(f"Primera pared en posición: {paredes_list[0].rect}")
+            logging.info(f"Última pared en posición: {paredes_list[-1].rect}")
 
     def verInfoEnemigos(self):
         enemy = player.Enemigo()
@@ -450,44 +460,62 @@ class App:
         if self.tocaMenu:
             self.menu()
 
+        logging.info("Asignar los Sprite Groups")
+        
+
         logging.info("Empezamos un juego nuevo.")
         self._running = True
         self.player.pintarJugador()
         self._jugador = self.player.image
         self.rect = self._jugador.get_rect()  # rectángulo Sprite Player
+        self.PlayerGroup.add(self.player)
         logging.info("Pintado Jugador")
 
         self.enemigo.pintarEnemigo()
-        self._enemigo = self.enemigo.image
+        self._enemigo = self.enemigo.imageEnemigo
+        self._JefeEnemigo = self.enemigo.imageJefeEnemigo
         print(len(self.enemigosArray))
+
         i = 0
         for i in range(0, self.numEnemigos):
             enemy = self.enemigosArray[i]
+            self.EnemigosGroup.add(enemy)
             enemy.pintarEnemigo()
-            self.rect = enemy.image.get_rect()  # rectángulo Sprite Player
+            self.rect = enemy.imageEnemigo.get_rect()  # rectángulo Sprite Player
 
         logging.info('Plot Enemigo')
 
         logging.info('Pintar Jefe Enemigo')
+        self.EnemigosGroup.add(self.JefeEnemigo)
         self.JefeEnemigo.pintarJefeEnemigo()
-        self.rect = self.JefeEnemigo.image.get_rect()  # rectángulo Sprite Jefe Enemigo
-        self.JefeEnemigo.vision(self.JefeEnemigo.image.get_rect().center)
+        self.rect = self.JefeEnemigo.imageJefeEnemigo.get_rect()  # rectángulo Sprite Jefe Enemigo
+        self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
 
         self.floor_surf = pygame.image.load("./Resources/floor.png").convert()
-        self.wall_surf = pygame.image.load("./Resources/WallBricks.png").convert()
+        self.wall_surf = pygame.image.load("./Resources/Wall.png").convert()
+        # self.wall_surf = pygame.image.load("./Resources/WallBricks.png").convert()
 
-    def on_event(self, event):
-        if event.type == QUIT:
-            logging.debug("ESCAPE pulsado.")
-            self._running = False
-            self.salir = True
-            pygame.quit()
+    def verificar_colision(self, sprite, grupo_paredes):
+        # Verificar si hay colisión
+        colisiones = pygame.sprite.spritecollide(sprite, grupo_paredes, False)
+        return len(colisiones) > 0
 
-        if event.type == pygame.QUIT:
-            logging.debug("X ventana pulsada !!")
-            self._running = False
-            self.salir = True
-            pygame.quit()
+    def mover_sin_colision(self, sprite, nueva_x, nueva_y, grupo_paredes):
+        # Guardar posición original
+        pos_original_x = sprite.rect.x
+        pos_original_y = sprite.rect.y
+        
+        # Intentar mover
+        sprite.rect.x = nueva_x
+        sprite.rect.y = nueva_y
+        
+        # Verificar colisión
+        if self.verificar_colision(sprite, grupo_paredes):
+            # Si hay colisión, revertir movimiento
+            sprite.rect.x = pos_original_x
+            sprite.rect.y = pos_original_y
+            return False  # Movimiento bloqueado
+        return True  # Movimiento exitoso
 
     def on_loop(self):
         self.JefeEnemigo.visionRotar()
@@ -508,28 +536,49 @@ class App:
             self.JefeEnemigo.bala.update()
 
         if self.movimiento == True:
+            pos_actual_x = self.player.x
+            pos_actual_y = self.player.y
+            
             match self.player.orientacion:
-                case 1:
-                    self.player.moveLeft()
-                case 2:
-                    self.player.moveUp()
-                case 3:
-                    self.player.moveRight()
-                case 4:
-                    self.player.moveDown()
+                case 1:  # Left
+                    nueva_x = pos_actual_x - self.player.speed
+                    if self.mover_sin_colision(self.player, nueva_x, pos_actual_y, self.maze.MazeParedes):
+                        self.player.moveLeft()
+                case 2:  # Up
+                    nueva_y = pos_actual_y - self.player.speed
+                    if self.mover_sin_colision(self.player, pos_actual_x, nueva_y, self.maze.MazeParedes):
+                        self.player.moveUp()
+                case 3:  # Right
+                    nueva_x = pos_actual_x + self.player.speed
+                    if self.mover_sin_colision(self.player, nueva_x, pos_actual_y, self.maze.MazeParedes):
+                        self.player.moveRight()
+                case 4:  # Down
+                    nueva_y = pos_actual_y + self.player.speed
+                    if self.mover_sin_colision(self.player, pos_actual_x, nueva_y, self.maze.MazeParedes):
+                        self.player.moveDown()
                 case _:
                     print("Valor desconocido !")
 
         # Colisiones entre enemigo y escenario.
-        colision = pygame.sprite.spritecollide(self.player, self.maze.MazeParedes, False)
-        if colision:
-            logging.info('COLISION DETECTADA')
-            print('COLISION DETECTADA')
-            # Aquí podrías manejar la colisión (por ejemplo, detener al jugador)
-        # else:
-        #     self.enemigo.kill()  # No elimines al enemigo si no hay colisión
-        #pygame.sprite.groupcollide(self.maze.MazeSprite, self.JefeEnemigo, False, False)
-        pass
+        logging.info('VERIFICACIÓN COLISIONES.')
+        
+        # Debug: verificar posiciones
+        logging.info(f"Player en posición: ({self.player.x}, {self.player.y}) - Rect: {self.player.rect}")
+        
+        # Colisión del jugador con paredes
+        colision_player = pygame.sprite.spritecollide(self.player, self.maze.MazeParedes, False)
+        if colision_player:
+            logging.info('COLISION PLAYER DETECTADA')
+            print('COLISION PLAYER DETECTADA')
+
+        # Colisión de enemigos con paredes
+        colision_enemigos = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazeParedes, False, False)
+        if colision_enemigos:
+            logging.info('COLISION Enemigo DETECTADA')
+            print('COLISION Enemigo DETECTADA')
+            # Opcional: procesar cada enemigo que colisionó
+            for enemigo, paredes in colision_enemigos.items():
+                logging.info(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(paredes)} paredes')
 
     def on_render(self):
         if self.pause == False:
@@ -558,22 +607,25 @@ class App:
             i = 0
             for i in range(0, self.numEnemigos):
                 self.enemigo = self.enemigosArray[i]
-                self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
+                if(self.enemigo.isJefeEnemigo):
+                    self.pantalla.blit(self._JefeEnemigo, (self.enemigo.x, self.enemigo.y))
+                else:
+                    self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
 
                 if (self.enemigo.flagDisparo == True):
                     self.pantalla.blit(self.enemigo.bala.image, (self.enemigo.bala.x, self.enemigo.bala.y))
 
             # Jefe Enemigo
             logging.debug('Pintamos el JEFE enemigo.')
-            self.pantalla.blit(self.JefeEnemigo.image, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+            self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
 
             if (self.visionEnemigos == True):
                 self.pantalla.blit(self.JefeEnemigo.visionImage, (self.JefeEnemigo.x, self.JefeEnemigo.y - 40))
 
             # Pintar disparos del Player
             if(self.player.flagDisparo == True):
-                # self.pantalla.blit(self.player.bala.image, (self.player.bala.x, self.player.bala.y))
-                 self.player.balas.draw(self.pantalla)
+                self.pantalla.blit(self.player.bala.image, (self.player.bala.x, self.player.bala.y))
+                # self.player.balas.draw(self.pantalla)
 
             # Pintar disparos de Jefe Enemigo
             if (self.JefeEnemigo.flagDisparo == True):
@@ -695,7 +747,7 @@ if __name__ == "__main__":
 
     logging.info('Fin acciones Base de Datos')
 
-    notification.notify(title='Inicio', message='Inicio Juego', app_name='OctoPussy', app_icon='/assets/player.png')
+    notification.notify(title="Inicio", message="Inicio Juego", app_name="OctoPussy", app_icon="/assets/player.png")
 
     # App principal
     theApp = App()
