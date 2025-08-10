@@ -330,7 +330,6 @@ class App:
         self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
         # Cargamos Jefe enemigo
         
-
         self.maze = Maze()
         self.paredesGroup = self.maze.MazeParedes
         logging.info("Cargado el escenario")
@@ -482,6 +481,8 @@ class App:
             self.EnemigosGroup.add(enemy)
             enemy.pintarEnemigo()
             self.rect = enemy.imageEnemigo.get_rect()  # rectángulo Sprite Player
+            # Asignar grupo de paredes al enemigo para que pueda consultarlo
+            enemy.MazeParedes = self.maze.MazeParedes
 
         logging.info('Plot Enemigo')
 
@@ -490,6 +491,8 @@ class App:
         self.JefeEnemigo.pintarJefeEnemigo()
         self.rect = self.JefeEnemigo.imageJefeEnemigo.get_rect()  # rectángulo Sprite Jefe Enemigo
         self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
+        # Asignar grupo de paredes al Jefe Enemigo
+        self.JefeEnemigo.MazeParedes = self.maze.MazeParedes
 
         self.floor_surf = pygame.image.load("./Resources/floor.png").convert()
         self.wall_surf = pygame.image.load("./Resources/Wall.png").convert()
@@ -579,6 +582,11 @@ class App:
             # Opcional: procesar cada enemigo que colisionó
             for enemigo, paredes in colision_enemigos.items():
                 logging.info(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(paredes)} paredes')
+                # Revertir y cambiar dirección solo del enemigo que colisiona
+                if hasattr(enemigo, 'revertir_movimiento'):
+                    enemigo.revertir_movimiento()
+                if hasattr(enemigo, 'cambiar_direccion'):
+                    enemigo.cambiar_direccion()
 
     def on_render(self):
         if self.pause == False:

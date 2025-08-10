@@ -365,19 +365,35 @@ class Enemigo(pygame.sprite.Sprite):
 
     def update(self):
         logging.debug('Dentro Update ENEMIGOS.')
+        # Guardar posición previa
+        self.prev_x = getattr(self, 'prev_x', self.x)
+        self.prev_y = getattr(self, 'prev_y', self.y)
+
         # Actualizar el rectángulo de colisión con la posición actual
         self.rect.x = self.x
         self.rect.y = self.y
         
         self.visionRotar()
         self.moveDown()
-        vieja_pos = self.rect.topleft
-
-        # Si hay colisión, volvemos a la posición anterior
-        #if pygame.sprite.spritecollideany(self, self.MazeParedes):
-        #    logging.debug('Colisión ENEmigo con LABERINTO.')
-        #    self.rect.topleft = vieja_pos
         
+        # Actualizar rect tras mover
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def revertir_movimiento(self):
+        # Revertir a la posición previa tras colisión
+        if hasattr(self, 'prev_x') and hasattr(self, 'prev_y'):
+            self.x = self.prev_x
+            self.y = self.prev_y
+            self.rect.x = self.x
+            self.rect.y = self.y
+
+    def cambiar_direccion(self):
+        # Cambio simple de dirección: invertir velocidad vertical
+        self.speedV = -self.speedV if self.speedV != 0 else -1
+        # Pequeño desplazamiento para evitar quedarse pegado
+        self.y += self.speedV
+        self.rect.y = self.y
 
     def logMovimiento(self, direccion, finalx, finaly):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
