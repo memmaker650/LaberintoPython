@@ -79,6 +79,26 @@ def load_image(nombre, dir_imagen, alpha=False):
         image = image.convert()
     return image
 
+def detectar_colision(rect1, rect2):
+    if not rect1.colliderect(rect2):
+        return None
+    
+    dx_izq = abs(rect1.right - rect2.left)
+    dx_der = abs(rect1.left - rect2.right)
+    dy_arr = abs(rect1.bottom - rect2.top)
+    dy_aba = abs(rect1.top - rect2.bottom)
+    
+    min_col = min(dx_izq, dx_der, dy_arr, dy_aba)
+    
+    if min_col == dx_izq:
+        return "izquierda"
+    elif min_col == dx_der:
+        return "derecha"
+    elif min_col == dy_arr:
+        return "arriba"
+    elif min_col == dy_aba:
+        return "abajo"
+
 class barraDeVida(pygame.sprite.Sprite):
     def __init__(self, x, y, valor, screen):
         pygame.draw.rect(screen, (255, 0, 0), (self.hitbox[0], self.hitbox[1] - 20, 50, 10))
@@ -156,8 +176,8 @@ class Player(pygame.sprite.Sprite):
 
     flagDisparo = False
     orientacion = 1  # 1 arriba, 2 derecha, 3 abajo y 4 izquierda.
-    speedV = 1
-    speedH = 1
+    speedV = 2
+    speedH = 2
     image = None
     rect = None
     bala = Disparos
@@ -169,7 +189,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.flagDisparo = False
         self.image = load_image("player_modif.png", IMG_DIR, alpha=True)
-        self.image = pygame.transform.scale(self.image, (25, 25))
+        self.image = pygame.transform.scale(self.image, (22, 22))
         self.rect = self.image.get_rect()
 
     def stop(self):
@@ -179,9 +199,13 @@ class Player(pygame.sprite.Sprite):
     def andar(self):
         if(self.speedH < 6):
             self.speedH = self.speedH + 1
+        else:
+            self.speedH = 3
 
         if (self.speedV < 6):
             self.speedV = self.speedV + 1
+        else:
+            self.speedH = 3
 
     def moveRight(self):
         self.andar()
@@ -228,12 +252,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
         
-        vieja_pos = self.rect.topleft
-
-        # Si hay colisión, volvemos a la posición anterior
-        #if pygame.sprite.spritecollideany(self, self.MazeParedes):
-        #    logging.debug('Colisión JUGADOR con LABERINTO.')
-        #    self.rect.topleft = vieja_pos
+        logging.info("Player INFO: Velocidad V %s y VeloH %s", self.speedV, self.speedH)
 
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)
@@ -306,15 +325,18 @@ class Enemigo(pygame.sprite.Sprite):
         self.angle = 0
         self.flagDisparo = False
         self.imageEnemigo = load_image("Chainsaw.png", IMG_DIR, alpha=True)
-        self.imageEnemigo = pygame.transform.scale(self.imageEnemigo, (40, 40))
+        self.imageEnemigo = pygame.transform.scale(self.imageEnemigo, (22, 22))
         self.rect = self.imageEnemigo.get_rect()
         self.imageJefeEnemigo = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
-        self.imageJefeEnemigo = pygame.transform.scale(self.imageJefeEnemigo, (40, 40))
+        self.imageJefeEnemigo = pygame.transform.scale(self.imageJefeEnemigo, (22, 22))
         self.rect = self.imageJefeEnemigo.get_rect()
         self.visionImage = load_image("linterna.png", "Code/assets", alpha=True)
         self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
         self.visionImage.set_alpha(128)
         self.isJefeEnemigo = False
+        self.visionPos = Vector2([Enemigo.x, Enemigo.y])
+        self.offset = Vector2(200, 0)
+        self.angle = -45
 
     def inicio(self, vx, vy):
         logging.info("Inicio Enemigos")
@@ -352,16 +374,12 @@ class Enemigo(pygame.sprite.Sprite):
     def vision(self, pos):
         logging.info("Pintamos cono de visión")
         self.rect = self.visionImage.get_rect(center=pos)
-        self.visionPos = Vector2(pos)
-        self.offset = Vector2(200, 0)
-        self.angle = -45
-
-
+        
     def visionRotar(self):
         logging.info("visión Rotar")
         self.angle = self.angle - 2
         # Add the rotated offset vector to the pos vector to get the rect.center.
-        self.rect.center = self.visionPos.rotate(self.angle)
+        # self.visionImage = pygame.transform.rotate(self.visionImage, self.angle)
 
     def update(self):
         logging.debug('Dentro Update ENEMIGOS.')
@@ -405,7 +423,6 @@ class Enemigo(pygame.sprite.Sprite):
     def pintarJefeEnemigo(self):
         logging.info("Pintamos Enemigo")
         
-
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)
 
@@ -416,5 +433,3 @@ class Enemigo(pygame.sprite.Sprite):
         self.bala = Disparos(self.rect.centerx, self.rect.top)
         self.balas.add(self.bala)
         self.flagDisparo = True
-
-

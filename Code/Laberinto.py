@@ -7,6 +7,8 @@ import random
 import os
 import sys
 
+import json
+
 
 import pygame
 from pygame.locals import *
@@ -100,7 +102,7 @@ class Maze:
     M = NUM_CASILLAS
     N = NUM_CASILLAS
     MazeParedes = pygame.sprite.Group()
-    MazeExtra = []
+    MazeExtra = pygame.sprite.Group()
     imageHuesos = pygame.image.load("./Resources/Bone.png")
     imagePilaHuesos = pygame.image.load("./Resources/PileOfBones.png")
     imageFinNivel = pygame.image.load("./Resources/banderaPirataRoja2.png")
@@ -135,8 +137,8 @@ class Maze:
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0,
-            0, 1, 1, 1, 1, 1, 2, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ]
         self.mazeDataExtra = [
@@ -181,20 +183,7 @@ class Maze:
                 rectSuelo.image = pygame.Surface([CASILLA_PIXEL, CASILLA_PIXEL])
                 rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, CASILLA_PIXEL, CASILLA_PIXEL)
                 self.MazeParedes.add(rectSuelo)
-                self.MazeExtra.append(self.maze[bx + (by * self.M)])
                 
-            bx = bx + 1
-            if bx > self.M - 1:
-                bx = 0
-                by = by + 1
-
-    def _crearExtra(self):
-        bx = 0
-        by = 0
-        for i in range(0, self.M * self.N):
-            if self.mazeDataExtra[bx + (by * self.M)] > 1:
-                self.MazeExtra.append(self.mazeDataExtra[bx + (by * self.M)], (bx, by))
-
             bx = bx + 1
             if bx > self.M - 1:
                 bx = 0
@@ -230,12 +219,21 @@ class Maze:
 
             if self.mazeDataExtra[bx + (by * self.M)] == 2:
                 display_surf.blit(self.imageHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                huesos = pygame.sprite.Sprite()
+                huesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
+                self.MazeExtra.add(huesos) 
 
             if self.mazeDataExtra[bx + (by * self.M)] == 3:
                 display_surf.blit(self.imagePilaHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                Pilahuesos = pygame.sprite.Sprite()
+                Pilahuesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
+                self.MazeExtra.add(Pilahuesos) 
 
             if self.mazeDataExtra[bx + (by * self.M)] == 4:
                 display_surf.blit(self.imageFinNivel, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                Bandera = pygame.sprite.Sprite()
+                Bandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
+                self.MazeExtra.add(Bandera) 
 
             bx = bx + 1
             if bx > self.M - 1:
@@ -255,7 +253,7 @@ class Maze:
     @staticmethod
     def calcularPixelPorCasilla(Casilla):
         posicion.x = (Casilla % 10) * CASILLA_PIXEL
-        posicion.y = (Casilla / 10) * CASILLA_PIXEL
+        posicion.y = (Casilla / 10) * NUM_CASILLAS
         logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
 
         return posicion
@@ -286,6 +284,7 @@ class App:
     EnemigosGroup = pygame.sprite.Group() #Incluirá también al jefe Enemigo.
     paredesGroup = pygame.sprite.Group()
     visionEnemigos = bool
+    pintaRectángulos = bool = True
 
     salir = bool = False
 
@@ -328,6 +327,11 @@ class App:
 
         self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
         self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+        pos = posicion(0, 0)
+        pos = Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
+        self.JefeEnemigo.x = pos.x
+        self.JefeEnemigo.y = pos.y
+        logging.debug('POsición Jefe ENEMY --> x: %i e y: %i', self.JefeEnemigo.x, self.JefeEnemigo.y)
         # Cargamos Jefe enemigo
         
         self.maze = Maze()
@@ -404,7 +408,7 @@ class App:
                     if mates.dentroBoton(mouse, int(width / 2), int(height / 2), 230, 40):
                         print("Opciones del juego, pulsada.")
                         self.tocaMenu = False
-                        self.on_execute()
+                        self.menuOpciones()
 
                     # Botón 4 - Salir del juego
                     if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 190, 230, 40):
@@ -449,10 +453,115 @@ class App:
                 # updates the frames of the game
                 pygame.display.update()
 
+    def menuOpciones(self):
+        color = (255, 255, 255)
+
+        print("Dentro de Opciones!!")
+
+        # Color for the buttons
+        # light shade of the button
+        color_light = (170, 170, 170)
+        # dark shade of the button
+        color_dark = (100, 100, 100)
+        color_darkorange = (255, 140, 0)
+        color_otherorange = (216,75, 32)
+        color_darkgreen = (0, 64, 0)
+
+        # stores the width of the
+        # screen into a variable
+        width = self.pantalla.get_width()
+
+        # stores the height of the
+        # screen into a variable
+        height = self.pantalla.get_height()
+
+        # defining a font
+        smallfont = pygame.font.SysFont('Corbel', 35)
+        Titlefont = pygame.font.SysFont('Impact', 150)
+
+        # rendering a text written in Corbel font.
+        textTitle = Titlefont.render('Octopussy', True, color_otherorange)
+        text1 = smallfont.render('Seleccionar Nivel', True, color)
+        text2 = smallfont.render('Estadísticas', True, color)
+        text3 = smallfont.render('Inventario Juego', True, color)
+        text4 = smallfont.render('Volver', True, color)
+
+        while True:
+            for ev in pygame.event.get():
+
+                if ev.type == pygame.QUIT:
+                    self.salir = True
+                    pygame.quit()
+
+                # Chequeamos click del ratón
+                if ev.type == pygame.MOUSEBUTTONDOWN:
+
+                    # Chequeamos si click en algún botón
+                    # Botón 1 - Seleccion Nivel
+                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 50, 230, 40):
+                        logging.info("Pulsado Botón Selección de Nivel.")
+                        self.tocaMenu = False
+                        self.seleccionNivel()
+
+                    # Botón 4 - Estadísticas Juego
+                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) + 100, 230, 40):
+                        logging.info("Pulsado Botón : Estadísticas de Juego del Jugador.")
+                        self.tocaMenu = False
+                        self.seleccionNivel()
+
+                    # Botón 3 - Inventario Juego
+                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2), 230, 40):
+                        logging.info("Pulsado entrar al Inventario del Juego")
+                        self.tocaMenu = False
+                        self.inventarioJuego()
+
+                    # Botón 4 - Volver al menú principal del Juego
+                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 190, 230, 40):
+                        logging.info("Pulsado Botón Voler al Menú Principal")
+                        self.tocaMenu = False
+                        self.menu()
+
+            if self.salir == False:
+                # fills the screen with a color
+                self.pantalla.fill((60, 25, 60))
+
+                # stores the (x,y) coordinates into
+                # the variable as a tuple
+                mouse = pygame.mouse.get_pos()
+
+                # Compruebo si el ratón está dentro de botón.
+                # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
+                if mates.dentroBoton(mouse, width / 2, (height / 2) - 60, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [width / 2, (height / 2) - 60, 230, 40])
+                # Botón 2 - Cargar partida
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
+                # Botón 3 - Opciones
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
+                # Botón 4 - Salir del juego
+                elif mates.dentroBoton(mouse, width / 2, (height / 2) +190, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 190, 230, 40])
+                else:
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
+
+                # superimposing the text onto our button
+                self.pantalla.blit(textTitle, ((width / 2) - 400, (height / 2) - 400))
+                self.pantalla.blit(text1, ((width / 2) + 50, (height / 2) - 50))
+                self.pantalla.blit(text2, ((width / 2) + 50, (height / 2)))
+                self.pantalla.blit(text3, ((width / 2) + 50, (height / 2) + 50))
+                self.pantalla.blit(text4, ((width / 2) + 50, (height / 2) + 200))
+
+                # updates the frames of the game
+                pygame.display.update()
+
     def on_init(self):
         pygame.init()
 
-        pygame.display.set_caption('Laberinto SquidCastle 2025, DAurora.')
+        pygame.display.set_caption('Laberinto SquidCastle 2025, Aurora.')
         logging.info("Inicio del juego.")
 
         logging.info("Pintamos el menú del juego.")
@@ -491,34 +600,13 @@ class App:
         self.JefeEnemigo.pintarJefeEnemigo()
         self.rect = self.JefeEnemigo.imageJefeEnemigo.get_rect()  # rectángulo Sprite Jefe Enemigo
         self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
+
         # Asignar grupo de paredes al Jefe Enemigo
         self.JefeEnemigo.MazeParedes = self.maze.MazeParedes
 
         self.floor_surf = pygame.image.load("./Resources/floor.png").convert()
         self.wall_surf = pygame.image.load("./Resources/Wall.png").convert()
         # self.wall_surf = pygame.image.load("./Resources/WallBricks.png").convert()
-
-    def verificar_colision(self, sprite, grupo_paredes):
-        # Verificar si hay colisión
-        colisiones = pygame.sprite.spritecollide(sprite, grupo_paredes, False)
-        return len(colisiones) > 0
-
-    def mover_sin_colision(self, sprite, nueva_x, nueva_y, grupo_paredes):
-        # Guardar posición original
-        pos_original_x = sprite.rect.x
-        pos_original_y = sprite.rect.y
-        
-        # Intentar mover
-        sprite.rect.x = nueva_x
-        sprite.rect.y = nueva_y
-        
-        # Verificar colisión
-        if self.verificar_colision(sprite, grupo_paredes):
-            # Si hay colisión, revertir movimiento
-            sprite.rect.x = pos_original_x
-            sprite.rect.y = pos_original_y
-            return False  # Movimiento bloqueado
-        return True  # Movimiento exitoso
 
     def on_loop(self):
         self.JefeEnemigo.visionRotar()
@@ -538,30 +626,6 @@ class App:
         if self.JefeEnemigo.flagDisparo == True:
             self.JefeEnemigo.bala.update()
 
-        if self.movimiento == True:
-            pos_actual_x = self.player.x
-            pos_actual_y = self.player.y
-            
-            match self.player.orientacion:
-                case 1:  # Left
-                    nueva_x = pos_actual_x - self.player.speed
-                    if self.mover_sin_colision(self.player, nueva_x, pos_actual_y, self.maze.MazeParedes):
-                        self.player.moveLeft()
-                case 2:  # Up
-                    nueva_y = pos_actual_y - self.player.speed
-                    if self.mover_sin_colision(self.player, pos_actual_x, nueva_y, self.maze.MazeParedes):
-                        self.player.moveUp()
-                case 3:  # Right
-                    nueva_x = pos_actual_x + self.player.speed
-                    if self.mover_sin_colision(self.player, nueva_x, pos_actual_y, self.maze.MazeParedes):
-                        self.player.moveRight()
-                case 4:  # Down
-                    nueva_y = pos_actual_y + self.player.speed
-                    if self.mover_sin_colision(self.player, pos_actual_x, nueva_y, self.maze.MazeParedes):
-                        self.player.moveDown()
-                case _:
-                    print("Valor desconocido !")
-
         # Colisiones entre enemigo y escenario.
         logging.info('VERIFICACIÓN COLISIONES.')
         
@@ -577,8 +641,8 @@ class App:
         # Colisión de enemigos con paredes
         colision_enemigos = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazeParedes, False, False)
         if colision_enemigos:
-            logging.info('COLISION Enemigo DETECTADA')
-            print('COLISION Enemigo DETECTADA')
+            logging.info('COLISION Enemigo DETECTADA %s', len(colision_enemigos))
+            print('COLISION Enemigo DETECTADA %s', len(colision_enemigos))
             # Opcional: procesar cada enemigo que colisionó
             for enemigo, paredes in colision_enemigos.items():
                 logging.info(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(paredes)} paredes')
@@ -587,6 +651,15 @@ class App:
                     enemigo.revertir_movimiento()
                 if hasattr(enemigo, 'cambiar_direccion'):
                     enemigo.cambiar_direccion()
+        
+        # Colisión de Extras Escenario con Player
+        colision_PlayerConExtra = pygame.sprite.spritecollide(self.player, self.maze.MazeExtra, True, )
+        if colision_PlayerConExtra:
+            logging.info('Huesos o Bandera Final IMPACTADA')
+            print('Huesos o Bandera Final IMPACTADA')
+            # Opcional: procesar cada enemigo que colisionó
+            for jouer, extra in colision_PlayerConExtra.items():
+                logging.info(f'Player en ({jouer.x}, {jouer.y}) colisionó con {len(extra)} paredes')
 
     def on_render(self):
         if self.pause == False:
@@ -594,7 +667,6 @@ class App:
             #Defino el laberinto
             logging.debug("Pintamos laberinto.")
             self.maze.draw(self.pantalla, self.floor_surf, self.wall_surf)
-
 
             # Aquí busco lugar suelo para Jugador
             # Llamada a la IA
@@ -608,17 +680,21 @@ class App:
                     self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
             else:
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+            
+            if self.pintaRectángulos == True:
+                pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
 
-            # Aquí busco lugar suelo para Enemigo
+            # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
             logging.debug("Pintamos los enemigos.")
-            #self.pantalla.blit(self._enemigo_surf, (self.enemigo.x, self.enemigo.y))
             i = 0
             for i in range(0, self.numEnemigos):
                 self.enemigo = self.enemigosArray[i]
                 if(self.enemigo.isJefeEnemigo):
-                    self.pantalla.blit(self._JefeEnemigo, (self.enemigo.x, self.enemigo.y))
+                    self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
                 else:
                     self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
+                    if self.pintaRectángulos == True:
+                        pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
 
                 if (self.enemigo.flagDisparo == True):
                     self.pantalla.blit(self.enemigo.bala.image, (self.enemigo.bala.x, self.enemigo.bala.y))
@@ -626,19 +702,25 @@ class App:
             # Jefe Enemigo
             logging.debug('Pintamos el JEFE enemigo.')
             self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+            if self.pintaRectángulos == True:
+                pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
 
             if (self.visionEnemigos == True):
+                self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
                 self.pantalla.blit(self.JefeEnemigo.visionImage, (self.JefeEnemigo.x, self.JefeEnemigo.y - 40))
 
             # Pintar disparos del Player
             if(self.player.flagDisparo == True):
+                logging.debug('DISPARO DeL Player.')
                 self.pantalla.blit(self.player.bala.image, (self.player.bala.x, self.player.bala.y))
-                # self.player.balas.draw(self.pantalla)
+                self.player.balas.draw(self.pantalla)
+                self.player.flagDisparo = False
 
             # Pintar disparos de Jefe Enemigo
             if (self.JefeEnemigo.flagDisparo == True):
+                logging.debug('Pintamos Disparo DEL JEFE enemigo.')
                 self.pantalla.blit(self.JefeEnemigo.bala.image, (self.JefeEnemigo.bala.x, self.JefeEnemigo.bala.y))
-
+                
         fps = int(self.clock.get_fps())
         font = pygame.font.SysFont('Arial', 20)
         fps_text = font.render(f"FPS: {fps}", True, (255, 255, 0))  # Amarillo
@@ -691,6 +773,18 @@ class App:
                         logging.info('¡¡¡ BARRA ESPACIADORA !!!')
                         logging.info('¡Disparo jugador!')
                         self.player.disparo()
+                    if event.key == pygame.K_r:
+                        print("Tecla R presionada")
+                        if self.pintaRectángulos == True:
+                           self.pintaRectángulos = False
+                        else:
+                            self.pintaRectángulos = True 
+                    if event.key == pygame.K_v:
+                        logging.info('Tecla V presionada')
+                        if self.visionEnemigos == True:
+                           self.visionEnemigos = False
+                        else:
+                            self.visionEnemigos = True
                     if event.key == pygame.K_p:
                         if self.Pause == False:
                             self.pause = True
@@ -754,6 +848,21 @@ if __name__ == "__main__":
         logging.info('Tablas DB creadas')
 
     logging.info('Fin acciones Base de Datos')
+
+
+    # Parseo de fichero JSON
+    logging.info('Start PARSEO JSON.')
+    try:
+        with open('./Levels/Level_2.json', 'r') as file:
+            data = json.load(file)
+        logging.info("JSON File data =", data)
+    
+    except FileNotFoundError:
+        logging.error("Error: The file 'Level2.json' was not found.")
+
+    except json.JSONDecodeError:
+        logging.error("Error: Failed to decode JSON from the file.")
+
 
     notification.notify(title="Inicio", message="Inicio Juego", app_name="OctoPussy", app_icon="/assets/player.png")
 
