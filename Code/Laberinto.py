@@ -7,14 +7,13 @@ import random
 import os
 import sys
 
-import json
-
-
 import pygame
 from pygame.locals import *
 import sqlite3
 
+import json
 from plyer import notification
+from levels_parser import LevelParser
 
 # -----------
 # Constantes
@@ -428,15 +427,27 @@ class App:
                 # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
                 if mates.dentroBoton(mouse, width / 2, (height / 2) - 60, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [width / 2, (height / 2) - 60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 2 - Cargar partida
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 3 - Opciones
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 4 - Salir del juego
                 elif mates.dentroBoton(mouse, width / 2, (height / 2) +190, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 190, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                 else:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
@@ -521,6 +532,16 @@ class App:
                         self.tocaMenu = False
                         self.menu()
 
+                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 290, 230, 40):
+                        logging.info("Pulsado Botón Voler al Menú Principal")
+                        self.tocaMenu = False
+                        self.menu()
+                    
+                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 400, 230, 40):
+                        logging.info("Pulsado Botón Voler al Menú Principal")
+                        self.tocaMenu = False
+                        self.menu()
+
             if self.salir == False:
                 # fills the screen with a color
                 self.pantalla.fill((60, 25, 60))
@@ -533,15 +554,27 @@ class App:
                 # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
                 if mates.dentroBoton(mouse, width / 2, (height / 2) - 60, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [width / 2, (height / 2) - 60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 2 - Cargar partida
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 3 - Opciones
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 4 - Salir del juego
                 elif mates.dentroBoton(mouse, width / 2, (height / 2) +190, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 190, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                 else:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
@@ -554,6 +587,165 @@ class App:
                 self.pantalla.blit(text2, ((width / 2) + 50, (height / 2)))
                 self.pantalla.blit(text3, ((width / 2) + 50, (height / 2) + 50))
                 self.pantalla.blit(text4, ((width / 2) + 50, (height / 2) + 200))
+
+                # updates the frames of the game
+                pygame.display.update()
+                
+    def seleccionNivel (self):
+        color = (255, 255, 255)
+
+        print("Dentro de Selecciona Nivel!!")
+
+        # Color for the buttons
+        # light shade of the button
+        color_light = (170, 170, 170)
+        # dark shade of the button
+        color_dark = (100, 100, 100)
+        color_darkorange = (255, 140, 0)
+        color_otherorange = (216,75, 32)
+        color_darkgreen = (0, 64, 0)
+
+        # stores the width of the
+        # screen into a variable
+        width = self.pantalla.get_width()
+
+        # stores the height of the
+        # screen into a variable
+        height = self.pantalla.get_height()
+
+        # defining a font
+        smallfont = pygame.font.SysFont('Corbel', 35)
+        Titlefont = pygame.font.SysFont('Impact', 150)
+
+        # rendering a text written in Corbel font.
+        textTitle = Titlefont.render('Octopussy', True, color_otherorange)
+        text1 = smallfont.render('Nivel 1: x1', True, color)
+        text2 = smallfont.render('Nivel 2: y2', True, color)
+        text3 = smallfont.render('Nivel 3: z3', True, color)
+        text4 = smallfont.render('Nivel 4: a4', True, color)
+        text5 = smallfont.render('Nivel 5: B5', True, color)
+        text6 = smallfont.render('Volver', True, color)
+
+        while True:
+            for ev in pygame.event.get():
+
+                if ev.type == pygame.QUIT:
+                    self.salir = True
+                    pygame.quit()
+
+                # Chequeamos click del ratón
+                if ev.type == pygame.MOUSEBUTTONDOWN:
+
+                    # Chequeamos si click en algún botón
+                    # Botón 1 - Nivel 1
+                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 50, 230, 40):
+                        logging.info("Pulsado Botón Selección de Nivel.")
+                        self.tocaMenu = False
+                        self.seleccionNivel()
+
+                    # Botón 2 - Nivel 3
+                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2), 230, 40):
+                        logging.info("Pulsado entrar al Inventario del Juego")
+                        self.tocaMenu = False
+                        self.inventarioJuego()
+
+                    # Botón 3 - Nivel 2
+                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) + 50, 230, 40):
+                        logging.info("Pulsado Botón : Estadísticas de Juego del Jugadr.")
+                        self.tocaMenu = False
+                        self.seleccionNivel()
+
+                    # Botón 4 - Nivel 4
+                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 100, 230, 40):
+                        logging.info("Pulsado Botón Voler al Menú Principal")
+                        self.tocaMenu = False
+                        self.menu()
+
+                    # Botón 5 - Nivel 5
+                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 150, 230, 40):
+                        logging.info("Pulsado Botón Voler al Menú Principal")
+                        self.tocaMenu = False
+                        self.menu()
+                    
+                    # Botón 5 - Volver al menú principal del Juego
+                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 210, 230, 40):
+                        logging.info("Pulsado Botón Voler al Menú Principal")
+                        self.tocaMenu = False
+                        self.menu()
+
+            if self.salir == False:
+                # fills the screen with a color
+                self.pantalla.fill((60, 25, 60))
+
+                # stores the (x,y) coordinates into
+                # the variable as a tuple
+                mouse = pygame.mouse.get_pos()
+
+                # Compruebo si el ratón está dentro de botón.
+                # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
+                if mates.dentroBoton(mouse, width / 2, (height / 2) - 60, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [width / 2, (height / 2) - 60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                # Botón 2 - Cargar partida
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                # Botón 3 - Opciones
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                # Botón 4 - Nivel 
+                elif mates.dentroBoton(mouse, width / 2, (height / 2) +100, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 90, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                # Botón 5 - Nivel
+                elif mates.dentroBoton(mouse, width / 2, (height / 2) +150, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 140, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                # Botón 4 - Salir del juego
+                elif mates.dentroBoton(mouse, width / 2, (height / 2) +210, 230, 40):
+                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 200, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
+                else:
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+
+                # superimposing the text onto our button
+                self.pantalla.blit(textTitle, ((width / 2) - 400, (height / 2) - 400))
+                self.pantalla.blit(text1, ((width / 2) + 50, (height / 2) - 50))
+                self.pantalla.blit(text2, ((width / 2) + 50, (height / 2)))
+                self.pantalla.blit(text3, ((width / 2) + 50, (height / 2) + 50))
+                self.pantalla.blit(text4, ((width / 2) + 50, (height / 2) + 100))
+                self.pantalla.blit(text5, ((width / 2) + 50, (height / 2) + 150))
+                self.pantalla.blit(text6, ((width / 2) + 50, (height / 2) + 210))
 
                 # updates the frames of the game
                 pygame.display.update()
@@ -863,6 +1055,13 @@ if __name__ == "__main__":
     except json.JSONDecodeError:
         logging.error("Error: Failed to decode JSON from the file.")
 
+    try:
+        parser = LevelParser("./Levels")
+        level_data = parser.load_by_name("Level_2.json")
+        logging.info("Level loaded: %s (%dx%d)", os.path.basename(level_data.path), level_data.width, level_data.height)
+    except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+        logging.error("Error cargando nivel JSON: %s", e)
+        level_data = None
 
     notification.notify(title="Inicio", message="Inicio Juego", app_name="OctoPussy", app_icon="/assets/player.png")
 
