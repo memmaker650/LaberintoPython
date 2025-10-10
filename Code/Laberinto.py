@@ -20,7 +20,8 @@ from levels_parser import LevelParser
 # -----------
 
 SCREEN_WIDTH = 864
-SCREEN_HEIGHT = 864
+SCREEN_HEIGHT = 1000
+BIAS = 136
 CASILLA_PIXEL = 32
 NUM_CASILLAS = 27
 IMG_DIR = "Resources"
@@ -180,7 +181,7 @@ class Maze:
             if self.maze[bx + (by * self.M)] == 1:
                 rectSuelo = pygame.sprite.Sprite()
                 rectSuelo.image = pygame.Surface([CASILLA_PIXEL, CASILLA_PIXEL])
-                rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, CASILLA_PIXEL, CASILLA_PIXEL)
+                rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, CASILLA_PIXEL, CASILLA_PIXEL)
                 self.MazeParedes.add(rectSuelo)
                 
             bx = bx + 1
@@ -203,12 +204,12 @@ class Maze:
 
         for i in range(0, self.M * self.N):
             if self.maze[bx + (by * self.M)] == 1:
-                display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 self.rect = image_surf.get_rect()
             else:
-                display_surf.blit(w_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                display_surf.blit(w_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 rectSuelo = pygame.sprite.Sprite()
-                rectSuelo.image = pygame.Surface([bx * CASILLA_PIXEL, by * CASILLA_PIXEL])
+                rectSuelo.image = pygame.Surface([bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS])
                 rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
                 # pygame.draw.rect(display_surf, ROJO, rectSuelo)
                 # textWallMark = xfont.render(str(i), True, (0, 80, 0))
@@ -217,19 +218,19 @@ class Maze:
                 # textWallDebug.add(X)
 
             if self.mazeDataExtra[bx + (by * self.M)] == 2:
-                display_surf.blit(self.imageHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                display_surf.blit(self.imageHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 huesos = pygame.sprite.Sprite()
                 huesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
                 self.MazeExtra.add(huesos) 
 
             if self.mazeDataExtra[bx + (by * self.M)] == 3:
-                display_surf.blit(self.imagePilaHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                display_surf.blit(self.imagePilaHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Pilahuesos = pygame.sprite.Sprite()
                 Pilahuesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
                 self.MazeExtra.add(Pilahuesos) 
 
             if self.mazeDataExtra[bx + (by * self.M)] == 4:
-                display_surf.blit(self.imageFinNivel, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL))
+                display_surf.blit(self.imageFinNivel, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Bandera = pygame.sprite.Sprite()
                 Bandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
                 self.MazeExtra.add(Bandera) 
@@ -362,8 +363,12 @@ class App:
         # dark shade of the button
         color_dark = (100, 100, 100)
         color_darkorange = (255, 140, 0)
-        color_otherorange = (216,75, 32)
         color_darkgreen = (0, 64, 0)
+        color_darkblue = (0, 47, 66)
+        color_overblue = (80, 30, 255)
+        color_otherorange = (216, 75, 32)
+        color_rojobrillante = (255, 35, 1)
+        
 
         # stores the width of the
         # screen into a variable
@@ -387,7 +392,7 @@ class App:
         while True:
             for ev in pygame.event.get():
 
-                if ev.type == pygame.QUIT:
+                if ev.type == pygame.QUIT | ev.type == pygame.K_ESCAPE:
                     self.salir = True
                     pygame.quit()
 
@@ -444,7 +449,7 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 4 - Salir del juego
                 elif mates.dentroBoton(mouse, width / 2, (height / 2) +190, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 190, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_rojobrillante, [int(width / 2), int((height / 2)) + 190, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
@@ -477,6 +482,8 @@ class App:
         color_darkorange = (255, 140, 0)
         color_otherorange = (216,75, 32)
         color_darkgreen = (0, 64, 0)
+        color_darkblue = (0, 47, 66)
+        color_overblue = (80, 30, 255)
 
         # stores the width of the
         # screen into a variable
@@ -556,22 +563,22 @@ class App:
                     pygame.draw.rect(self.pantalla, color_darkorange, [width / 2, (height / 2) - 60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 2 - Cargar partida
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 3 - Opciones
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +190, 230, 40])
                 # Botón 4 - Salir del juego
                 elif mates.dentroBoton(mouse, width / 2, (height / 2) +190, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 190, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_overblue, [int(width / 2), int((height / 2)) + 190, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
@@ -579,7 +586,7 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +190, 230, 40])
 
                 # superimposing the text onto our button
                 self.pantalla.blit(textTitle, ((width / 2) - 400, (height / 2) - 400))
@@ -604,6 +611,9 @@ class App:
         color_darkorange = (255, 140, 0)
         color_otherorange = (216,75, 32)
         color_darkgreen = (0, 64, 0)
+        color_darkblue = (0, 47, 66)
+        color_overblue = (80, 30, 255)
+        
 
         # stores the width of the
         # screen into a variable
@@ -689,7 +699,7 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
                 # Botón 2 - Cargar partida
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
@@ -697,7 +707,7 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
                 # Botón 3 - Opciones
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
@@ -705,7 +715,7 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
                 # Botón 4 - Nivel 
                 elif mates.dentroBoton(mouse, width / 2, (height / 2) +100, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 90, 230, 40])
@@ -713,7 +723,7 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
                 # Botón 5 - Nivel
                 elif mates.dentroBoton(mouse, width / 2, (height / 2) +150, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 140, 230, 40])
@@ -721,10 +731,10 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
-                # Botón 4 - Salir del juego
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
+                # Botón Volver
                 elif mates.dentroBoton(mouse, width / 2, (height / 2) +210, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 200, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_overblue, [int(width / 2), int((height / 2)) + 200, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
@@ -736,7 +746,7 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +200, 230, 40])
+                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
 
                 # superimposing the text onto our button
                 self.pantalla.blit(textTitle, ((width / 2) - 400, (height / 2) - 400))
