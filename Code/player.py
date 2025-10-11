@@ -99,31 +99,6 @@ def detectar_colision(rect1, rect2):
     elif min_col == dy_aba:
         return "abajo"
 
-class barraDeVida(pygame.sprite.Sprite):
-    def __init__(self, x, y, valor, screen):
-        pygame.draw.rect(screen, (255, 0, 0), (self.hitbox[0], self.hitbox[1] - 20, 50, 10))
-        pygame.draw.rect(screen, (0, 128, 0), (self.hitbox[0], self.hitbox[1] - 20, 50 - (5 * (10 - self.valor)), 10))
-
-class panelPuntuacion(pygame.sprite.Sprite):
-    puntos = int
-    reloj_min = int
-    reloj_sec = int
-    arma = int
-    balasContador = int
-
-    def __init__(self, screen):
-        super.__init__()
-        # This should go inside the redrawGameWindow function
-        font = pygame.font.SysFont('comicsans', 30, True)
-        text = font.render("Score: " + str(self.puntos), 1, (0, 0, 0))  # Arguments are: text, anti-aliasing, color
-        screen.blit(text, (390, 10))
-
-        self.puntos = 0
-        self.reloj_min = 10
-        self.reloj_sec = 00
-        self.arma = 1
-        self.balasContador = 0
-
 class Disparos(pygame.sprite.Sprite):
     x = int
     y = int

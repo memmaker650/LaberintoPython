@@ -1,5 +1,6 @@
 import mates
 import player
+import infoPantalla
 
 import logging
 import statistics
@@ -285,6 +286,12 @@ class App:
     paredesGroup = pygame.sprite.Group()
     visionEnemigos = bool
     pintaRectángulos = bool = True
+    # Valores Cabecera
+    HUD = infoPantalla.infoArmasMunicion()
+    HeadNivel = infoPantalla.infoNivel()
+    HeadBarraDeVida = infoPantalla.barraDeVida()
+    HeadReloj = infoPantalla.relojPantalla()
+    HeadPuntuacion = infoPantalla.panelPuntuacion()
 
     salir = bool = False
 
@@ -770,6 +777,8 @@ class App:
         if self.tocaMenu:
             self.menu()
 
+        logging.info("Crear clases del HUD")
+
         logging.info("Asignar los Sprite Groups")
         
 
@@ -837,8 +846,11 @@ class App:
         # Colisión del jugador con paredes
         colision_player = pygame.sprite.spritecollide(self.player, self.maze.MazeParedes, False)
         if colision_player:
-            logging.info('COLISION PLAYER DETECTADA')
-            print('COLISION PLAYER DETECTADA')
+            logging.info(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
+            print(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
+            for cl in colision_player:
+                logging.info(f'PLAYER colisionó con paRED')
+                print(f'PLAYER colisionó con paRED')
 
         # Colisión de enemigos con paredes
         colision_enemigos = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazeParedes, False, False)
@@ -922,12 +934,40 @@ class App:
             if (self.JefeEnemigo.flagDisparo == True):
                 logging.debug('Pintamos Disparo DEL JEFE enemigo.')
                 self.pantalla.blit(self.JefeEnemigo.bala.image, (self.JefeEnemigo.bala.x, self.JefeEnemigo.bala.y))
-                
+
+        # Actualizo valores del HUB.
+        self.HeadBarraDeVida.crearBarraDeVida()
+        self.HeadNivel.conversionTexto()
+        self.HeadReloj.conversionTexto()
+        self.HeadPuntuacion.conversionTexto()
+
+        # Pinto los valores del HUB o cabecera de valores.
+        logging.debug("Pintando la Cabecera de Valores")
+        # Puntuación
+        font = pygame.font.SysFont('Arial', 32)
+        puntos_text = font.render(f"Puntos: {self.HeadPuntuacion.textoPuntos}", True, (255, 255, 0))  # Amarillo
+        self.pantalla.blit(puntos_text, (600, 10))
+
+        # Reloj
+        font = pygame.font.SysFont('Arial', 40)
+        puntos_text = font.render(f"Reloj: {self.HeadReloj.textoReloj}", True, (255, 255, 255))  # Blanco
+        self.pantalla.blit(puntos_text, (300, 10))
+
+        # Nivel
+        font = pygame.font.SysFont('Arial', 40)
+        puntos_text = font.render(f"Level: {self.HeadNivel.textoNivel}", True, (0, 0, 255))  # Blanco
+        self.pantalla.blit(puntos_text, (300, 50))
+
+        # Barra de Vida
+        pygame.draw.rect(self.HeadBarraDeVida.spriteBarraDeVida, (255, 255, 255), (0, 0, 200, 50), 3)  # grosor 3px
+        self.pantalla.blit(self.HeadBarraDeVida.spriteBarraDeVida, (10, 10))
+
+        #FPS
         fps = int(self.clock.get_fps())
         font = pygame.font.SysFont('Arial', 20)
         fps_text = font.render(f"FPS: {fps}", True, (255, 255, 0))  # Amarillo
         logging.debug("FPS de pintado : %i", fps)
-        self.pantalla.blit(fps_text, (10, 10))
+        self.pantalla.blit(fps_text, (10, 100))
 
         pygame.display.flip() # Aquí es donde ploteamos todo.
 
