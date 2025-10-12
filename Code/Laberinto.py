@@ -222,19 +222,19 @@ class Maze:
             if self.mazeDataExtra[bx + (by * self.M)] == 2:
                 display_surf.blit(self.imageHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 huesos = pygame.sprite.Sprite()
-                huesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
+                huesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL +BIAS, 32, 32)
                 self.MazeExtra.add(huesos) 
 
             if self.mazeDataExtra[bx + (by * self.M)] == 3:
                 display_surf.blit(self.imagePilaHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Pilahuesos = pygame.sprite.Sprite()
-                Pilahuesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
+                Pilahuesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 self.MazeExtra.add(Pilahuesos) 
 
             if self.mazeDataExtra[bx + (by * self.M)] == 4:
                 display_surf.blit(self.imageFinNivel, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Bandera = pygame.sprite.Sprite()
-                Bandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
+                Bandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 self.MazeExtra.add(Bandera) 
 
             bx = bx + 1
@@ -245,7 +245,7 @@ class Maze:
 
     @staticmethod
     def calcularCasilla(valorX, valorY):
-        casilla = (valorX / CASILLA_PIXEL) + ((valorY / CASILLA_PIXEL)*NUM_CASILLAS)
+        casilla = (valorX / CASILLA_PIXEL) + ((valorY-BIAS / CASILLA_PIXEL) * NUM_CASILLAS)
         casilla = int(casilla)
         logging.info("Valor calculado: %s", casilla)
 
@@ -255,7 +255,7 @@ class Maze:
     @staticmethod
     def calcularPixelPorCasilla(Casilla):
         posicion.x = (Casilla % 10) * CASILLA_PIXEL
-        posicion.y = (Casilla / 10) * NUM_CASILLAS
+        posicion.y = (Casilla / 10) * NUM_CASILLAS + BIAS
         logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
 
         return posicion
@@ -870,8 +870,8 @@ class App:
             logging.info('Huesos o Bandera Final IMPACTADA')
             print('Huesos o Bandera Final IMPACTADA')
             # Opcional: procesar cada enemigo que colisionó
-            for jouer, extra in colision_PlayerConExtra.items():
-                logging.info(f'JUGADOR en ({jouer.x}, {jouer.y}) colisionó con {len(extra)} paredes')
+            for cpcE in colision_PlayerConExtra.items():
+                logging.info(f'Bandera o Huesos.')
 
     def on_render(self):
         if self.pause == False:
@@ -920,6 +920,10 @@ class App:
             if (self.visionEnemigos == True):
                 self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
                 self.pantalla.blit(self.JefeEnemigo.visionImage, (self.JefeEnemigo.x, self.JefeEnemigo.y - 40))
+
+            # Maze Extra --> Recuadros
+            for extra in self.maze.MazeExtra:
+                pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
 
             # Pintar disparos del Player
             if(self.player.flagDisparo == True):
@@ -1011,7 +1015,6 @@ class App:
                     self._running = False # pygame window closed by user
                     self.salir = True
                 elif event.type == pygame.KEYDOWN:
-                    self.player.speed = 1
                     if event.key == pygame.K_ESCAPE:
                         self._running = False  # user pressed ESC
                     if event.key == pygame.K_RIGHT:
@@ -1057,26 +1060,39 @@ class App:
                     if event.key == pygame.K_RIGHT:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor DERECHO !!!')
-                        # print('¡¡¡ SOLtado cursor DERECHO !!!')
+                        print('¡¡¡ SOLtado cursor DERECHO !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_LEFT:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor IZQUIERDO !!!')
-                        # print('¡¡¡ SOLtado cursor IZQUIERDO !!!')
+                        print('¡¡¡ SOLtado cursor IZQUIERDO !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_UP:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor ARRIBA !!!')
-                        # print('¡¡¡ SOLtado cursor ARRIBA !!!')
+                        print('¡¡¡ SOLtado cursor ARRIBA !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_DOWN:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor ABAJO !!!')
-                        # print('¡¡¡ SOLtado cursor ABAJO !!!')
+                        print('¡¡¡ SOLtado cursor ABAJO !!!')
                         self.player.stop()
+
+            if self.movimiento == True:
+                if(self.player.orientacion == 1):
+                    self.player.moveLeft()
+                elif(self.player.orientacion == 2):
+                    self.player.moveUp()
+                elif(self.player.orientacion == 3):
+                    self.player.moveRight()
+                elif(self.player.orientacion == 4):
+                    self.player.moveDown()
+                else:
+                    logging.info('¡¡¡ What !!!')
+                    print('¡¡¡ What !!!')
 
             self.on_loop()
             self.on_render()

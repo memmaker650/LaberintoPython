@@ -172,15 +172,15 @@ class Player(pygame.sprite.Sprite):
         self.speedV = 0
 
     def andar(self):
-        if(self.speedH < 8):
+        if(self.speedH < 6):
             self.speedH = self.speedH + 1
         else:
-            self.speedH = 4
+            self.speedH = 2
 
-        if (self.speedV < 8):
+        if (self.speedV < 6):
             self.speedV = self.speedV + 1
         else:
-            self.speedH = 4
+            self.speedH = 2
 
     def moveRight(self):
         self.andar()
