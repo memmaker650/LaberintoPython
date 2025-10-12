@@ -179,7 +179,7 @@ class Maze:
         bx = 0
         by = 0
         for i in range(0, self.M * self.N):
-            if self.maze[bx + (by * self.M)] == 1:
+            if self.maze[bx + (by * self.M)] == 0:
                 rectSuelo = pygame.sprite.Sprite()
                 rectSuelo.image = pygame.Surface([CASILLA_PIXEL, CASILLA_PIXEL])
                 rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, CASILLA_PIXEL, CASILLA_PIXEL)
@@ -211,8 +211,9 @@ class Maze:
                 display_surf.blit(w_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 rectSuelo = pygame.sprite.Sprite()
                 rectSuelo.image = pygame.Surface([bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS])
-                rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL, 32, 32)
-                # pygame.draw.rect(display_surf, ROJO, rectSuelo)
+                rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                
+                pygame.draw.rect(display_surf, ROJO, rectSuelo)
                 # textWallMark = xfont.render(str(i), True, (0, 80, 0))
                 # X = pygame.sprite
                 # X = textWallMark
@@ -287,11 +288,12 @@ class App:
     visionEnemigos = bool
     pintaRectángulos = bool = True
     # Valores Cabecera
-    HUD = infoPantalla.infoArmasMunicion()
+    HeadGunAmmo = infoPantalla.infoArmasMunicion()
     HeadNivel = infoPantalla.infoNivel()
     HeadBarraDeVida = infoPantalla.barraDeVida()
     HeadReloj = infoPantalla.relojPantalla()
     HeadPuntuacion = infoPantalla.panelPuntuacion()
+    tiempo_inicio = None
 
     salir = bool = False
 
@@ -319,6 +321,8 @@ class App:
         self.JefeEnemigo = player.Enemigo()
 
         self.visionEnemigos = True
+        self.tiempo_inicio = pygame.time.get_ticks()
+
         self.salir = False
 
         # Llenar el vector de enemigos
@@ -776,10 +780,6 @@ class App:
         logging.info("Pintamos el menú del juego.")
         if self.tocaMenu:
             self.menu()
-
-        logging.info("Crear clases del HUD")
-
-        logging.info("Asignar los Sprite Groups")
         
 
         logging.info("Empezamos un juego nuevo.")
@@ -850,13 +850,11 @@ class App:
             print(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
             for cl in colision_player:
                 logging.info(f'PLAYER colisionó con paRED')
-                print(f'PLAYER colisionó con paRED')
 
         # Colisión de enemigos con paredes
         colision_enemigos = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazeParedes, False, False)
         if colision_enemigos:
             logging.info('COLISION Enemigo DETECTADA %s', len(colision_enemigos))
-            print('COLISION Enemigo DETECTADA %s', len(colision_enemigos))
             # Opcional: procesar cada enemigo que colisionó
             for enemigo, paredes in colision_enemigos.items():
                 logging.info(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(paredes)} paredes')
@@ -867,13 +865,13 @@ class App:
                     enemigo.cambiar_direccion()
         
         # Colisión de Extras Escenario con Player
-        colision_PlayerConExtra = pygame.sprite.spritecollide(self.player, self.maze.MazeExtra, True, )
+        colision_PlayerConExtra = pygame.sprite.spritecollide(self.player, self.maze.MazeExtra, True)
         if colision_PlayerConExtra:
             logging.info('Huesos o Bandera Final IMPACTADA')
             print('Huesos o Bandera Final IMPACTADA')
             # Opcional: procesar cada enemigo que colisionó
             for jouer, extra in colision_PlayerConExtra.items():
-                logging.info(f'Player en ({jouer.x}, {jouer.y}) colisionó con {len(extra)} paredes')
+                logging.info(f'JUGADOR en ({jouer.x}, {jouer.y}) colisionó con {len(extra)} paredes')
 
     def on_render(self):
         if self.pause == False:
@@ -940,15 +938,36 @@ class App:
         self.HeadNivel.conversionTexto()
         self.HeadReloj.conversionTexto()
         self.HeadPuntuacion.conversionTexto()
+        self.HeadGunAmmo.conversionTexto()
+        
 
         # Pinto los valores del HUB o cabecera de valores.
         logging.debug("Pintando la Cabecera de Valores")
+
         # Puntuación
         font = pygame.font.SysFont('Arial', 32)
         puntos_text = font.render(f"Puntos: {self.HeadPuntuacion.textoPuntos}", True, (255, 255, 0))  # Amarillo
         self.pantalla.blit(puntos_text, (600, 10))
+        # Arma y Munición
+        font = pygame.font.SysFont('Arial', 32)
+        puntos_text = font.render(f"Arma: {self.HeadGunAmmo.textoArma}", True, (0, 0, 255))  # Azul
+        self.pantalla.blit(puntos_text, (600, 40))
+        puntos_text = font.render(f"Ammo: {self.HeadGunAmmo.textoMunicion}", True, (0, 0, 255))  # Azul
+        self.pantalla.blit(puntos_text, (600, 70))
+
 
         # Reloj
+        # Calculos
+        tiempo_actual = pygame.time.get_ticks()
+        segundos_transcurridos = (tiempo_actual - self.tiempo_inicio) // 1000
+        tiempo_restante = max(0, self.HeadReloj.maxTiempo - segundos_transcurridos)
+        self.HeadReloj.tiempoInteger = int(tiempo_restante)
+
+        # Si llega a cero, puedes hacer algo (ej. fin del juego)
+        if self.HeadReloj.tiempoInteger == 0:
+            # Aquí podrías mostrar mensaje "¡Tiempo agotado!"
+            pass
+
         font = pygame.font.SysFont('Arial', 40)
         puntos_text = font.render(f"Reloj: {self.HeadReloj.textoReloj}", True, (255, 255, 255))  # Blanco
         self.pantalla.blit(puntos_text, (300, 10))

@@ -21,9 +21,11 @@ class barraDeVida(pygame.sprite.Sprite):
 class panelPuntuacion(pygame.sprite.Sprite):
     puntos = int
     textoPuntos = string
+    baseString = "00000000"
 
     def __init__(self):
         self.puntos = 0
+        self.textoPuntos = self.baseString
 
     def incrementarPuntos(self, subida):
         puntos += subida
@@ -35,7 +37,7 @@ class panelPuntuacion(pygame.sprite.Sprite):
         puntos = 0
     
     def conversionTexto(self):
-        self.textoPuntos = str(self.puntos)
+        self.textoPuntos = str(self.puntos).zfill(8)
 
 class infoNivel(pygame.sprite.Sprite):
     NumeroNivel = int
@@ -81,11 +83,29 @@ class infoItems(pygame.sprite.Sprite):
     def definirNumeroNivel(self, NN):
         self.NumeroNivel = NN
 
+# 1 Cuchillo
+# 2 Pistola
+# 3 Metralleta
+# 4 Granada
+# 5 Laser
+# 6 Bomba humo
 class infoArmasMunicion(pygame.sprite.Sprite):
     Armas = [bool]
     municion = [int]
     textoArma = string
     textoMunicion = string
+    armaSeleccionada = None
+
+    def __init__(self):
+        self.armaSeleccionada = 4
+
+        n = 6
+        self.Armas = [False] * n
+        self.Armas = True
+        
+        n = 6
+        self.municion = [0] * n
+        self.municion[0] = 1
 
     def definirMunicion(self, armaNum, municion):
         self.Armas[armaNum] = municion
@@ -96,6 +116,33 @@ class infoArmasMunicion(pygame.sprite.Sprite):
     def gastarMunicion(self, armaNum):
         self.Armas[armaNum] = self.Armas[armaNum] -1
 
-    def conversionTexto(self, armaNum):
-        self.textoArma = str(self.Armas[armaNum])
-        self.textoMunicion = str(self.municion[armaNum])
+    def conversionTexto(self):
+        if self.armaSeleccionada == 1:
+            self.textoArma = "Cuchillo"
+        elif self.armaSeleccionada == 2:
+            self.textoArma = "Pistola"
+        elif self.armaSeleccionada == 3:
+            self.textoArma = "Metralleta"
+        if self.armaSeleccionada == 4:
+            self.textoArma = "Granada"
+        elif self.armaSeleccionada == 5:
+            self.textoArma = "Laser"
+        elif self.armaSeleccionada == 6:
+            self.textoArma = "Bomba Humo"
+        else:
+            print("Opción no válida")
+
+        if self.armaSeleccionada == 1:
+            self.textoMunicion = str(self.municion[self.armaSeleccionada -1])
+        elif self.armaSeleccionada == 2:
+            self.textoMunicion = str(self.municion[self.armaSeleccionada -1])
+        elif self.armaSeleccionada == 3:
+            self.textoMunicion = str(self.municion[self.armaSeleccionada -1])
+        if self.armaSeleccionada == 4:
+            self.textoMunicion = str(self.municion[self.armaSeleccionada -1])
+        elif self.armaSeleccionada == 5:
+            self.textoMunicion = str(self.municion[self.armaSeleccionada -1])
+        elif self.armaSeleccionada == 6:
+            self.textoMunicion = str(self.municion[self.armaSeleccionada -1])
+        else:
+            print("Ammo Opción no válida")
