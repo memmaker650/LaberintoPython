@@ -104,6 +104,7 @@ class Maze:
     N = NUM_CASILLAS
     MazeParedes = pygame.sprite.Group()
     MazeExtra = pygame.sprite.Group()
+    MazeBandera = pygame.sprite.Group()
     imageHuesos = pygame.image.load("./Resources/Bone.png")
     imagePilaHuesos = pygame.image.load("./Resources/PileOfBones.png")
     imageFinNivel = pygame.image.load("./Resources/banderaPirataRoja2.png")
@@ -205,15 +206,16 @@ class Maze:
 
         for i in range(0, self.M * self.N):
             if self.maze[bx + (by * self.M)] == 1:
-                display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS))
                 self.rect = image_surf.get_rect()
             else:
                 display_surf.blit(w_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 rectSuelo = pygame.sprite.Sprite()
-                rectSuelo.image = pygame.Surface([bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS])
-                rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                rectSuelo.image = pygame.Surface([bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS])
+                rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, 32, 32)
                 
-                pygame.draw.rect(display_surf, ROJO, rectSuelo)
+                # pygame.draw.rect(display_surf, ROJO, rectSuelo) # Pintar paredes de Rojo
+
                 # textWallMark = xfont.render(str(i), True, (0, 80, 0))
                 # X = pygame.sprite
                 # X = textWallMark
@@ -235,44 +237,61 @@ class Maze:
                 display_surf.blit(self.imageFinNivel, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Bandera = pygame.sprite.Sprite()
                 Bandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                self.MazeExtra.add(Bandera) 
+                self.MazeBandera.add(Bandera)
+                # self.MazeBandera.image = self.imageFinNivel
+                # self.MazeBandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                # self.MazeBandera.mask = pygame.mask.from_surface(self.imageFinNivel)
 
             bx = bx + 1
             if bx > self.M - 1:
                 bx = 0
                 by = by + 1
-        #return textWallDebug
 
     @staticmethod
     def calcularCasilla(valorX, valorY):
-        casilla = (valorX / CASILLA_PIXEL) + ((valorY-BIAS / CASILLA_PIXEL) * NUM_CASILLAS)
+        casilla = int(valorX / NUM_CASILLAS) + (int((valorY-BIAS) / NUM_CASILLAS))
         casilla = int(casilla)
         logging.info("Valor calculado: %s", casilla)
 
         logging.debug("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", valorX, valorY, int(casilla))
+
         return casilla
 
     @staticmethod
     def calcularPixelPorCasilla(Casilla):
-        posicion.x = (Casilla % 10) * CASILLA_PIXEL
-        posicion.y = (Casilla / 10) * NUM_CASILLAS + BIAS
+        posicion.x = (Casilla % NUM_CASILLAS) * CASILLA_PIXEL
+        posicion.y = (int(Casilla / NUM_CASILLAS) * CASILLA_PIXEL) + BIAS
         logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
 
         return posicion
 
-    @staticmethod
-    def esAlcanzable(x, y):
+    # Casilla de suelo. Cambiar y chequear
+    def esAlcanzable(self, x, y):
         logging.info("Dentro Método alcanzable")
+        eqCasilla = None
 
-        if x > NUM_CASILLAS or y > NUM_CASILLAS:
+        eqCasilla = Maze.calcularCasilla(x, y)
+
+        if x > NUM_CASILLAS | y > (NUM_CASILLAS + BIAS) | x < 0 | y < 0:
             logging.info("esAlcanzble : X= %s and Y= %s", x, y)
+            if x > NUM_CASILLAS | x < 0 :
+                logging.info("esAlcanzble : X fuera de rango.", x)
+                return False
+            elif y > NUM_CASILLAS | y < 0:
+                logging.info("esAlcanzble : Y fuera de rango.", y)
+                return False
+            else:
+                logging.info("Raro en esAlcanzble ")
+            
+        bx = int(eqCasilla % NUM_CASILLAS)    
+        by = int(eqCasilla / NUM_CASILLAS) 
+        if self.maze[bx + (by * NUM_CASILLAS)] == 0:
             return False
-
-        if Maze.calcularCasilla(x, y) == 1:
+        elif self.maze[bx + (by * NUM_CASILLAS)] == 1: 
             return True
-        else:
+        else: 
             return False
-
+            
 class App:
     windowWidth = SCREEN_WIDTH
     windowHeight = SCREEN_HEIGHT
@@ -335,15 +354,6 @@ class App:
 
         logging.info("Contenido grupo Sprites: %s", len(self.EnemigosGroup))
         logging.info("Cagados todos los enemigos")
-
-        self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-        self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
-        pos = posicion(0, 0)
-        pos = Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
-        self.JefeEnemigo.x = pos.x
-        self.JefeEnemigo.y = pos.y
-        logging.debug('POsición Jefe ENEMY --> x: %i e y: %i', self.JefeEnemigo.x, self.JefeEnemigo.y)
-        # Cargamos Jefe enemigo
         
         self.maze = Maze()
         self.paredesGroup = self.maze.MazeParedes
@@ -355,6 +365,27 @@ class App:
         if paredes_list:
             logging.info(f"Primera pared en posición: {paredes_list[0].rect}")
             logging.info(f"Última pared en posición: {paredes_list[-1].rect}")
+
+        # Ubicar al jefe enemigo.
+        self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
+        self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+        print(f'**** Enemy LORD RANDOM Position:  ', self.JefeEnemigo.x, self.JefeEnemigo.y)
+        pos = posicion(0, 0)
+        pos = Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
+        print(f'**** CASILLAS PARADA: ', self.JefeEnemigo.casilla)
+        print(f'**** Calcular posición JEFE ENEMIGO x=%s, y=%s', pos.x, pos.y)
+        resultado = self.maze.esAlcanzable(pos.x, pos.y)
+        print(f'**** Es POSICIÓN SUELO ? ', resultado)
+        while not self.maze.esAlcanzable(pos.x, pos.y):
+            self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
+            self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+            pos = posicion(0, 0)
+            pos = Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
+
+        self.JefeEnemigo.x = pos.x
+        self.JefeEnemigo.y = pos.y + BIAS
+        logging.debug('POsición Jefe ENEMY --> x: %i e y: %i', self.JefeEnemigo.x, self.JefeEnemigo.y)
+        # Cargamos Jefe enemigo
 
     def verInfoEnemigos(self):
         enemy = player.Enemigo()
@@ -847,7 +878,11 @@ class App:
         colision_player = pygame.sprite.spritecollide(self.player, self.maze.MazeParedes, False)
         if colision_player:
             logging.info(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
-            print(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
+            # print(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
+
+            self.player.x = self.player.prev_x
+            self.player.y = self.player.prev_y
+
             for cl in colision_player:
                 logging.info(f'PLAYER colisionó con paRED')
 
@@ -865,13 +900,22 @@ class App:
                     enemigo.cambiar_direccion()
         
         # Colisión de Extras Escenario con Player
-        colision_PlayerConExtra = pygame.sprite.spritecollide(self.player, self.maze.MazeExtra, True)
+        colision_PlayerConExtra = pygame.sprite.spritecollide(self.player, self.maze.MazeExtra, False)
         if colision_PlayerConExtra:
-            logging.info('Huesos o Bandera Final IMPACTADA')
-            print('Huesos o Bandera Final IMPACTADA')
+            logging.info('Huesos  IMPACTADA')
+            # print('Huesos  IMPACTADA')
             # Opcional: procesar cada enemigo que colisionó
-            for cpcE in colision_PlayerConExtra.items():
-                logging.info(f'Bandera o Huesos.')
+            for cpcE in colision_PlayerConExtra:
+                logging.info(f'Huesos tocados')
+
+        # Colisión de Bandera FIN Pantalla del Escenario con Player
+        colision_PlayerConBandera = pygame.sprite.spritecollide(self.player, self.maze.MazeBandera, False)
+        if colision_PlayerConBandera:
+            logging.info('Bandera Final IMPACTADA')
+            # print('Bandera Final IMPACTADA')
+            # Opcional: procesar cada enemigo que colisionó
+            for cpcE in colision_PlayerConBandera:
+                logging.info('Bandera tocada')
 
     def on_render(self):
         if self.pause == False:
@@ -902,8 +946,10 @@ class App:
             for i in range(0, self.numEnemigos):
                 self.enemigo = self.enemigosArray[i]
                 if(self.enemigo.isJefeEnemigo):
+                    print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
                     self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
                 else:
+                    print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
                     self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
                     if self.pintaRectángulos == True:
                         pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
@@ -1060,25 +1106,25 @@ class App:
                     if event.key == pygame.K_RIGHT:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor DERECHO !!!')
-                        print('¡¡¡ SOLtado cursor DERECHO !!!')
+                        # print('¡¡¡ SOLtado cursor DERECHO !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_LEFT:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor IZQUIERDO !!!')
-                        print('¡¡¡ SOLtado cursor IZQUIERDO !!!')
+                        # print('¡¡¡ SOLtado cursor IZQUIERDO !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_UP:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor ARRIBA !!!')
-                        print('¡¡¡ SOLtado cursor ARRIBA !!!')
+                        # print('¡¡¡ SOLtado cursor ARRIBA !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_DOWN:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor ABAJO !!!')
-                        print('¡¡¡ SOLtado cursor ABAJO !!!')
+                        # print('¡¡¡ SOLtado cursor ABAJO !!!')
                         self.player.stop()
 
             if self.movimiento == True:

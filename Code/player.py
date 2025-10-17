@@ -33,6 +33,8 @@ H61CD35 = (97, 205, 53)
 SCREEN_WIDTH = 864
 SCREEN_HEIGHT = 864
 
+BIAS = 136
+
 # Directorio de imágenes principal
 carpeta_imagenes = os.path.join(IMG_DIR, "imagenes")
 
@@ -145,6 +147,8 @@ class Disparos(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     x = 23
     y = 23
+    prev_x = 23
+    prev_y = 23
     casilla = 0
 
     vida = int
@@ -166,6 +170,7 @@ class Player(pygame.sprite.Sprite):
         self.image = load_image("player_modif.png", IMG_DIR, alpha=True)
         self.image = pygame.transform.scale(self.image, (22, 22))
         self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
 
     def stop(self):
         self.speedH = 0
@@ -182,26 +187,38 @@ class Player(pygame.sprite.Sprite):
         else:
             self.speedH = 2
 
+    def guardarPosicionPrevia(self):
+        self.prev_x = self.x
+        self.prev_y = self.y
+
     def moveRight(self):
         self.andar()
+        self.guardarPosicionPrevia()
+
         self.x = self.x + self.speedH
         self.logMovimiento("Derecha", self.x, self.y)
         self.orientacion = 3
 
     def moveLeft(self):
         self.andar()
+        self.guardarPosicionPrevia()
+
         self.x = self.x - self.speedH
         self.logMovimiento('Izquierda', self.x, self.y)
         self.orientacion = 1
 
     def moveUp(self):
         self.andar()
+        self.guardarPosicionPrevia()
+
         self.y = self.y - self.speedV
         self.logMovimiento('Arriba', self.x, self.y)
         self.orientacion = 2
 
     def moveDown(self):
         self.andar()
+        self.guardarPosicionPrevia()
+
         self.y = self.y + self.speedV
         self.logMovimiento('Abajo', self.x, self.y)
         self.orientacion = 4
@@ -269,6 +286,8 @@ class Explosiones(pygame.sprite.Sprite):
 class Enemigo(pygame.sprite.Sprite):
     x = 12
     y = 12
+    prev_x = None
+    prev_y = None
     casilla = 0
 
     vida = int
@@ -316,7 +335,9 @@ class Enemigo(pygame.sprite.Sprite):
     def inicio(self, vx, vy):
         logging.info("Inicio Enemigos")
         self.x = random.randint(0, vx)
-        self.y = random.randint(0, vy)
+        self.y = random.randint(BIAS, vy+BIAS)
+        self.prev_x = self.x
+        self.prev_y = self.y
 
     def definirJefeEnemigo(self):
         self.isJefeEnemigo = True
@@ -359,8 +380,8 @@ class Enemigo(pygame.sprite.Sprite):
     def update(self):
         logging.debug('Dentro Update ENEMIGOS.')
         # Guardar posición previa
-        self.prev_x = getattr(self, 'prev_x', self.x)
-        self.prev_y = getattr(self, 'prev_y', self.y)
+        self.prev_x = self.x
+        self.prev_y = self.y
 
         # Actualizar el rectángulo de colisión con la posición actual
         self.rect.x = self.x
@@ -378,15 +399,12 @@ class Enemigo(pygame.sprite.Sprite):
         if hasattr(self, 'prev_x') and hasattr(self, 'prev_y'):
             self.x = self.prev_x
             self.y = self.prev_y
-            self.rect.x = self.x
-            self.rect.y = self.y
 
     def cambiar_direccion(self):
         # Cambio simple de dirección: invertir velocidad vertical
-        self.speedV = -self.speedV if self.speedV != 0 else -1
+        self.speedV = -self.speedV 
         # Pequeño desplazamiento para evitar quedarse pegado
-        self.y += self.speedV
-        self.rect.y = self.y
+        #self.rect.y = self.y
 
     def logMovimiento(self, direccion, finalx, finaly):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
