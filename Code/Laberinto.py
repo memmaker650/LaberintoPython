@@ -105,9 +105,11 @@ class Maze:
     MazeParedes = pygame.sprite.Group()
     MazeExtra = pygame.sprite.Group()
     MazeBandera = pygame.sprite.Group()
+    MazeLlave = pygame.sprite.Group()
     imageHuesos = pygame.image.load("./Resources/Bone.png")
     imagePilaHuesos = pygame.image.load("./Resources/PileOfBones.png")
     imageFinNivel = pygame.image.load("./Resources/banderaPirataRoja2.png")
+    imageLlave = pygame.image.load("./Resources/llave.png")
        
 
     def __init__(self):
@@ -169,7 +171,7 @@ class Maze:
             0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0,
-            0, 1, 1, 1, 1, 1, 2, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 6, 1, 1, 1, 2, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ]
         self.MazeParedes = pygame.sprite.Group()
@@ -242,6 +244,13 @@ class Maze:
                 # self.MazeBandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 # self.MazeBandera.mask = pygame.mask.from_surface(self.imageFinNivel)
 
+            if self.mazeDataExtra[bx + (by * self.M)] == 6:
+                imagen_escalada = pygame.transform.scale(self.imageLlave, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                key = pygame.sprite.Sprite()
+                key.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeLlave.add(key)
+
             bx = bx + 1
             if bx > self.M - 1:
                 bx = 0
@@ -272,22 +281,40 @@ class Maze:
 
         eqCasilla = Maze.calcularCasilla(x, y)
 
-        if x > NUM_CASILLAS | y > (NUM_CASILLAS + BIAS) | x < 0 | y < 0:
+        if x > SCREEN_WIDTH | y > SCREEN_HEIGHT | x < 0 | y < 0:
             logging.info("esAlcanzble : X= %s and Y= %s", x, y)
-            if x > NUM_CASILLAS | x < 0 :
+            if x > SCREEN_WIDTH | x < 0 :
                 logging.info("esAlcanzble : X fuera de rango.", x)
                 return False
-            elif y > NUM_CASILLAS | y < 0:
+            elif y > SCREEN_HEIGHT | y < 0:
                 logging.info("esAlcanzble : Y fuera de rango.", y)
                 return False
             else:
                 logging.info("Raro en esAlcanzble ")
             
-        bx = int(eqCasilla % NUM_CASILLAS)    
-        by = int(eqCasilla / NUM_CASILLAS) 
-        if self.maze[bx + (by * NUM_CASILLAS)] == 0:
+        if self.maze[eqCasilla] == 0:
             return False
-        elif self.maze[bx + (by * NUM_CASILLAS)] == 1: 
+        elif self.maze[eqCasilla] == 1: 
+            return True
+        else: 
+            return False
+
+    def esAlcanzableCasilla(self, casilla):
+        logging.info("Dentro Método alcanzable KASILLA")
+
+        if casilla > NUM_CASILLAS*NUM_CASILLAS | casilla < 0: 
+            if casilla < 0 :
+                logging.info("esAlcanzble : casilla fuera de rango.")
+                return False
+            elif casilla > NUM_CASILLAS*NUM_CASILLAS :
+                logging.info("esAlcanzble : casilla fuera de rango.")
+                return False
+            else:
+                logging.info("Raro en esAlcanzble KSY")
+            
+        if self.maze[casilla] == 0:
+            return False
+        elif self.maze[casilla] == 1: 
             return True
         else: 
             return False
@@ -344,46 +371,67 @@ class App:
 
         self.salir = False
 
-        # Llenar el vector de enemigos
-        for i in range(0, self.numEnemigos):
-            self.enemigo = player.Enemigo()
-            self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-            self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
-            self.enemigosArray.append(self.enemigo)
-            self.EnemigosGroup.add(self.enemigo)
-
-        logging.info("Contenido grupo Sprites: %s", len(self.EnemigosGroup))
-        logging.info("Cagados todos los enemigos")
-        
         self.maze = Maze()
         self.paredesGroup = self.maze.MazeParedes
         logging.info("Cargado el escenario")
         logging.info(f"Número de paredes creadas: {len(self.maze.MazeParedes)}")
-        
+
         # Debug: imprimir algunas posiciones de paredes
         paredes_list = list(self.maze.MazeParedes)
         if paredes_list:
             logging.info(f"Primera pared en posición: {paredes_list[0].rect}")
             logging.info(f"Última pared en posición: {paredes_list[-1].rect}")
 
+        # Llenar el vector de enemigos
+        for i in range(0, self.numEnemigos):
+            self.enemigo = player.Enemigo()
+            self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
+            self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
+            pos = posicion(0, 0)
+            pos = Maze.calcularPixelPorCasilla(self.enemigo.casilla)
+            resultado = self.maze.esAlcanzableCasilla(self.enemigo.casilla)
+            print(f'**** Es POSICIÓN SUELO ? ', i, self.enemigo.casilla, resultado)
+            while not self.maze.esAlcanzableCasilla(self.enemigo.casilla):
+                self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
+                print(f'**** Es RANDON VALUES: ', self.enemigo.x, self.enemigo.y)
+                self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
+                pos = posicion(0, 0)
+                pos = Maze.calcularPixelPorCasilla(self.enemigo.casilla)
+                print(f'**** CASILLA ENEMIGO: ', i, self.enemigo.casilla)
+                resultado = self.maze.esAlcanzableCasilla(self.enemigo.casilla)
+                print(f'**** Es POSICIÓN SUELO ? ', i, resultado)
+            
+            self.enemigo.x = pos.x
+            self.enemigo.y = pos.y
+            self.enemigosArray.append(self.enemigo)
+            self.EnemigosGroup.add(self.enemigo)
+
+        logging.info("Contenido grupo Sprites: %s", len(self.EnemigosGroup))
+        logging.info("Cagados todos los enemigos")
+        
         # Ubicar al jefe enemigo.
         self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
         self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
         print(f'**** Enemy LORD RANDOM Position:  ', self.JefeEnemigo.x, self.JefeEnemigo.y)
         pos = posicion(0, 0)
         pos = Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
-        print(f'**** CASILLAS PARADA: ', self.JefeEnemigo.casilla)
+        print(f'**** CASILLAS JEFE PARADA: ', self.JefeEnemigo.casilla)
         print(f'**** Calcular posición JEFE ENEMIGO x=%s, y=%s', pos.x, pos.y)
-        resultado = self.maze.esAlcanzable(pos.x, pos.y)
-        print(f'**** Es POSICIÓN SUELO ? ', resultado)
-        while not self.maze.esAlcanzable(pos.x, pos.y):
+        resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
+        print(f'**** JEFE, ES POSICIÓN SUELO ? ', resultado)
+        while not self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla):
             self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
             self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+            print(f'**** Ksilla JEFE ENEMIGO ==>', self.JefeEnemigo.casilla)
             pos = posicion(0, 0)
             pos = Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
+            print(f'**** Calcular posición JEFE ENEMIGO x=%s, y=%s', pos.x, pos.y)
+            print(f'**** CASILLA JEFE ENEMIGO: ', i, self.enemigo.casilla)
+            resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
+            print(f'**** Es POSICIÓN SUELO ? ', i, self.JefeEnemigo.casilla, resultado)
 
         self.JefeEnemigo.x = pos.x
-        self.JefeEnemigo.y = pos.y + BIAS
+        self.JefeEnemigo.y = pos.y
         logging.debug('POsición Jefe ENEMY --> x: %i e y: %i', self.JefeEnemigo.x, self.JefeEnemigo.y)
         # Cargamos Jefe enemigo
 
@@ -393,6 +441,11 @@ class App:
         for i in range(1, self.numEnemigos):
             enemy = self.enemigosArray[i]
             enemy.logPosicionEnemigo()
+
+    def dibujar_cruz(self, surface, x:int, y:int, tamaño=10, color=(255, 165, 0), grosor=4):
+        mitad = tamaño // 2
+        pygame.draw.line(surface, color, (x - mitad, y), (x + mitad, y), grosor)
+        pygame.draw.line(surface, color, (x, y - mitad), (x, y + mitad), grosor)
 
     def menu(self):
         color = (255, 255, 255)
@@ -933,12 +986,62 @@ class App:
                 else:
                     self.player.x = random.randint(0, SCREEN_WIDTH)
                     self.player.y = random.randint(0, SCREEN_HEIGHT)
+                    self.player.casilla = Maze.calcularCasilla(self.player.x, self.player.y)
+                    pos = posicion(0, 0)
+                    pos = Maze.calcularPixelPorCasilla(self.player.casilla)
+                    while not self.maze.esAlcanzableCasilla(self.player.casilla):
+                        self.player.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
+                        self.player.casilla = Maze.calcularCasilla(self.player.x, self.player.y)
+                        pos = posicion(0, 0)
+                        pos = Maze.calcularPixelPorCasilla(self.player.casilla)
+
+                    self.player.x = pos.x
+                    self.player.y = pos.y + BIAS
                     self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
             else:
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
             
             if self.pintaRectángulos == True:
                 pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
+
+            self.dibujar_cruz(self.pantalla, 200, 200, 20)
+
+            smallfont = pygame.font.SysFont('Corbel', 35)
+            
+            position = self.maze.calcularPixelPorCasilla(27)
+            if self.maze.esAlcanzable(position.x, position.y):
+                text1 = smallfont.render('27', True, (255, 165, 0))
+            else:
+                text1 = smallfont.render('27', True, (255, 255, 255))
+            self.pantalla.blit(text1, (position.x, position.y))
+
+            position = self.maze.calcularPixelPorCasilla(36)
+            if self.maze.esAlcanzable(position.x, position.y):
+                text1 = smallfont.render('36', True, (255, 165, 0))
+            else:
+                text1 = smallfont.render('36', True, (255, 255, 255))
+            self.pantalla.blit(text1, (position.x, position.y))
+
+            position = self.maze.calcularPixelPorCasilla(41)
+            if self.maze.esAlcanzable(position.x, position.y):
+                text1 = smallfont.render('41', True, (255, 165, 0))
+            else:
+                text1 = smallfont.render('41', True, (255, 255, 255))
+            self.pantalla.blit(text1, (position.x, position.y))
+
+            position = self.maze.calcularPixelPorCasilla(134)
+            if self.maze.esAlcanzableCasilla(134):
+                text1 = smallfont.render('134', True, (255, 165, 0))
+            else:
+                text1 = smallfont.render('134', True, (255, 255, 255))
+            self.pantalla.blit(text1, (position.x, position.y))
+
+            position = self.maze.calcularPixelPorCasilla(24)
+            if self.maze.esAlcanzableCasilla(24):
+                text1 = smallfont.render('24', True, (255, 165, 0))
+            else:
+                text1 = smallfont.render('24', True, (255, 255, 255))
+            self.pantalla.blit(text1, (position.x, position.y))
 
             # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
             logging.debug("Pintamos los enemigos.")
@@ -949,7 +1052,7 @@ class App:
                     print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
                     self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
                 else:
-                    print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
+                    # print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
                     self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
                     if self.pintaRectángulos == True:
                         pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)

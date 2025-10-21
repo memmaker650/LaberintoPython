@@ -31,7 +31,7 @@ HC74225 = (199, 66, 37)
 H61CD35 = (97, 205, 53)
 
 SCREEN_WIDTH = 864
-SCREEN_HEIGHT = 864
+SCREEN_HEIGHT = 1000
 
 BIAS = 136
 
@@ -171,6 +171,13 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (22, 22))
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
+
+    def inicio(self, vx, vy):
+        logging.info("Inicio Player")
+        self.x = random.randint(0, vx)
+        self.y = random.randint(BIAS, vy+BIAS)
+        self.prev_x = self.x
+        self.prev_y = self.y
 
     def stop(self):
         self.speedH = 0
