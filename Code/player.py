@@ -175,7 +175,7 @@ class Player(pygame.sprite.Sprite):
     def inicio(self, vx, vy):
         logging.info("Inicio Player")
         self.x = random.randint(0, vx)
-        self.y = random.randint(BIAS, vy+BIAS)
+        self.y = random.randint(BIAS, vy)
         self.prev_x = self.x
         self.prev_y = self.y
 
@@ -303,6 +303,7 @@ class Enemigo(pygame.sprite.Sprite):
 
     orientacion = str
     visionImage = None
+    velocidadVisionRotacion = float = 1.5
     visionPos = Vector2
     speedV = 1
     speedH = 1
@@ -323,7 +324,7 @@ class Enemigo(pygame.sprite.Sprite):
         self.kia = KerberosIA.KerberosIA()
         self.vida = 100
         self.visionPos = Vector2 (0, 0)
-        self.angle = 0
+        self.angle = 2
         self.flagDisparo = False
         self.imageEnemigo = load_image("Chainsaw.png", IMG_DIR, alpha=True)
         self.imageEnemigo = pygame.transform.scale(self.imageEnemigo, (22, 22))
@@ -331,18 +332,27 @@ class Enemigo(pygame.sprite.Sprite):
         self.imageJefeEnemigo = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
         self.imageJefeEnemigo = pygame.transform.scale(self.imageJefeEnemigo, (22, 22))
         self.rect = self.imageJefeEnemigo.get_rect()
-        self.visionImage = load_image("linterna.png", "Code/assets", alpha=True)
-        self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
+        # self.visionImage = load_image("linterna.png", "Code/assets", alpha=True)
+        # self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
+        self.visionImage = pygame.Surface((40, 60), pygame.SRCALPHA)
+        # Coordenadas del triángulo (vértice arriba, base abajo)
+        # Vértice cerca del planeta, base en el exterior
+        p1 = (20, 5)   # vértice
+        p2 = (5, 55)   # esquina izquierda base
+        p3 = (35, 55)  # esquina derecha base
+        # Dibujamos triángulo amarillo con alpha 50%
+        color = (199,180,70, 128)  # RGBA → alpha=128 (50%)
+        pygame.draw.polygon(self.visionImage, color, [p1, p2, p3])
         self.visionImage.set_alpha(128)
         self.isJefeEnemigo = False
         self.visionPos = Vector2([Enemigo.x, Enemigo.y])
         self.offset = Vector2(200, 0)
-        self.angle = -45
+        self.angle = 0
 
     def inicio(self, vx, vy):
         logging.info("Inicio Enemigos")
         self.x = random.randint(0, vx)
-        self.y = random.randint(BIAS, vy+BIAS)
+        self.y = random.randint(BIAS, vy)
         self.prev_x = self.x
         self.prev_y = self.y
 
@@ -376,11 +386,10 @@ class Enemigo(pygame.sprite.Sprite):
 
     def vision(self, pos):
         logging.info("Pintamos cono de visión")
-        self.rect = self.visionImage.get_rect(center=pos)
         
     def visionRotar(self):
         logging.info("visión Rotar")
-        self.angle = self.angle - 2
+        self.angle = (self.angle + self.velocidadVisionRotacion) % 360
         # Add the rotated offset vector to the pos vector to get the rect.center.
         # self.visionImage = pygame.transform.rotate(self.visionImage, self.angle)
 

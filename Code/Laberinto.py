@@ -7,6 +7,7 @@ import statistics
 import random
 import os
 import sys
+import math
 
 import pygame
 from pygame.locals import *
@@ -106,10 +107,24 @@ class Maze:
     MazeExtra = pygame.sprite.Group()
     MazeBandera = pygame.sprite.Group()
     MazeLlave = pygame.sprite.Group()
+    MazeLlavePuerta = pygame.sprite.Group()
+    MazeChampi = pygame.sprite.Group()
+    MazeRedStar = pygame.sprite.Group()
+    MazeOro = pygame.sprite.Group()
+    MazeTunnel = pygame.sprite.Group()
+    MazeGranada = pygame.sprite.Group()
     imageHuesos = pygame.image.load("./Resources/Bone.png")
     imagePilaHuesos = pygame.image.load("./Resources/PileOfBones.png")
     imageFinNivel = pygame.image.load("./Resources/banderaPirataRoja2.png")
     imageLlave = pygame.image.load("./Resources/llave.png")
+    imageLlavePuerta = pygame.image.load("./Resources/llave_puerta.png")
+    imageChampi = pygame.image.load("./Resources/powerMushroom.png")
+    imageRedStar = pygame.image.load("./Resources/redstar.png")
+    imageTunnel = pygame.image.load("./Resources/CompuertaTunnel.png")
+    imageGranada = pygame.image.load("./Resources/granada-de-mano.png")
+    imageOro = pygame.image.load("./Resources/Oro.png")
+    imageTNT = pygame.image.load("./Resources/TNT.png")
+    imageTNTAbajo = pygame.image.load("./Resources/TNTAbajo.png")
        
 
     def __init__(self):
@@ -151,27 +166,27 @@ class Maze:
             0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 2, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
             0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
-            0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 9, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 2, 1, 1, 1, 1, 0,
-            0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 13, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
             0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0,
             0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0,
             0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0,
             0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0,
-            0, 3, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0,
+            0, 3, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 8, 1, 1, 0, 1, 0, 1, 11, 1, 0, 1, 1, 0,
             0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0,
             0, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0,
-            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 7, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
-            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 0,
             0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0,
-            0, 1, 6, 1, 1, 1, 2, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 6, 1, 1, 1, 2, 0, 1, 1, 1, 1, 1, 1, 1, 0, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ]
         self.MazeParedes = pygame.sprite.Group()
@@ -244,12 +259,63 @@ class Maze:
                 # self.MazeBandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 # self.MazeBandera.mask = pygame.mask.from_surface(self.imageFinNivel)
 
+            # Accesorios del nivel.
             if self.mazeDataExtra[bx + (by * self.M)] == 6:
                 imagen_escalada = pygame.transform.scale(self.imageLlave, (20, 20))
                 display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 key = pygame.sprite.Sprite()
                 key.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                self.MazeLlave.add(key)
+                self.MazeLlave.add(Doorkey)
+
+            if self.mazeDataExtra[bx + (by * self.M)] == 7:
+                imagen_escalada = pygame.transform.scale(self.imageLlavePuerta, (8, 21))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Doorkey = pygame.sprite.Sprite()
+                Doorkey.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeLlavePuerta.add(Doorkey)
+
+            if self.mazeDataExtra[bx + (by * self.M)] == 8:
+                imagen_escalada = pygame.transform.scale(self.imageChampi, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Champi = pygame.sprite.Sprite()
+                Champi.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeChampi.add(Champi)
+            
+            if self.mazeDataExtra[bx + (by * self.M)] == 9:
+                imagen_escalada = pygame.transform.scale(self.imageRedStar, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                redStar = pygame.sprite.Sprite()
+                redStar.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeRedStar.add(redStar)
+            
+            if self.mazeDataExtra[bx + (by * self.M)] == 10:
+                rect_surf = pygame.Surface((32, 32))
+                rect_surf.set_alpha(128)  # Transparencia 50%
+                rect_surf.fill((200, 200, 200))  # Gris claro
+                display_surf.blit(rect_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                imagen_escalada = pygame.transform.scale(self.imageTunnel, (35, 35))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL-2, by * CASILLA_PIXEL+BIAS-2))
+                Tunnel = pygame.sprite.Sprite()
+                Tunnel.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeTunnel.add(Tunnel)
+            
+            if self.mazeDataExtra[bx + (by * self.M)] == 11:
+                imagen_escalada = pygame.transform.scale(self.imageOro, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Oro = pygame.sprite.Sprite()
+                Oro.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeOro.add(Oro)
+
+            if self.mazeDataExtra[bx + (by * self.M)] == 13:
+                rect_surf = pygame.Surface((15, 15))
+                rect_surf.set_alpha(128)  # Transparencia 50%
+                rect_surf.fill((200, 200, 200))  # Gris claro
+                display_surf.blit(rect_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                imagen_escalada = pygame.transform.scale(self.imageGranada, (15, 15))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                granada = pygame.sprite.Sprite()
+                granada.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeGranada.add(granada)
 
             bx = bx + 1
             if bx > self.M - 1:
@@ -258,8 +324,7 @@ class Maze:
 
     @staticmethod
     def calcularCasilla(valorX, valorY):
-        casilla = int(valorX / NUM_CASILLAS) + (int((valorY-BIAS) / NUM_CASILLAS))
-        casilla = int(casilla)
+        casilla = int(valorX / CASILLA_PIXEL) + (int((valorY-BIAS) / CASILLA_PIXEL))* NUM_CASILLAS
         logging.info("Valor calculado: %s", casilla)
 
         logging.debug("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", valorX, valorY, int(casilla))
@@ -339,7 +404,9 @@ class App:
     HeadBarraDeVida = infoPantalla.barraDeVida()
     HeadReloj = infoPantalla.relojPantalla()
     HeadPuntuacion = infoPantalla.panelPuntuacion()
+    # Tiempo / Iteracion
     tiempo_inicio = None
+    iteracion = int = 0
 
     salir = bool = False
 
@@ -387,52 +454,36 @@ class App:
             self.enemigo = player.Enemigo()
             self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
             self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
+            resultado = self.maze.esAlcanzableCasilla(self.enemigo.casilla)
             pos = posicion(0, 0)
             pos = Maze.calcularPixelPorCasilla(self.enemigo.casilla)
-            resultado = self.maze.esAlcanzableCasilla(self.enemigo.casilla)
-            print(f'**** Es POSICIÓN SUELO ? ', i, self.enemigo.casilla, resultado)
             while not self.maze.esAlcanzableCasilla(self.enemigo.casilla):
                 self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-                print(f'**** Es RANDON VALUES: ', self.enemigo.x, self.enemigo.y)
                 self.enemigo.casilla = Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
                 pos = posicion(0, 0)
                 pos = Maze.calcularPixelPorCasilla(self.enemigo.casilla)
-                print(f'**** CASILLA ENEMIGO: ', i, self.enemigo.casilla)
                 resultado = self.maze.esAlcanzableCasilla(self.enemigo.casilla)
-                print(f'**** Es POSICIÓN SUELO ? ', i, resultado)
             
             self.enemigo.x = pos.x
             self.enemigo.y = pos.y
             self.enemigosArray.append(self.enemigo)
             self.EnemigosGroup.add(self.enemigo)
-
-        logging.info("Contenido grupo Sprites: %s", len(self.EnemigosGroup))
-        logging.info("Cagados todos los enemigos")
         
         # Ubicar al jefe enemigo.
         self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
         self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
-        print(f'**** Enemy LORD RANDOM Position:  ', self.JefeEnemigo.x, self.JefeEnemigo.y)
         pos = posicion(0, 0)
         pos = Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
-        print(f'**** CASILLAS JEFE PARADA: ', self.JefeEnemigo.casilla)
-        print(f'**** Calcular posición JEFE ENEMIGO x=%s, y=%s', pos.x, pos.y)
         resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
-        print(f'**** JEFE, ES POSICIÓN SUELO ? ', resultado)
         while not self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla):
             self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
             self.JefeEnemigo.casilla = Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
-            print(f'**** Ksilla JEFE ENEMIGO ==>', self.JefeEnemigo.casilla)
             pos = posicion(0, 0)
             pos = Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
-            print(f'**** Calcular posición JEFE ENEMIGO x=%s, y=%s', pos.x, pos.y)
-            print(f'**** CASILLA JEFE ENEMIGO: ', i, self.enemigo.casilla)
             resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
-            print(f'**** Es POSICIÓN SUELO ? ', i, self.JefeEnemigo.casilla, resultado)
 
         self.JefeEnemigo.x = pos.x
         self.JefeEnemigo.y = pos.y
-        logging.debug('POsición Jefe ENEMY --> x: %i e y: %i', self.JefeEnemigo.x, self.JefeEnemigo.y)
         # Cargamos Jefe enemigo
 
     def verInfoEnemigos(self):
@@ -894,7 +945,7 @@ class App:
         self.EnemigosGroup.add(self.JefeEnemigo)
         self.JefeEnemigo.pintarJefeEnemigo()
         self.rect = self.JefeEnemigo.imageJefeEnemigo.get_rect()  # rectángulo Sprite Jefe Enemigo
-        self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
+        # self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
 
         # Asignar grupo de paredes al Jefe Enemigo
         self.JefeEnemigo.MazeParedes = self.maze.MazeParedes
@@ -904,7 +955,6 @@ class App:
         # self.wall_surf = pygame.image.load("./Resources/WallBricks.png").convert()
 
     def on_loop(self):
-        self.JefeEnemigo.visionRotar()
         self.player.update()
         self.JefeEnemigo.update()
 
@@ -977,6 +1027,9 @@ class App:
             logging.debug("Pintamos laberinto.")
             self.maze.draw(self.pantalla, self.floor_surf, self.wall_surf)
 
+            if self.iteracion == 35:
+                self.iteracion = 0
+
             # Aquí busco lugar suelo para Jugador
             # Llamada a la IA
             if self.flagInit == True:
@@ -1004,7 +1057,7 @@ class App:
             if self.pintaRectángulos == True:
                 pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
 
-            self.dibujar_cruz(self.pantalla, 200, 200, 20)
+            self.dibujar_cruz(self.pantalla, 202, 702, 20)
 
             smallfont = pygame.font.SysFont('Corbel', 35)
             
@@ -1060,15 +1113,27 @@ class App:
                 if (self.enemigo.flagDisparo == True):
                     self.pantalla.blit(self.enemigo.bala.image, (self.enemigo.bala.x, self.enemigo.bala.y))
 
-            # Jefe Enemigo
+            # Jefe Enemigo + VISIÓN
             logging.debug('Pintamos el JEFE enemigo.')
             self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
             if self.pintaRectángulos == True:
                 pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
-
+            # VISION
             if (self.visionEnemigos == True):
+                self.JefeEnemigo.visionRotar()
                 self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
-                self.pantalla.blit(self.JefeEnemigo.visionImage, (self.JefeEnemigo.x, self.JefeEnemigo.y - 40))
+                centro = (self.JefeEnemigo.x+10, self.JefeEnemigo.y+10)
+                radio = 20
+                x = centro[0] + radio * math.cos(math.radians(self.JefeEnemigo.angle))
+                y = centro[1] + radio * math.sin(math.radians(self.JefeEnemigo.angle))
+                # Calculamos el ángulo de rotación: la cruz debe mirar hacia afuera
+                # → sumamos 90° para que apunte al exterior en lugar de al centro
+                rot_angle = -self.JefeEnemigo.angle + 90
+                # Rotamos la imagen
+                rotated = pygame.transform.rotate(self.JefeEnemigo.visionImage, rot_angle)
+                rect = rotated.get_rect(center=(x, y))
+                # Dibujamos la cruz rotada en su posición orbital
+                self.pantalla.blit(rotated, rect)
 
             # Maze Extra --> Recuadros
             for extra in self.maze.MazeExtra:
@@ -1085,6 +1150,8 @@ class App:
             if (self.JefeEnemigo.flagDisparo == True):
                 logging.debug('Pintamos Disparo DEL JEFE enemigo.')
                 self.pantalla.blit(self.JefeEnemigo.bala.image, (self.JefeEnemigo.bala.x, self.JefeEnemigo.bala.y))
+
+        self.iteracion += 1
 
         # Actualizo valores del HUB.
         self.HeadBarraDeVida.crearBarraDeVida()
