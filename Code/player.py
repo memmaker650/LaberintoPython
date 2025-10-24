@@ -301,6 +301,12 @@ class Enemigo(pygame.sprite.Sprite):
     flagDisparo = bool
     isJefeEnemigo = bool
 
+    alarma = bool = False
+    # bocadilloTexto vars
+    bubble_start_time = pygame.time.get_ticks()
+    bubble_duration = 10000  # 10 segundos
+    fade_duration = 2000     # últimos 2 segundos para desvanecerse
+
     orientacion = str
     visionImage = None
     velocidadVisionRotacion = float = 1.5
@@ -437,6 +443,46 @@ class Enemigo(pygame.sprite.Sprite):
 
     def escalaGrises(self):
         return pygame.transform.grayscale(self.imagen)
+    
+    @staticmethod
+    def bocadilloTexto(surface, text, pos, alpha=255, color=(255, 255, 255), text_color=(0, 0, 0)):
+        """Dibuja un bocadillo de texto con transparencia controlada por alpha."""
+        font = pygame.font.SysFont("arial", 20)
+        text_surf = font.render(text, True, text_color)
+        text_rect = text_surf.get_rect()
+
+        padding = 10
+        bubble_width = text_rect.width + padding * 2
+        bubble_height = text_rect.height + padding * 2
+
+        bubble_rect = pygame.Rect(0, 0, bubble_width, bubble_height)
+        bubble_rect.midbottom = (pos[0], pos[1] - 10)
+
+        # Superficie con canal alfa
+        bubble_surf = pygame.Surface((bubble_width, bubble_height + 10), pygame.SRCALPHA)
+
+        # Color con opacidad (alpha)
+        bubble_color = (*color[:3], alpha)
+
+        # Cuerpo del bocadillo
+        pygame.draw.rect(bubble_surf, bubble_color, (0, 0, bubble_width, bubble_height), border_radius=10)
+
+        # Punta
+        pygame.draw.polygon(bubble_surf, bubble_color, [
+        (bubble_width // 2 - 8, bubble_height),
+        (bubble_width // 2 + 8, bubble_height),
+        (bubble_width // 2, bubble_height + 10)
+        ])
+
+        # Texto (se aplica opacidad igual al bocadillo)
+        text_with_alpha = text_surf.copy()
+        text_with_alpha.fill((255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
+
+        bubble_surf.blit(text_with_alpha, (padding, padding))
+        surface.blit(bubble_surf, bubble_rect.topleft)
+
+    def restarRelojBocadilloTexto(self):
+        self.bubble_start_time = pygame.time.get_ticks()
 
     def disparo(self):
         self.bala = Disparos(self.rect.centerx, self.rect.top)

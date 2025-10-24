@@ -265,10 +265,10 @@ class Maze:
                 display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 key = pygame.sprite.Sprite()
                 key.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                self.MazeLlave.add(Doorkey)
+                self.MazeLlave.add(key)
 
             if self.mazeDataExtra[bx + (by * self.M)] == 7:
-                imagen_escalada = pygame.transform.scale(self.imageLlavePuerta, (8, 21))
+                imagen_escalada = pygame.transform.scale(self.imageLlavePuerta, (9, 21))
                 display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Doorkey = pygame.sprite.Sprite()
                 Doorkey.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
@@ -1135,6 +1135,23 @@ class App:
                 # Dibujamos la cruz rotada en su posición orbital
                 self.pantalla.blit(rotated, rect)
 
+            if(self.JefeEnemigo.alarma):
+                # --- Control del tiempo del bocadillo ---
+                current_time = pygame.time.get_ticks()
+                elapsed = current_time - self.JefeEnemigo.bubble_start_time
+                if elapsed < self.JefeEnemigo.bubble_duration:
+                    # Calculamos opacidad
+                    if elapsed > self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration:
+                        # Fase de desvanecimiento (alpha entre 255 → 0)
+                        alphaBTexto = int(255 * (1 - (elapsed - (self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration)) / self.JefeEnemigo.fade_duration))
+                    else:
+                        alphaBTexto = 255
+
+                    self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", (int(self.JefeEnemigo.x), int(self.JefeEnemigo.y) - 10), alpha=alphaBTexto)
+                else:
+                    self.JefeEnemigo.alarma = False
+                    self.JefeEnemigo.restarRelojBocadilloTexto()
+    
             # Maze Extra --> Recuadros
             for extra in self.maze.MazeExtra:
                 pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
@@ -1253,6 +1270,7 @@ class App:
                         logging.info('¡¡¡ BARRA ESPACIADORA !!!')
                         logging.info('¡Disparo jugador!')
                         self.player.disparo()
+                        self.JefeEnemigo.alarma = True
                     if event.key == pygame.K_r:
                         print("Tecla R presionada")
                         if self.pintaRectángulos == True:
