@@ -4,6 +4,7 @@ import infoPantalla
 
 import logging
 import statistics
+import Sonido
 import random
 import os
 import sys
@@ -64,20 +65,6 @@ def load_image(nombre, dir_imagen, alpha=False):
     else:
         image = image.convert()
     return image
-
-
-def load_sound(nombre, dir_sonido):
-    ruta = os.path.join(dir_sonido, nombre)
-
-    print("Intentar cargar el sonido.")
-
-    try:
-        sonido = pygame.mixer.Sound("../" + ruta)
-    except (pygame.error) as message:
-        print("No se pudo cargar el sonido:", ruta)
-        logging.error("Error, no se puede cargar el sonido: " + ruta)
-        sonido = None
-    return sonido
 
 class estadisticasSquid:
     tiempoNivel = 0
@@ -408,6 +395,9 @@ class App:
     tiempo_inicio = None
     iteracion = int = 0
 
+    Sound = None
+    canalmusicaFondo = None
+
     salir = bool = False
 
     # Inicio el reloj y el Sonido.
@@ -432,6 +422,8 @@ class App:
         self.player = player.Player()  # damos los valores por defecto.
         self.enemigo = player.Enemigo()
         self.JefeEnemigo = player.Enemigo()
+
+        self.Sound = Sonido.Sonido()
 
         self.visionEnemigos = True
         self.tiempo_inicio = pygame.time.get_ticks()
@@ -916,6 +908,7 @@ class App:
         if self.tocaMenu:
             self.menu()
         
+        self.Sound.musica = pygame.mixer.Sound("./Resources/Sonidos/sobrecarga-cibernetica.mp3")
 
         logging.info("Empezamos un juego nuevo.")
         self._running = True
@@ -956,11 +949,16 @@ class App:
 
     def on_loop(self):
         self.player.update()
+
         self.JefeEnemigo.update()
+        ksilla = self.maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
+        self.enemigo.cargarCasillaRecorrido(ksilla)
 
         i = 0
         for i in range(0, self.numEnemigos):
             self.enemigo = self.enemigosArray[i]
+            ksilla = self.maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
+            self.enemigo.cargarCasillaRecorrido(ksilla)
             self.enemigo.update()
             if self.enemigo.flagDisparo == True:
                 self.enemigo.bala.update()
@@ -1283,13 +1281,22 @@ class App:
                            self.visionEnemigos = False
                         else:
                             self.visionEnemigos = True
+                    if event.key == pygame.K_s:
+                        logging.info('Tecla S apretada')
+                        if self.Sound.reproducirMusica == False:
+                           self.canalmusicaFondo = self.Sound.musica.play()  # 🔊 Reproduce el sonido una vez
+                           # musicaFondo.play(loops=-1)  # Si quieres que se repita indefinidamente
+                           self.Sound.musica.set_volume(0.7)
+                           self.Sound.reproducirMusica = True
+                        else:
+                            self.reproducirMusica = False
+                            self.canalmusicaFondo.stop()
                     if event.key == pygame.K_p:
                         if self.Pause == False:
                             self.pause = True
                         else:
                             self.pause = False
                         logging.info('PAUSA PULSADA.')
-
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_RIGHT:
                         self.movimiento = False

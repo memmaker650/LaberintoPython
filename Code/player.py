@@ -7,6 +7,8 @@ import random
 import os
 import sys
 
+import time
+
 import pygame
 from pygame.locals import *
 
@@ -307,6 +309,9 @@ class Enemigo(pygame.sprite.Sprite):
     bubble_duration = 10000  # 10 segundos
     fade_duration = 2000     # últimos 2 segundos para desvanecerse
 
+    posicionesRecorridas = []
+    tiempoOlvido = 5
+
     orientacion = str
     visionImage = None
     velocidadVisionRotacion = float = 1.5
@@ -399,6 +404,7 @@ class Enemigo(pygame.sprite.Sprite):
         # Add the rotated offset vector to the pos vector to get the rect.center.
         # self.visionImage = pygame.transform.rotate(self.visionImage, self.angle)
 
+    # MÉTODO UPDATE 
     def update(self):
         logging.debug('Dentro Update ENEMIGOS.')
         # Guardar posición previa
@@ -415,6 +421,8 @@ class Enemigo(pygame.sprite.Sprite):
         # Actualizar rect tras mover
         self.rect.x = self.x
         self.rect.y = self.y
+
+        self.borrarRecorridosAntiguos()
 
     def revertir_movimiento(self):
         # Revertir a la posición previa tras colisión
@@ -443,9 +451,20 @@ class Enemigo(pygame.sprite.Sprite):
 
     def escalaGrises(self):
         return pygame.transform.grayscale(self.imagen)
-    
+
+    # Aquí guardamos la posición donde está el enemigo donde no está el jugador.
+    def cargarCasillaRecorrido(self, casilla):
+        existe = any(v == 3 for v, t in self.posicionesRecorridas)
+        # Sólo cargamos posiciones que no hayamos recorrido.
+        if not existe:
+            self.posicionesRecorridas.append((casilla, time.time()))
+
+    def borrarRecorridosAntiguos(self):
+        ahora = time.time()
+        self.posicionesRecorridas = [(v, t) for (v, t) in self.posicionesRecorridas if ahora - t < self.tiempoOlvido]
+        
     @staticmethod
-    def bocadilloTexto(surface, text, pos, alpha=255, color=(255, 255, 255), text_color=(0, 0, 0)):
+    def bocadilloTexto(surface, text, pos, alpha, color=(255, 255, 255), text_color=(0, 0, 0)):
         """Dibuja un bocadillo de texto con transparencia controlada por alpha."""
         font = pygame.font.SysFont("arial", 20)
         text_surf = font.render(text, True, text_color)
