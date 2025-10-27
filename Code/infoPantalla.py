@@ -1,3 +1,4 @@
+import logging
 import string
 import pygame
 
@@ -94,18 +95,26 @@ class infoArmasMunicion(pygame.sprite.Sprite):
     municion = [int]
     textoArma = string
     textoMunicion = string
-    armaSeleccionada = None
+    armaSeleccionada = int = None
+    municionArmaSeleccionada = int = None
 
     def __init__(self):
         self.armaSeleccionada = 4
 
         n = 6
         self.Armas = [False] * n
-        self.Armas = True
+        self.Armas[4] = True
         
         n = 6
         self.municion = [0] * n
         self.municion[0] = 1
+
+    def update(self):
+        logging.info("Dentro UPDATE info Armas Municion !!!")
+        self.Armas = [False] * 6
+        self.Armas[self.armaSeleccionada-1] = True
+
+        self.municion[self.armaSeleccionada-1] = self.municionArmaSeleccionada
 
     def definirMunicion(self, armaNum, municion):
         self.Armas[armaNum] = municion
@@ -130,7 +139,7 @@ class infoArmasMunicion(pygame.sprite.Sprite):
         elif self.armaSeleccionada == 6:
             self.textoArma = "Bomba Humo"
         else:
-            print("Opción no válida")
+            print("Arma Opción no válida")
 
         if self.armaSeleccionada == 1:
             self.textoMunicion = str(self.municion[self.armaSeleccionada -1])

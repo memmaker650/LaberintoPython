@@ -384,7 +384,10 @@ class App:
     EnemigosGroup = pygame.sprite.Group() #Incluirá también al jefe Enemigo.
     paredesGroup = pygame.sprite.Group()
     visionEnemigos = bool
+
     pintaRectángulos = bool = True
+    pintaVision = bool = True
+
     # Valores Cabecera
     HeadGunAmmo = infoPantalla.infoArmasMunicion()
     HeadNivel = infoPantalla.infoNivel()
@@ -964,7 +967,7 @@ class App:
                 self.enemigo.bala.update()
 
         if self.player.flagDisparo == True:
-            self.player.bala.update()
+            self.player.balas.update()
 
         if self.JefeEnemigo.flagDisparo == True:
             self.JefeEnemigo.bala.update()
@@ -1151,15 +1154,15 @@ class App:
                     self.JefeEnemigo.restarRelojBocadilloTexto()
     
             # Maze Extra --> Recuadros
-            for extra in self.maze.MazeExtra:
-                pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
+            if self.pintaRectángulos == True:
+                for extra in self.maze.MazeExtra:
+                    pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
 
             # Pintar disparos del Player
             if(self.player.flagDisparo == True):
                 logging.debug('DISPARO DeL Player.')
-                self.pantalla.blit(self.player.bala.image, (self.player.bala.x, self.player.bala.y))
                 self.player.balas.draw(self.pantalla)
-                self.player.flagDisparo = False
+                # self.player.flagDisparo = False
 
             # Pintar disparos de Jefe Enemigo
             if (self.JefeEnemigo.flagDisparo == True):
@@ -1168,13 +1171,16 @@ class App:
 
         self.iteracion += 1
 
+        self.HeadGunAmmo.armaSeleccionada = 2
+        self.HeadGunAmmo.municionArmaSeleccionada = self.player.municion
+        self.HeadGunAmmo.update()
+
         # Actualizo valores del HUB.
         self.HeadBarraDeVida.crearBarraDeVida()
         self.HeadNivel.conversionTexto()
         self.HeadReloj.conversionTexto()
         self.HeadPuntuacion.conversionTexto()
         self.HeadGunAmmo.conversionTexto()
-        
 
         # Pinto los valores del HUB o cabecera de valores.
         logging.debug("Pintando la Cabecera de Valores")
@@ -1189,7 +1195,6 @@ class App:
         self.pantalla.blit(puntos_text, (600, 40))
         puntos_text = font.render(f"Ammo: {self.HeadGunAmmo.textoMunicion}", True, (0, 0, 255))  # Azul
         self.pantalla.blit(puntos_text, (600, 70))
-
 
         # Reloj
         # Calculos
@@ -1269,18 +1274,20 @@ class App:
                         logging.info('¡Disparo jugador!')
                         self.player.disparo()
                         self.JefeEnemigo.alarma = True
-                    if event.key == pygame.K_r:
+                    if event.key == pygame.K_c:
                         print("Tecla R presionada")
                         if self.pintaRectángulos == True:
                            self.pintaRectángulos = False
                         else:
                             self.pintaRectángulos = True 
+                    if event.key == pygame.K_k:
+                        logging.info('Tecla K presionada')
                     if event.key == pygame.K_v:
                         logging.info('Tecla V presionada')
-                        if self.visionEnemigos == True:
-                           self.visionEnemigos = False
+                        if self.pintaVision == True:
+                           self.pintaVision = False
                         else:
-                            self.visionEnemigos = True
+                            self.pintaVision = True 
                     if event.key == pygame.K_s:
                         logging.info('Tecla S apretada')
                         if self.Sound.reproducirMusica == False:

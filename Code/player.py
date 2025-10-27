@@ -106,12 +106,14 @@ def detectar_colision(rect1, rect2):
 class Disparos(pygame.sprite.Sprite):
     x = int
     y = int
-    municion = 0
+    # 1 Izq 2 Arriba 3 Dcha 4 Abajo
+    orientacion = int = 4
 
     def __init__(self, dx, dy):
         super().__init__()
-        self.image = load_image("disparo.png", "assets", alpha=True)
-        #self.image = pygame.transform.scale(pygame.image.load("assets/disparo.png").convert(), (10, 20))
+        logging.info("INIT clase DISPARO.")
+        self.image = load_image("disparo.png", "./Code/assets/", alpha=True)
+        # self.image = pygame.transform.scale(pygame.image.load("./Code/assets/disparo.png").convert(), (10, 20))
         self.image = pygame.transform.scale(self.image, (10, 20))
         self.rect = self.image.get_rect()
         self.rect.x = dx
@@ -134,7 +136,7 @@ class Disparos(pygame.sprite.Sprite):
 
     def update(self):
         logging.info('Dentro UPDATE BALA.')
-        self.rect.y -= 5
+        self.rect.y -= 1
 
         if self.rect.x < 0:
             self.kill()
@@ -161,6 +163,8 @@ class Player(pygame.sprite.Sprite):
     speedH = 2
     image = None
     rect = None
+    arma = int = 2
+    municion = int = 10
     bala = Disparos
     balas = pygame.sprite.Group()
     MazeParedes = pygame.sprite.Group
@@ -252,8 +256,9 @@ class Player(pygame.sprite.Sprite):
         # Actualizar el rectángulo de colisión con la posición actual
         self.rect.x = self.x
         self.rect.y = self.y
-        
         logging.info("Player INFO: Velocidad V %s y VeloH %s", self.speedV, self.speedH)
+
+
 
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)
@@ -262,11 +267,12 @@ class Player(pygame.sprite.Sprite):
         return pygame.transform.grayscale(self.imagen)
 
     def disparo(self):
-        if self.bala.municion > 0:
+        if self.municion > 0:
+            logging.info("Player DISPARO: Hay munición.")
             self.bala = Disparos(self.x, self.y)
             self.balas.add(self.bala)
             self.flagDisparo = True
-            self.bala.municion -= 1
+            self.municion -= 1
 
 class Explosiones(pygame.sprite.Sprite):
     def __init__(self, centro, dimensiones):
