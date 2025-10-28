@@ -3,6 +3,7 @@ import KerberosIA
 
 import logging
 import statistics
+import Sonido
 import random
 import os
 import sys
@@ -136,7 +137,7 @@ class Disparos(pygame.sprite.Sprite):
 
     def update(self):
         logging.info('Dentro UPDATE BALA.')
-        self.rect.y -= 1
+        self.rect.y -= 3
 
         if self.rect.x < 0:
             self.kill()
@@ -169,6 +170,14 @@ class Player(pygame.sprite.Sprite):
     balas = pygame.sprite.Group()
     MazeParedes = pygame.sprite.Group
 
+    llavePuerta = bool = False
+    llaveFinNivel = bool = False
+    pistola = bool = True
+    granada = bool = False
+    laser = bool = False
+
+    sonidoDisparo = Sonido.Sonido()
+
     def __init__(self):
         logging.info("Init Player")
         super().__init__()
@@ -177,6 +186,7 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (22, 22))
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
+        self.sonidoDisparo.musica = pygame.mixer.Sound("./Resources/Sonidos/gunshot.mp3")
 
     def inicio(self, vx, vy):
         logging.info("Inicio Player")
@@ -273,6 +283,7 @@ class Player(pygame.sprite.Sprite):
             self.balas.add(self.bala)
             self.flagDisparo = True
             self.municion -= 1
+            self.canalDisparo = self.sonidoDisparo.musica.play()
 
 class Explosiones(pygame.sprite.Sprite):
     def __init__(self, centro, dimensiones):

@@ -138,8 +138,6 @@ class infoArmasMunicion(pygame.sprite.Sprite):
             self.textoArma = "Laser"
         elif self.armaSeleccionada == 6:
             self.textoArma = "Bomba Humo"
-        else:
-            print("Arma Opción no válida")
 
         if self.armaSeleccionada == 1:
             self.textoMunicion = str(self.municion[self.armaSeleccionada -1])
@@ -153,5 +151,3 @@ class infoArmasMunicion(pygame.sprite.Sprite):
             self.textoMunicion = str(self.municion[self.armaSeleccionada -1])
         elif self.armaSeleccionada == 6:
             self.textoMunicion = str(self.municion[self.armaSeleccionada -1])
-        else:
-            print("Ammo Opción no válida")

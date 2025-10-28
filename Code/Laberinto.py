@@ -90,8 +90,12 @@ class posicion:
 class Maze:
     M = NUM_CASILLAS
     N = NUM_CASILLAS
+
     MazeParedes = pygame.sprite.Group()
     MazeExtra = pygame.sprite.Group()
+    
+    MazeHueso = pygame.sprite.Group()
+    MazePilaHuesos = pygame.sprite.Group()
     MazeBandera = pygame.sprite.Group()
     MazeLlave = pygame.sprite.Group()
     MazeLlavePuerta = pygame.sprite.Group()
@@ -100,6 +104,7 @@ class Maze:
     MazeOro = pygame.sprite.Group()
     MazeTunnel = pygame.sprite.Group()
     MazeGranada = pygame.sprite.Group()
+    
     imageHuesos = pygame.image.load("./Resources/Bone.png")
     imagePilaHuesos = pygame.image.load("./Resources/PileOfBones.png")
     imageFinNivel = pygame.image.load("./Resources/banderaPirataRoja2.png")
@@ -113,6 +118,17 @@ class Maze:
     imageTNT = pygame.image.load("./Resources/TNT.png")
     imageTNTAbajo = pygame.image.load("./Resources/TNTAbajo.png")
        
+    flagHuesos = bool = True
+    flagPilaHuesos = bool = True
+    flagBanderaFinNivel = bool = True
+    flagLlave = bool = True
+    flagLlavePuerta = bool = True
+    flagChampi = bool = True
+    flagRedStar = bool = True
+    flagTunnel = bool = True
+    flagGranada = bool = True
+    flagOro = bool = True
+    flagTNT = bool = True
 
     def __init__(self):
         self.M = NUM_CASILLAS
@@ -217,25 +233,18 @@ class Maze:
                 rectSuelo = pygame.sprite.Sprite()
                 rectSuelo.image = pygame.Surface([bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS])
                 rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, 32, 32)
-                
-                # pygame.draw.rect(display_surf, ROJO, rectSuelo) # Pintar paredes de Rojo
 
-                # textWallMark = xfont.render(str(i), True, (0, 80, 0))
-                # X = pygame.sprite
-                # X = textWallMark
-                # textWallDebug.add(X)
-
-            if self.mazeDataExtra[bx + (by * self.M)] == 2:
+            if self.mazeDataExtra[bx + (by * self.M)] == 2 and self.flagHuesos:
                 display_surf.blit(self.imageHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 huesos = pygame.sprite.Sprite()
                 huesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL +BIAS, 32, 32)
-                self.MazeExtra.add(huesos) 
+                self.MazeHueso.add(huesos) 
 
-            if self.mazeDataExtra[bx + (by * self.M)] == 3:
+            if self.mazeDataExtra[bx + (by * self.M)] == 3 and self.flagPilaHuesos:
                 display_surf.blit(self.imagePilaHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Pilahuesos = pygame.sprite.Sprite()
                 Pilahuesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                self.MazeExtra.add(Pilahuesos) 
+                self.MazePilaHuesos.add(Pilahuesos) 
 
             if self.mazeDataExtra[bx + (by * self.M)] == 4:
                 display_surf.blit(self.imageFinNivel, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
@@ -247,28 +256,28 @@ class Maze:
                 # self.MazeBandera.mask = pygame.mask.from_surface(self.imageFinNivel)
 
             # Accesorios del nivel.
-            if self.mazeDataExtra[bx + (by * self.M)] == 6:
+            if self.mazeDataExtra[bx + (by * self.M)] == 6 and self.flagLlave:
                 imagen_escalada = pygame.transform.scale(self.imageLlave, (20, 20))
                 display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 key = pygame.sprite.Sprite()
                 key.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 self.MazeLlave.add(key)
 
-            if self.mazeDataExtra[bx + (by * self.M)] == 7:
+            if self.mazeDataExtra[bx + (by * self.M)] == 7 and self.flagLlavePuerta:
                 imagen_escalada = pygame.transform.scale(self.imageLlavePuerta, (9, 21))
                 display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Doorkey = pygame.sprite.Sprite()
                 Doorkey.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 self.MazeLlavePuerta.add(Doorkey)
 
-            if self.mazeDataExtra[bx + (by * self.M)] == 8:
+            if self.mazeDataExtra[bx + (by * self.M)] == 8 and self.flagChampi:
                 imagen_escalada = pygame.transform.scale(self.imageChampi, (20, 20))
                 display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Champi = pygame.sprite.Sprite()
                 Champi.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 self.MazeChampi.add(Champi)
             
-            if self.mazeDataExtra[bx + (by * self.M)] == 9:
+            if self.mazeDataExtra[bx + (by * self.M)] == 9 and self.flagRedStar:
                 imagen_escalada = pygame.transform.scale(self.imageRedStar, (20, 20))
                 display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 redStar = pygame.sprite.Sprite()
@@ -286,14 +295,14 @@ class Maze:
                 Tunnel.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 self.MazeTunnel.add(Tunnel)
             
-            if self.mazeDataExtra[bx + (by * self.M)] == 11:
+            if self.mazeDataExtra[bx + (by * self.M)] == 11 and self.flagOro:
                 imagen_escalada = pygame.transform.scale(self.imageOro, (20, 20))
                 display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Oro = pygame.sprite.Sprite()
                 Oro.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 self.MazeOro.add(Oro)
 
-            if self.mazeDataExtra[bx + (by * self.M)] == 13:
+            if self.mazeDataExtra[bx + (by * self.M)] == 13 and self.flagGranada:
                 rect_surf = pygame.Surface((15, 15))
                 rect_surf.set_alpha(128)  # Transparencia 50%
                 rect_surf.fill((200, 200, 200))  # Gris claro
@@ -1012,11 +1021,35 @@ class App:
             for cpcE in colision_PlayerConExtra:
                 logging.info(f'Huesos tocados')
 
+        # Colisión Player con llave puerta
+        colision_PlayerConLlavePuerta = pygame.sprite.spritecollide(self.player, self.maze.MazeLlavePuerta, True)
+        if colision_PlayerConLlavePuerta:
+            logging.info('Llave PUERTA cogida')
+            print('Llave PUERTA cogida')
+            self.player.llavePuerta = True
+            self.maze.MazeLlavePuerta.empty()
+            self.maze.flagLlavePuerta = False
+            # Opcional: procesar cada enemigo que colisionó
+            for cpcE in colision_PlayerConLlavePuerta:
+                logging.info(f'Llave PUERTA tocados')
+
+        # Colisión de Player con Llave fin de pantalla.
+        colision_PlayerConLlaveFinal = pygame.sprite.spritecollide(self.player, self.maze.MazeLlave, True)
+        if colision_PlayerConLlaveFinal:
+            logging.info('Llave FINAL IMPACTADA')
+            print('Llave FINAL cogida')
+            self.player.llaveFinNivel = True
+            self.maze.MazeLlave.empty()
+            self.maze.flagLlave = False
+            # Opcional: procesar cada enemigo que colisionó
+            for cpcE in colision_PlayerConLlaveFinal:
+                logging.info(f'Llave PUERTA tocados')
+
         # Colisión de Bandera FIN Pantalla del Escenario con Player
         colision_PlayerConBandera = pygame.sprite.spritecollide(self.player, self.maze.MazeBandera, False)
         if colision_PlayerConBandera:
             logging.info('Bandera Final IMPACTADA')
-            # print('Bandera Final IMPACTADA')
+            print('Bandera Final IMPACTADA')
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConBandera:
                 logging.info('Bandera tocada')
@@ -1062,7 +1095,7 @@ class App:
 
             smallfont = pygame.font.SysFont('Corbel', 35)
             
-            position = self.maze.calcularPixelPorCasilla(27)
+            """ position = self.maze.calcularPixelPorCasilla(27)
             if self.maze.esAlcanzable(position.x, position.y):
                 text1 = smallfont.render('27', True, (255, 165, 0))
             else:
@@ -1095,7 +1128,7 @@ class App:
                 text1 = smallfont.render('24', True, (255, 165, 0))
             else:
                 text1 = smallfont.render('24', True, (255, 255, 255))
-            self.pantalla.blit(text1, (position.x, position.y))
+            self.pantalla.blit(text1, (position.x, position.y)) """
 
             # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
             logging.debug("Pintamos los enemigos.")
@@ -1184,6 +1217,32 @@ class App:
 
         # Pinto los valores del HUB o cabecera de valores.
         logging.debug("Pintando la Cabecera de Valores")
+
+        # Objetos adquiridos (Llaves & Armas)
+        if self.player.llavePuerta:
+            imagenPanel1 = pygame.image.load("./Resources/llave_puerta.png")
+            imagen_escalada = pygame.transform.scale(imagenPanel1, (7, 21))
+            self.pantalla.blit(imagen_escalada, (620, 110))
+
+        if self.player.llaveFinNivel:
+            imagenPanel2 = pygame.image.load("./Resources/llave.png")
+            imagen_escalada = pygame.transform.scale(imagenPanel2, (20, 20))
+            self.pantalla.blit(imagen_escalada, (660, 110))
+        
+        if self.player.pistola:
+            imagenPanel3 = pygame.image.load("./Resources/pistola.png")
+            imagen_escalada = pygame.transform.scale(imagenPanel3, (25, 25))
+            self.pantalla.blit(imagen_escalada, (700, 110))
+
+        if self.player.granada:
+            imagenPanel4 = pygame.image.load("./Resources/granada-de-mano.png")
+            imagen_escalada = pygame.transform.scale(imagenPanel4, (20, 20))
+            self.pantalla.blit(imagen_escalada, (740, 110))
+        
+        if self.player.laser:
+            imagenPanel5 = pygame.image.load("./Resources/pistola-laser.png")
+            imagen_escalada = pygame.transform.scale(imagenPanel5, (20, 20))
+            self.pantalla.blit(imagen_escalada, (780, 110))
 
         # Puntuación
         font = pygame.font.SysFont('Arial', 32)
@@ -1275,7 +1334,7 @@ class App:
                         self.player.disparo()
                         self.JefeEnemigo.alarma = True
                     if event.key == pygame.K_c:
-                        print("Tecla R presionada")
+                        print("Tecla C presionada")
                         if self.pintaRectángulos == True:
                            self.pintaRectángulos = False
                         else:
