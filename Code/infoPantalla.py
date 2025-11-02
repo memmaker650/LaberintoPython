@@ -60,6 +60,20 @@ class infoNivel(pygame.sprite.Sprite):
     def conversionTexto(self):
         self.textoNivel = str(self.NumeroNivel)
 
+class infoHuesos(pygame.sprite.Sprite):
+    NumeroHuesos = int
+    textoHuesos = string
+
+    def __init__(self):
+        self.NumeroHuesos = 0
+        self.textoHuesos = "0"
+
+    def definirNumeroNivel(self, NN):
+        self.NumeroHuesos = NN
+
+    def conversionTexto(self):
+        self.textoHuesos = str(self.NumeroHuesos)
+
 class relojPantalla(pygame.sprite.Sprite):
     maxTiempo = int = 90
     tiempoActual = float

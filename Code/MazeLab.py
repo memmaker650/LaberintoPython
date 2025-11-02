@@ -55,6 +55,7 @@ class Maze:
     MazeOro = pygame.sprite.Group()
     MazeTunnel = pygame.sprite.Group()
     MazeGranada = pygame.sprite.Group()
+    MazeBotiquin = pygame.sprite.Group()
     
     imageHuesos = pygame.image.load("./Resources/Bone.png")
     imagePilaHuesos = pygame.image.load("./Resources/PileOfBones.png")
@@ -68,6 +69,7 @@ class Maze:
     imageOro = pygame.image.load("./Resources/Oro.png")
     imageTNT = pygame.image.load("./Resources/TNT.png")
     imageTNTAbajo = pygame.image.load("./Resources/TNTAbajo.png")
+    imageBotiquin = pygame.image.load("./Resources/medical-box.png")
        
     flagHuesos = bool = True
     flagPilaHuesos = bool = True
@@ -80,6 +82,7 @@ class Maze:
     flagGranada = bool = True
     flagOro = bool = True
     flagTNT = bool = True
+    flagBotiquin = bool = True
 
     ObjetosNoPintar = []
 
@@ -122,7 +125,7 @@ class Maze:
             0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 2, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
             0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0,
-            0, 1, 9, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
+            0, 1, 9, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 15, 1, 1, 0,
             0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 2, 1, 1, 1, 1, 0,
             0, 13, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,
             0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0,
@@ -274,6 +277,13 @@ class Maze:
 
             if self.mazeDataExtra[bx + (by * self.M)] == 44:
                 self.posicionInitJugador = bx + (by * self.M)  # Casilla
+            
+            if self.mazeDataExtra[bx + (by * self.M)] == 15 and self.flagBotiquin:
+                imagen_escalada = pygame.transform.scale(self.imageBotiquin, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Botiquin = pygame.sprite.Sprite()
+                Botiquin.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeBotiquin.add(Botiquin)
 
             bx = bx + 1
             if bx > self.M - 1:

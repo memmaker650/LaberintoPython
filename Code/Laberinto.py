@@ -113,6 +113,7 @@ class App:
     HeadBarraDeVida = infoPantalla.barraDeVida()
     HeadReloj = infoPantalla.relojPantalla()
     HeadPuntuacion = infoPantalla.panelPuntuacion()
+    HeadHuesos = infoPantalla.infoHuesos()
     # Tiempo / Iteracion
     tiempo_inicio = None
     iteracion = int = 0
@@ -778,6 +779,7 @@ class App:
             logging.info('Hueso simple IMPACTADO')
             print('HuesO o BONE: ', len(colision_PlayerConHueso))
             self.HeadPuntuacion.puntos += 10
+            self.HeadHuesos.NumeroHuesos += 1
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConHueso:
                 logging.info(f'Hueso Sólo tocado')
@@ -808,9 +810,22 @@ class App:
             self.maze.MazePilaHuesos.empty()
             self.maze.flagPilaHuesos = False
             self.HeadPuntuacion.puntos += 50
+            self.HeadHuesos.NumeroHuesos += 10
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConPilaHueso:
                 logging.info(f'Pila de Huesos  tocado')
+        
+        # Colisión de Player con Botiquin.
+        colision_PlayerConBotiquin = pygame.sprite.spritecollide(self.player, self.maze.MazeBotiquin, True)
+        if colision_PlayerConBotiquin:
+            logging.info('Botiquin IMPACTADo')
+            print('Botiquin cogida')
+            self.maze.MazeBotiquin.empty()
+            self.maze.flagBotiquin = False
+            self.HeadBarraDeVida.vida += 30
+            # Opcional: procesar cada enemigo que colisionó
+            for cpcE in colision_PlayerConBotiquin:
+                logging.info(f'Botiquin tocado')
 
         # Colisión de Bandera FIN Pantalla del Escenario con Player
         colision_PlayerConBandera = pygame.sprite.spritecollide(self.player, self.maze.MazeBandera, False)
@@ -973,6 +988,7 @@ class App:
         self.HeadReloj.conversionTexto()
         self.HeadPuntuacion.conversionTexto()
         self.HeadGunAmmo.conversionTexto()
+        self.HeadHuesos.conversionTexto()
 
         # Pinto los valores del HUB o cabecera de valores.
         logging.debug("Pintando la Cabecera de Valores")
@@ -1010,10 +1026,14 @@ class App:
 
         # Arma y Munición
         font = pygame.font.SysFont('Arial', 32)
-        puntos_text = font.render(f"Arma: {self.HeadGunAmmo.textoArma}", True, (0, 0, 255))  # Azul
+        puntos_text = font.render(f"Arma: ", True, (100, 100, 100))  # Azul
         self.pantalla.blit(puntos_text, (600, 40))
-        puntos_text = font.render(f"Ammo: {self.HeadGunAmmo.textoMunicion}", True, (0, 0, 255))  # Azul
+        puntos_text = font.render(f"{self.HeadGunAmmo.textoArma}", True, (255, 255, 255))  # Azul
+        self.pantalla.blit(puntos_text, (720, 40))
+        puntos_text = font.render(f"Munición: ", True, (100, 100, 100))  # Azul
         self.pantalla.blit(puntos_text, (600, 70))
+        puntos_text = font.render(f"{self.HeadGunAmmo.textoMunicion}", True, (255, 255, 255))  # Azul
+        self.pantalla.blit(puntos_text, (750, 70))
 
         # Reloj
         # Calculos
@@ -1026,30 +1046,45 @@ class App:
         if self.HeadReloj.tiempoInteger == 0:
             # Aquí podrías mostrar mensaje "¡Tiempo agotado!"
             pass
-
+        imagenPanel3 = pygame.image.load("./Resources/clock.png")
+        imagen_escalada = pygame.transform.scale(imagenPanel3, (40, 40))
+        self.pantalla.blit(imagen_escalada, (360, 10))
         font = pygame.font.SysFont('Arial', 40)
-        puntos_text = font.render(f"Reloj: {self.HeadReloj.textoReloj}", True, (255, 255, 255))  # Blanco
-        self.pantalla.blit(puntos_text, (300, 10))
+        puntos_text = font.render(f"{self.HeadReloj.textoReloj}", True, (255, 255, 255))  # Blanco
+        self.pantalla.blit(puntos_text, (420, 10))
 
         # Nivel
         font = pygame.font.SysFont('Arial', 40)
-        puntos_text = font.render(f"Level: {self.HeadNivel.textoNivel}", True, (0, 0, 255))  # Blanco
-        self.pantalla.blit(puntos_text, (300, 50))
+        puntos_text = font.render(f"Level: ", True, (100, 100, 100))  # Azúl
+        self.pantalla.blit(puntos_text, (360, 50))
+        puntos_text = font.render(f"{self.HeadNivel.textoNivel}", True, (0, 0, 255))  # Azúl
+        self.pantalla.blit(puntos_text, (480, 50))
+
+        # Huesos
+        font = pygame.font.SysFont('Arial', 32)
+        puntos_text = font.render(f"Huesos:", True, (100, 100, 100))  # Azúl
+        self.pantalla.blit(puntos_text, (360, 90))
+        puntos_text = font.render(f"{self.HeadHuesos.textoHuesos}", True, (255, 255, 255))  # Azúl
+        self.pantalla.blit(puntos_text, (485, 90))
+
+        # Nombre Jugador
+        font = pygame.font.SysFont('Arial', 32)
+        puntos_text = font.render(f"Memmaker650", True, (100, 100, 100))  # Azúl
+        self.pantalla.blit(puntos_text, (10, 10))
 
         # Barra de Vida
-        
-        self.pantalla.blit(self.HeadBarraDeVida.spriteBarraDeVida, (10, 10))
+        self.pantalla.blit(self.HeadBarraDeVida.spriteBarraDeVida, (10, 50))
         # Barra de Vida (Porcentaje)
         font = pygame.font.SysFont('Arial', 27)
         puntos_text = font.render(f"{self.HeadBarraDeVida.textoVida}", True, (255, 255, 255))  # Blanco
-        self.pantalla.blit(puntos_text, (85, 20))
+        self.pantalla.blit(puntos_text, (85, 60))
 
         #FPS
         fps = int(self.clock.get_fps())
         font = pygame.font.SysFont('Arial', 20)
         fps_text = font.render(f"FPS: {fps}", True, (255, 255, 0))  # Amarillo
         logging.debug("FPS de pintado : %i", fps)
-        self.pantalla.blit(fps_text, (10, 100))
+        self.pantalla.blit(fps_text, (10, 110))
 
         pygame.display.flip() # Aquí es donde ploteamos todo.
 
