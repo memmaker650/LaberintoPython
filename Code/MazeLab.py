@@ -324,7 +324,7 @@ class Maze:
 
     def esAlcanzableCasilla(self, casilla):
         logging.info("Dentro Método alcanzable KASILLA")
-        print("MazeLab:", casilla)
+        # print("MazeLab:", casilla)
 
         #if casilla > (NUM_CASILLAS*NUM_CASILLAS) or casilla < 0: 
         #    if casilla < 0 :

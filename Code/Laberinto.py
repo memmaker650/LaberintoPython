@@ -820,24 +820,12 @@ class App:
             # Llamada a la IA
             if self.flagInit == True:
                 self.flagInit = False
-                if self.maze.esAlcanzable(self.player.x, self.player.y):
-                    self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-                else:
-                    # self.player.x = random.randint(0, SCREEN_WIDTH)
-                    # self.player.y = random.randint(0, SCREEN_HEIGHT)
-                    # self.player.casilla = MazeLab.Maze.calcularCasilla(self.player.x, self.player.y)
-                    # pos = posicion(0, 0)
-                    print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
-                    self.player.casilla = self.maze.posicionInitJugador
-                    while not self.maze.esAlcanzableCasilla(self.player.casilla):
-                        print("No Debe estar dentro")
-                        self.player.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-                        self.player.casilla = MazeLab.Maze.calcularCasilla(self.player.x, self.player.y)
-                        
-                    pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
-                    self.player.x = pos.x
-                    self.player.y = pos.y + BIAS
-                    self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+                print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
+                self.player.casilla = self.maze.posicionInitJugador    
+                pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
+                self.player.x = pos.x
+                self.player.y = pos.y
+                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
             else:
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
             
@@ -848,13 +836,15 @@ class App:
 
             smallfont = pygame.font.SysFont('Corbel', 35)
             
-            """ position = self.maze.calcularPixelPorCasilla(27)
+            """
+            position = self.maze.calcularPixelPorCasilla(665)
             if self.maze.esAlcanzable(position.x, position.y):
-                text1 = smallfont.render('27', True, (255, 165, 0))
+                text1 = smallfont.render('X', True, (255, 165, 0))
             else:
-                text1 = smallfont.render('27', True, (255, 255, 255))
+                text1 = smallfont.render('X', True, (255, 255, 255))
             self.pantalla.blit(text1, (position.x, position.y))
 
+             
             position = self.maze.calcularPixelPorCasilla(36)
             if self.maze.esAlcanzable(position.x, position.y):
                 text1 = smallfont.render('36', True, (255, 165, 0))

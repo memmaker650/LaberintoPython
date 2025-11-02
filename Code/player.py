@@ -316,7 +316,7 @@ class Enemigo(pygame.sprite.Sprite):
     posicionesRecorridas = []
     tiempoOlvido = 5
 
-    orientacion = str  # 0 Arriba 1 Derecha 2 Abajo 3 Izquierda
+    orientacion = int  # 0 Arriba 1 Derecha 2 Abajo 3 Izquierda
 
     visionImage = None
     velocidadVisionRotacion = float = 1.5
@@ -479,15 +479,15 @@ class Enemigo(pygame.sprite.Sprite):
         # Cambio simple de dirección: invertir velocidad vertical
         self.speedV = -self.speedV 
 
-        if self.orientation == 0:
-            self.orientation = 2
-        elif self.orientation == 2:
-            self.orientation = 0
-        elif self.orientation == 1:
-            self.orientation = 3
-        elif self.orientation == 3:
-            self.orientation = 1
-            
+        if self.orientacion == 0:
+            self.orientacion = 2
+        elif self.orientacion == 2:
+            self.orientacion = 0
+        elif self.orientacion == 1:
+            self.orientacion = 3
+        elif self.orientacion == 3:
+            self.orientacion = 1
+
         self.kia.orientacion = self.orientacion
         # Pequeño desplazamiento para evitar quedarse pegado
         #self.rect.y = self.y

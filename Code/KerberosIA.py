@@ -73,9 +73,6 @@ class KerberosIA:
             self.orientation = 3
         elif self.orientation == 3:
             self.orientation = 1
-            
-        # Pequeño desplazamiento para evitar quedarse pegado
-        #self.rect.y = self.y
 
     def gritarAlarma(self):
         alarma = True;
@@ -119,20 +116,25 @@ class KerberosIA:
     def update(self):
         self.revisarCasillasAdyacentes()
         result = self.casillasLibres.count(True)
-        if result > 0:
-            valor = random.randint(0, result-1)
-            print("valor1: ", valor)
-            print("tamaño vector: ", len(self.casillasLibres))
-            while self.casillasLibres[valor]:
-                valor += 1
-        else:
-            self.casillasLibres = self.casillasLibresVuelta
-            result = self.casillasLibres.count(True)
-            valor = random.randint(0, result-1)
-            print("valor 2: ", valor)
-            print("tamaño vector: ", len(self.casillasLibres))
-            while self.casillasLibres[valor]:
-                valor += 1
+
+        if not self.colisionParedes:
+            if result > 0:
+                valor = random.randint(0, result-1)
+                # print("valor1: ", valor)
+                # print("tamaño vector: ", len(self.casillasLibres))
+                while not self.casillasLibres[valor]:
+                    valor += 1
+            else:
+                self.casillasLibres = self.casillasLibresVuelta
+                result = self.casillasLibres.count(True)
+                valor = random.randint(0, result-1)
+                # print("valor 2: ", valor)
+                # print("tamaño vector: ", len(self.casillasLibres))
+                while not self.casillasLibres[valor]:
+                    valor += 1
+        else: 
+            self.cambiar_direccion()
+            valor = self.orientacion
 
         # Devolvemos la dirección a donde se va a mover el Enemigo.        
         return valor
