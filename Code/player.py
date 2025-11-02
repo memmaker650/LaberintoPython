@@ -1,8 +1,10 @@
+from plyer import orientation
 import mates
 import KerberosIA
 
 import logging
 import statistics
+import MazeLab
 import Sonido
 import random
 import os
@@ -40,22 +42,6 @@ BIAS = 136
 
 # Directorio de imágenes principal
 carpeta_imagenes = os.path.join(IMG_DIR, "imagenes")
-
-# # Explosiones
-# animacion_explosion1 = {'t1': [], 't2': [], 't3': [], 't4': []}
-#
-# for x in range(24):
-#     archivo_explosiones = f'expl_01_00{x:02d}.png'
-# 	imagenes = pygame.image.load(os.path.join(carpeta_imagenes_explosiones, archivo_explosiones)).convert()
-# 	imagenes.set_colorkey(NEGRO)
-# 	imagenes_t1 = pygame.transform.scale(imagenes, (32,32))
-# 	animacion_explosion1['t1'].append(imagenes_t1)
-# 	imagenes_t2 = pygame.transform.scale(imagenes, (64,64))
-# 	animacion_explosion1['t2'].append(imagenes_t2)
-# 	imagenes_t3 = pygame.transform.scale(imagenes, (128, 128))
-# 	animacion_explosion1['t3'].append(imagenes_t3)
-# 	imagenes_t4 = pygame.transform.scale(imagenes, (256, 256))
-# 	animacion_explosion1['t4'].append(imagenes_t4)
 
 IMG_DIR = "./Resources"
 # Especificación de la paleta de colores
@@ -172,6 +158,7 @@ class Player(pygame.sprite.Sprite):
 
     llavePuerta = bool = False
     llaveFinNivel = bool = False
+    champi = bool = False
     pistola = bool = True
     granada = bool = False
     laser = bool = False
@@ -317,8 +304,8 @@ class Enemigo(pygame.sprite.Sprite):
     casilla = 0
 
     vida = int
-    flagDisparo = bool
-    isJefeEnemigo = bool
+    flagDisparo = bool = False
+    isJefeEnemigo = bool = False
 
     alarma = bool = False
     # bocadilloTexto vars
@@ -329,7 +316,8 @@ class Enemigo(pygame.sprite.Sprite):
     posicionesRecorridas = []
     tiempoOlvido = 5
 
-    orientacion = str
+    orientacion = str  # 0 Arriba 1 Derecha 2 Abajo 3 Izquierda
+
     visionImage = None
     velocidadVisionRotacion = float = 1.5
     visionPos = Vector2
@@ -341,7 +329,7 @@ class Enemigo(pygame.sprite.Sprite):
     rect = None
     bala = Disparos
     balas = pygame.sprite.Group
-    MazeParedes = pygame.sprite.Group
+    MazeInfo = []
     balasArray = []
     kia = None
 
@@ -349,7 +337,11 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info("Init Enemigo")
         super().__init__()
         self.orientacion = 'N'
+
+        # Inicio IA enemigos
         self.kia = KerberosIA.KerberosIA()
+        self.kia.KasRecorridas = self.posicionesRecorridas
+
         self.vida = 100
         self.visionPos = Vector2 (0, 0)
         self.angle = 2
@@ -370,8 +362,9 @@ class Enemigo(pygame.sprite.Sprite):
         p3 = (35, 55)  # esquina derecha base
         # Dibujamos triángulo amarillo con alpha 50%
         color = (199,180,70, 128)  # RGBA → alpha=128 (50%)
-        pygame.draw.polygon(self.visionImage, color, [p1, p2, p3])
+        pygame.draw.polygon(self.visionImage, color, [p1, p2, p3])        
         self.visionImage.set_alpha(128)
+
         self.isJefeEnemigo = False
         self.visionPos = Vector2([Enemigo.x, Enemigo.y])
         self.offset = Vector2(200, 0)
@@ -395,18 +388,22 @@ class Enemigo(pygame.sprite.Sprite):
 
     def moveRight(self):
         self.x = self.x + self.speedH
+        self.orientacion = 1
         self.logMovimiento('Derecha', self.x, self.y)
 
     def moveLeft(self):
         self.x = self.x - self.speedH
+        self.orientacion = 3
         self.logMovimiento('Izquierda', self.x, self.y)
 
     def moveUp(self):
         self.y = self.y - self.speedV
+        self.orientacion = 0
         self.logMovimiento('Arriba', self.x, self.y)
 
     def moveDown(self):
         self.y = self.y + self.speedV
+        self.orientacion = 2
         self.logMovimiento('Abajo', self.x, self.y)
 
     def getPosicion(self):
@@ -432,8 +429,39 @@ class Enemigo(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
         
-        self.visionRotar()
+        #self.visionRotar()
         self.moveDown()
+        
+        # Actualizar rect tras mover
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+        self.borrarRecorridosAntiguos()
+
+    def updateJefe(self):
+        logging.debug('Dentro Update ENEMIGOS.')
+        # Guardar posición previa
+        self.prev_x = self.x
+        self.prev_y = self.y
+
+        # Actualizar el rectángulo de colisión con la posición actual
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+        self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
+
+        self.kia.definirPosicion(self.x, self.y)
+        
+        self.visionRotar()
+        dir = self.kia.update()
+        if dir == 0:
+            self.moveUp()
+        elif dir == 1:
+            self.moveRight()
+        elif dir == 2:
+            self.moveDown()
+        else:
+            self.moveLeft()
         
         # Actualizar rect tras mover
         self.rect.x = self.x
@@ -450,6 +478,17 @@ class Enemigo(pygame.sprite.Sprite):
     def cambiar_direccion(self):
         # Cambio simple de dirección: invertir velocidad vertical
         self.speedV = -self.speedV 
+
+        if self.orientation == 0:
+            self.orientation = 2
+        elif self.orientation == 2:
+            self.orientation = 0
+        elif self.orientation == 1:
+            self.orientation = 3
+        elif self.orientation == 3:
+            self.orientation = 1
+            
+        self.kia.orientacion = self.orientacion
         # Pequeño desplazamiento para evitar quedarse pegado
         #self.rect.y = self.y
 
@@ -457,11 +496,15 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
 
     def pintarEnemigo(self):
-        logging.info("Pintamos Enemigo")
-        
+        logging.info("Pintamos Enemigo") 
 
     def pintarJefeEnemigo(self):
         logging.info("Pintamos Enemigo")
+
+    def detectarColision(self):
+        self.kia.colisionParedes = True
+        self.kia.orientacion = self.orientacion
+        self.kia.update()
         
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)
