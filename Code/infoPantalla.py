@@ -9,20 +9,26 @@ class barraDeVida(pygame.sprite.Sprite):
     spriteBarraDeVida = None
 
     def __init__(self):
-        self.vida = 100
+        self.vida = 60
 
     def crearBarraDeVida(self):
         # Crear una superficie de 200x50
         self.spriteBarraDeVida = pygame.Surface((200, 50))
+        # Fondo GRIS
+        self.spriteBarraDeVida.fill((100, 100, 100))  # RGB: gris
         # Rellenar de rojo
-        self.spriteBarraDeVida.fill((255, 0, 0))  # RGB: rojo
+        pygame.draw.rect(self.spriteBarraDeVida, (255, 0, 0), (0, 0, self.vida*2, 50))
         # Dibujar borde blanco
+        pygame.draw.rect(self.spriteBarraDeVida, (255, 255, 255), (0, 0, 200, 50), 3)  # grosor 3px
+    
+    def conversionTexto(self):
+        self.textoVida = str(self.vida)
         
 
 class panelPuntuacion(pygame.sprite.Sprite):
     puntos = int
     textoPuntos = string
-    baseString = "00000000"
+    baseString = "000000"
 
     def __init__(self):
         self.puntos = 0
@@ -38,7 +44,7 @@ class panelPuntuacion(pygame.sprite.Sprite):
         puntos = 0
     
     def conversionTexto(self):
-        self.textoPuntos = str(self.puntos).zfill(8)
+        self.textoPuntos = str(self.puntos).zfill(6)
 
 class infoNivel(pygame.sprite.Sprite):
     NumeroNivel = int

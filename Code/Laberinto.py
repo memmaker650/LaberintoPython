@@ -747,6 +747,18 @@ class App:
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConChampi:
                 logging.info(f'Champi tocadO')
+        
+        # Colisión Player con Granada
+        colision_PlayerConGranada = pygame.sprite.spritecollide(self.player, self.maze.MazeGranada, True)
+        if colision_PlayerConGranada:
+            logging.info('Granada cogidA')
+            print('Granada cocogidAgida')
+            self.player.granada = True
+            self.maze.MazeGranada.empty()
+            self.maze.flagGranada = False
+            # Opcional: procesar cada enemigo que colisionó
+            for cpcE in colision_PlayerConGranada:
+                logging.info(f'Granada tocadA')
 
         # Colisión de Player con Llave fin de pantalla.
         colision_PlayerConLlaveFinal = pygame.sprite.spritecollide(self.player, self.maze.MazeLlave, True)
@@ -765,6 +777,7 @@ class App:
         if colision_PlayerConHueso:
             logging.info('Hueso simple IMPACTADO')
             print('HuesO o BONE: ', len(colision_PlayerConHueso))
+            self.HeadPuntuacion.puntos += 10
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConHueso:
                 logging.info(f'Hueso Sólo tocado')
@@ -776,6 +789,7 @@ class App:
         if colision_PlayerConOro:
             logging.info('Oro IMPACTADO')
             print('Oro cogida')
+            self.HeadPuntuacion.puntos += 100
             for cpcE in colision_PlayerConOro:
                 logging.info(f'Oro tocado')
                 self.casillaObjetosTocados.add(self.maze.calcularCasilla(cpcE.rect.x, cpcE.rect.y))
@@ -793,6 +807,7 @@ class App:
             print('Pila de Huesos cogida')
             self.maze.MazePilaHuesos.empty()
             self.maze.flagPilaHuesos = False
+            self.HeadPuntuacion.puntos += 50
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConPilaHueso:
                 logging.info(f'Pila de Huesos  tocado')
@@ -953,6 +968,7 @@ class App:
 
         # Actualizo valores del HUB.
         self.HeadBarraDeVida.crearBarraDeVida()
+        self.HeadBarraDeVida.conversionTexto()
         self.HeadNivel.conversionTexto()
         self.HeadReloj.conversionTexto()
         self.HeadPuntuacion.conversionTexto()
@@ -991,6 +1007,7 @@ class App:
         font = pygame.font.SysFont('Arial', 32)
         puntos_text = font.render(f"Puntos: {self.HeadPuntuacion.textoPuntos}", True, (255, 255, 0))  # Amarillo
         self.pantalla.blit(puntos_text, (600, 10))
+
         # Arma y Munición
         font = pygame.font.SysFont('Arial', 32)
         puntos_text = font.render(f"Arma: {self.HeadGunAmmo.textoArma}", True, (0, 0, 255))  # Azul
@@ -1020,8 +1037,12 @@ class App:
         self.pantalla.blit(puntos_text, (300, 50))
 
         # Barra de Vida
-        pygame.draw.rect(self.HeadBarraDeVida.spriteBarraDeVida, (255, 255, 255), (0, 0, 200, 50), 3)  # grosor 3px
+        
         self.pantalla.blit(self.HeadBarraDeVida.spriteBarraDeVida, (10, 10))
+        # Barra de Vida (Porcentaje)
+        font = pygame.font.SysFont('Arial', 27)
+        puntos_text = font.render(f"{self.HeadBarraDeVida.textoVida}", True, (255, 255, 255))  # Blanco
+        self.pantalla.blit(puntos_text, (85, 20))
 
         #FPS
         fps = int(self.clock.get_fps())
