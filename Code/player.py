@@ -328,6 +328,8 @@ class Enemigo(pygame.sprite.Sprite):
     balasArray = []
     kia = None
 
+    sonidoDisparoEnemigo = Sonido.Sonido()
+
     def __init__(self):
         logging.info("Init Enemigo")
         super().__init__()
@@ -366,6 +368,7 @@ class Enemigo(pygame.sprite.Sprite):
         self.visionPos = Vector2([Enemigo.x, Enemigo.y])
         self.offset = Vector2(200, 0)
         self.angle = 0
+        self.sonidoDisparoEnemigo.musica = pygame.mixer.Sound("./Resources/Sonidos/gunfire.mp3")
 
     def inicio(self, vx, vy):
         logging.info("Inicio Enemigos")
@@ -560,3 +563,4 @@ class Enemigo(pygame.sprite.Sprite):
             self.balas.add(self.bala)
             self.flagDisparo = True
             self.municion -= 1
+            self.canalDisparo = self.sonidoDisparoEnemigo.musica.play()

@@ -833,6 +833,25 @@ class App:
             for cpcE in colision_PlayerConBandera:
                 logging.info('Bandera tocada')
 
+        # Colisión de Balas Enemigos con Paredes
+        for EnemyAmmo in self.EnemigosGroup:
+            colision_EnemyBalasParedes = pygame.sprite.groupcollide(EnemyAmmo.balas, self.maze.MazeParedes, False, False)
+            if colision_EnemyBalasParedes:
+                logging.info('COLISION Blas Player DETECTADA %s', len(colision_EnemyBalasParedes))
+                # Opcional: procesar cada enemigo que colisionó
+                for muni, paredes in colision_EnemyBalasParedes.items():
+                    logging.info(f'BalaEnemigo en ({muni.x}, {muni.y}) colisionó con {len(paredes)} paredes')
+                    muni.kill()
+        
+        # Colisión de Balas Player con Paredes
+        colision_PlayerBalasConParedes = pygame.sprite.groupcollide(self.player.balas, self.maze.MazeParedes, False, False)
+        if colision_PlayerBalasConParedes:
+            logging.info('COLISION Enemigo DETECTADA %s', len(colision_PlayerBalasConParedes))
+            # Opcional: procesar cada enemigo que colisionó
+            for muni, paredes in colision_PlayerBalasConParedes.items():
+                logging.info(f'Bala Player en ({muni.x}, {muni.y}) colisionó con {len(paredes)} paredes')
+                muni.kill()
+
     def on_render(self):
         if self.pause == False:
             self.pantalla.fill((0, 0, 0))
