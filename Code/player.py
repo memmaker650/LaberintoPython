@@ -95,13 +95,22 @@ class Disparos(pygame.sprite.Sprite):
     y = int
     # 1 Izq 2 Arriba 3 Dcha 4 Abajo
     orientacion = int = 4
+    isPlayer = False
 
-    def __init__(self, dx, dy):
+    def __init__(self, dx, dy, jugador):
         super().__init__()
         logging.info("INIT clase DISPARO.")
-        self.image = load_image("disparo.png", "./Code/assets/", alpha=True)
-        # self.image = pygame.transform.scale(pygame.image.load("./Code/assets/disparo.png").convert(), (10, 20))
-        self.image = pygame.transform.scale(self.image, (10, 20))
+        self.isPlayer = jugador
+
+        if self.isPlayer:
+            self.image = load_image("disparo.png", "./Code/assets/", alpha=True)
+            self.image = pygame.transform.scale(self.image, (10, 20))
+            self.municion = 10
+        else:
+            self.image = load_image("disparoEnemigo.png", "./Code/assets/", alpha=True)
+            self.image = pygame.transform.scale(self.image, (8, 18))
+            self.municion = 100
+        
         self.rect = self.image.get_rect()
         self.rect.x = dx
         self.rect.y = dy
@@ -131,7 +140,7 @@ class Disparos(pygame.sprite.Sprite):
             self.kill()
         elif self.rect.x > SCREEN_WIDTH:
             self.kill()
-        elif self.rect.y > SCREEN_HEIGHT:
+        elif self.rect.y < BIAS:
             self.kill()
 
 
@@ -255,8 +264,6 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = self.y
         logging.info("Player INFO: Velocidad V %s y VeloH %s", self.speedV, self.speedH)
 
-
-
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)
 
@@ -266,35 +273,12 @@ class Player(pygame.sprite.Sprite):
     def disparo(self):
         if self.municion > 0:
             logging.info("Player DISPARO: Hay munición.")
-            self.bala = Disparos(self.x, self.y)
+            self.bala = Disparos(self.x, self.y, True)
             self.balas.add(self.bala)
             self.flagDisparo = True
             self.municion -= 1
             self.canalDisparo = self.sonidoDisparo.musica.play()
 
-class Explosiones(pygame.sprite.Sprite):
-    def __init__(self, centro, dimensiones):
-        pygame.sprite.Sprite.__init__(self)
-	    # self.dimensiones = dimensiones
-	    # #self.image = animacion_explosion1[self.dimensiones][0]
-	    # self.rect = self.image.get_rect()
-	    # self.rect.center = centro
-	    # self.fotograma = 0
-	    # self.frecuencia_fotograma = 35
-	    # self.actualizacion = pygame.time.get_ticks()
-
-    # def update(self):
-    #     ahora = pygame.time.get_ticks()
-    #     if ahora - self.actualizacion > self.frecuencia_fotograma:
-    #         self.actualizacion = ahora
-    #         self.fotograma += 1
-    #         if self.fotograma == len(animacion_explosion1[self.dimensiones]):
-    #             self.kill()
-    #         else:
-    #             centro = self.rect.center
-    #             self.image = animacion_explosion1[self.dimensiones][self.fotograma]
-    #             self.rect = self.image.get_rect()
-    #             self.rect.center = centro
 
 class Enemigo(pygame.sprite.Sprite):
     x = 12
@@ -328,7 +312,7 @@ class Enemigo(pygame.sprite.Sprite):
     imageJefeEnemigo = None
     rect = None
     bala = Disparos
-    balas = pygame.sprite.Group
+    balas = pygame.sprite.Group()
     MazeInfo = []
     balasArray = []
     kia = None
@@ -343,6 +327,8 @@ class Enemigo(pygame.sprite.Sprite):
         self.kia.KasRecorridas = self.posicionesRecorridas
 
         self.vida = 100
+        self.municion = 100
+
         self.visionPos = Vector2 (0, 0)
         self.angle = 2
         self.flagDisparo = False
@@ -495,12 +481,6 @@ class Enemigo(pygame.sprite.Sprite):
     def logMovimiento(self, direccion, finalx, finaly):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
 
-    def pintarEnemigo(self):
-        logging.info("Pintamos Enemigo") 
-
-    def pintarJefeEnemigo(self):
-        logging.info("Pintamos Enemigo")
-
     def detectarColision(self):
         self.kia.colisionParedes = True
         self.kia.orientacion = self.orientacion
@@ -564,6 +544,8 @@ class Enemigo(pygame.sprite.Sprite):
         self.bubble_start_time = pygame.time.get_ticks()
 
     def disparo(self):
-        self.bala = Disparos(self.rect.centerx, self.rect.top)
-        self.balas.add(self.bala)
-        self.flagDisparo = True
+        if self.municion > 0:
+            self.bala = Disparos(self.rect.centerx, self.rect.top, False)
+            self.balas.add(self.bala)
+            self.flagDisparo = True
+            self.municion -= 1

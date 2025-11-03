@@ -634,7 +634,6 @@ class App:
         self.PlayerGroup.add(self.player)
         logging.info("Pintado Jugador")
 
-        self.enemigo.pintarEnemigo()
         self._enemigo = self.enemigo.imageEnemigo
         self._JefeEnemigo = self.enemigo.imageJefeEnemigo
         print(len(self.enemigosArray))
@@ -643,7 +642,6 @@ class App:
         for i in range(0, self.numEnemigos):
             enemy = self.enemigosArray[i]
             self.EnemigosGroup.add(enemy)
-            enemy.pintarEnemigo()
             self.rect = enemy.imageEnemigo.get_rect()  # rectángulo Sprite Player
             # Asignar grupo de paredes al enemigo para que pueda consultarlo
             enemy.MazeInfo = self.maze.MazeLaberinto
@@ -652,7 +650,6 @@ class App:
 
         logging.info('Pintar Jefe Enemigo')
         self.EnemigosGroup.add(self.JefeEnemigo)
-        self.JefeEnemigo.pintarJefeEnemigo()
         self.rect = self.JefeEnemigo.imageJefeEnemigo.get_rect()  # rectángulo Sprite Jefe Enemigo
 
         # Asignar grupo de paredes al Jefe Enemigo
@@ -676,14 +673,14 @@ class App:
             ksilla = self.maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
             self.enemigo.cargarCasillaRecorrido(ksilla)
             self.enemigo.update()
-            if self.enemigo.flagDisparo == True:
-                self.enemigo.bala.update()
+            # if self.enemigo.flagDisparo == True:
+                # self.enemigo.balas.update()
 
         if self.player.flagDisparo == True:
             self.player.balas.update()
 
         if self.JefeEnemigo.flagDisparo == True:
-            self.JefeEnemigo.bala.update()
+            self.JefeEnemigo.balas.update()
 
         # Colisiones entre enemigo y escenario.
         logging.info('VERIFICACIÓN COLISIONES.')
@@ -862,7 +859,7 @@ class App:
             if self.pintaRectángulos == True:
                 pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
 
-            self.dibujar_cruz(self.pantalla, 202, 702, 20)
+            # self.dibujar_cruz(self.pantalla, 202, 702, 20)
 
             smallfont = pygame.font.SysFont('Corbel', 35)
             
@@ -917,8 +914,8 @@ class App:
                     if self.pintaRectángulos == True:
                         pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
 
-                if (self.enemigo.flagDisparo == True):
-                    self.pantalla.blit(self.enemigo.bala.image, (self.enemigo.bala.x, self.enemigo.bala.y))
+            # for nemesis in self.EnemigosGroup:
+                # nemesis.balas.draw(self.pantalla)
 
             # Jefe Enemigo + VISIÓN
             logging.debug('Pintamos el JEFE enemigo.')
@@ -965,15 +962,14 @@ class App:
                     pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
 
             # Pintar disparos del Player
-            if(self.player.flagDisparo == True):
+            if self.player.flagDisparo == True:
                 logging.debug('DISPARO DeL Player.')
                 self.player.balas.draw(self.pantalla)
-                # self.player.flagDisparo = False
 
             # Pintar disparos de Jefe Enemigo
-            if (self.JefeEnemigo.flagDisparo == True):
+            if self.JefeEnemigo.flagDisparo == True:
                 logging.debug('Pintamos Disparo DEL JEFE enemigo.')
-                self.pantalla.blit(self.JefeEnemigo.bala.image, (self.JefeEnemigo.bala.x, self.JefeEnemigo.bala.y))
+                self.JefeEnemigo.balas.draw(self.pantalla)
 
         self.iteracion += 1
 
@@ -1131,7 +1127,12 @@ class App:
                         logging.info('¡¡¡ BARRA ESPACIADORA !!!')
                         logging.info('¡Disparo jugador!')
                         self.player.disparo()
+                    if event.key == pygame.K_RETURN:
+                        logging.info('¡¡¡ INTRO !!!')
                         self.JefeEnemigo.alarma = True
+                        for x in self.EnemigosGroup:
+                            x.flagDisparo == True
+                            x.disparo()
                     if event.key == pygame.K_c:
                         print("Tecla C presionada")
                         if self.pintaRectángulos == True:
