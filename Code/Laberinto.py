@@ -1189,14 +1189,14 @@ class App:
                         self.player.stop()
 
             if self.movimiento == True:
-                if(self.player.orientacion == 1):
-                    self.player.moveLeft()
-                elif(self.player.orientacion == 2):
+                if(self.player.orientacion == 0):
                     self.player.moveUp()
-                elif(self.player.orientacion == 3):
+                elif(self.player.orientacion == 1):
                     self.player.moveRight()
-                elif(self.player.orientacion == 4):
+                elif(self.player.orientacion == 2):
                     self.player.moveDown()
+                elif(self.player.orientacion == 3):
+                    self.player.moveLeft()
                 else:
                     logging.info('¡¡¡ What !!!')
                     print('¡¡¡ What !!!')

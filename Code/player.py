@@ -93,14 +93,15 @@ def detectar_colision(rect1, rect2):
 class Disparos(pygame.sprite.Sprite):
     x = int
     y = int
-    # 1 Izq 2 Arriba 3 Dcha 4 Abajo
+    #  0 Arriba 1 Dcha 2 Abajo 3 Izq
     orientacion = int = 4
     isPlayer = False
 
-    def __init__(self, dx, dy, jugador):
+    def __init__(self, dx, dy, jugador, orient):
         super().__init__()
         logging.info("INIT clase DISPARO.")
         self.isPlayer = jugador
+        self.orientacion = orient
 
         if self.isPlayer:
             self.image = load_image("disparo.png", "./Code/assets/", alpha=True)
@@ -110,6 +111,9 @@ class Disparos(pygame.sprite.Sprite):
             self.image = load_image("disparoEnemigo.png", "./Code/assets/", alpha=True)
             self.image = pygame.transform.scale(self.image, (8, 18))
             self.municion = 100
+        
+        if self.orientacion == 1 or self.orientacion == 3:
+            self.image = pygame.transform.rotate(self.image, 90)
         
         self.rect = self.image.get_rect()
         self.rect.x = dx
@@ -132,7 +136,14 @@ class Disparos(pygame.sprite.Sprite):
 
     def update(self):
         logging.info('Dentro UPDATE BALA.')
-        self.rect.y -= 3
+        if self.orientacion == 0: # Arriba
+            self.rect.y -= 3
+        elif self.orientacion == 1: # Derecha
+            self.rect.x += 3
+        elif self.orientacion == 2: # Abajo
+            self.rect.y += 3
+        else:                       # Izquierda
+            self.rect.x -= 3
 
         if self.rect.x < 0:
             self.kill()
@@ -216,7 +227,7 @@ class Player(pygame.sprite.Sprite):
 
         self.x = self.x + self.speedH
         self.logMovimiento("Derecha", self.x, self.y)
-        self.orientacion = 3
+        self.orientacion = 1
 
     def moveLeft(self):
         self.andar()
@@ -224,7 +235,7 @@ class Player(pygame.sprite.Sprite):
 
         self.x = self.x - self.speedH
         self.logMovimiento('Izquierda', self.x, self.y)
-        self.orientacion = 1
+        self.orientacion = 3
 
     def moveUp(self):
         self.andar()
@@ -232,7 +243,7 @@ class Player(pygame.sprite.Sprite):
 
         self.y = self.y - self.speedV
         self.logMovimiento('Arriba', self.x, self.y)
-        self.orientacion = 2
+        self.orientacion = 0
 
     def moveDown(self):
         self.andar()
@@ -240,7 +251,7 @@ class Player(pygame.sprite.Sprite):
 
         self.y = self.y + self.speedV
         self.logMovimiento('Abajo', self.x, self.y)
-        self.orientacion = 4
+        self.orientacion = 2
 
     def asignarVida(self, valor):
         self.vida = valor
@@ -273,7 +284,7 @@ class Player(pygame.sprite.Sprite):
     def disparo(self):
         if self.municion > 0:
             logging.info("Player DISPARO: Hay munición.")
-            self.bala = Disparos(self.x, self.y, True)
+            self.bala = Disparos(self.x, self.y, True, self.orientacion)
             self.balas.add(self.bala)
             self.flagDisparo = True
             self.municion -= 1
@@ -545,7 +556,7 @@ class Enemigo(pygame.sprite.Sprite):
 
     def disparo(self):
         if self.municion > 0:
-            self.bala = Disparos(self.rect.centerx, self.rect.top, False)
+            self.bala = Disparos(self.rect.centerx, self.rect.top, False, self.orientacion)
             self.balas.add(self.bala)
             self.flagDisparo = True
             self.municion -= 1
