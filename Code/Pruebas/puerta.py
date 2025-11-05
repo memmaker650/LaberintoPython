@@ -1,5 +1,6 @@
 import pygame
 import sys
+import math
 
 pygame.init()
 
@@ -50,9 +51,30 @@ def draw_maze_background():
 
 def draw_door(angle):
     """Dibuja la puerta rotando sobre su bisagra izquierda."""
+    # Rotar la superficie
     rotated = pygame.transform.rotate(door_surface, -angle)
-    rect = rotated.get_rect(midleft=(pivot_x, pivot_y))
-    screen.blit(rotated, rect.topleft)
+    
+    # Calcular el desplazamiento del pivote después de la rotación
+    # El pivote original está en (0, door_thickness/2) de la superficie original
+    pivot_offset_x = 0  # El pivote está en el lado izquierdo (x=0)
+    pivot_offset_y = door_thickness / 2  # Centro vertical de la puerta
+    
+    # Convertir a radianes
+    angle_rad = math.radians(angle)
+    
+    # Calcular la posición del pivote después de la rotación
+    # Necesitamos calcular dónde está el pivote en la superficie rotada
+    rotated_rect = rotated.get_rect()
+    pivot_in_rotated = (
+        pivot_offset_x * math.cos(angle_rad) - pivot_offset_y * math.sin(angle_rad),
+        pivot_offset_x * math.sin(angle_rad) + pivot_offset_y * math.cos(angle_rad)
+    )
+    
+    # Ajustar para que el pivote esté en la posición correcta
+    draw_x = pivot_x - pivot_in_rotated[0]
+    draw_y = pivot_y - pivot_in_rotated[1]
+    
+    screen.blit(rotated, (draw_x, draw_y))
 
 # --- BUCLE PRINCIPAL ---
 while True:

@@ -183,7 +183,9 @@ class Player(pygame.sprite.Sprite):
     granada = bool = False
     laser = bool = False
 
-    sonidoDisparo = Sonido.Sonido()
+    gestionSonidoFX = Sonido.Sonido()
+    sonidoDisparo = None
+    canalDisparo = pygame.mixer.Channel(1)
 
     def __init__(self):
         logging.info("Init Player")
@@ -193,7 +195,8 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (22, 22))
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
-        self.sonidoDisparo.musica = pygame.mixer.Sound("./Resources/Sonidos/gunshot.mp3")
+        
+        self.sonidoDisparo = pygame.mixer.Sound("./Resources/Sonidos/gunshot.mp3")
 
     def inicio(self, vx, vy):
         logging.info("Inicio Player")
@@ -288,7 +291,9 @@ class Player(pygame.sprite.Sprite):
             self.balas.add(self.bala)
             self.flagDisparo = True
             self.municion -= 1
-            self.canalDisparo = self.sonidoDisparo.musica.play()
+            if self.canalDisparo.get_busy():
+                self.canalDisparo.stop()
+            self.canalDisparo.play(self.sonidoDisparo)
 
 
 class Enemigo(pygame.sprite.Sprite):
@@ -328,7 +333,9 @@ class Enemigo(pygame.sprite.Sprite):
     balasArray = []
     kia = None
 
-    sonidoDisparoEnemigo = Sonido.Sonido()
+    gestionSonidoFX = Sonido.Sonido()
+    sonidoDisparoEnemigo = None
+    canalDisparo = pygame.mixer.Channel(0)
 
     def __init__(self):
         logging.info("Init Enemigo")
@@ -368,7 +375,7 @@ class Enemigo(pygame.sprite.Sprite):
         self.visionPos = Vector2([Enemigo.x, Enemigo.y])
         self.offset = Vector2(200, 0)
         self.angle = 0
-        self.sonidoDisparoEnemigo.musica = pygame.mixer.Sound("./Resources/Sonidos/gunfire.mp3")
+        self.sonidoDisparoEnemigo = pygame.mixer.Sound("./Resources/Sonidos/gunfire.mp3")
 
     def inicio(self, vx, vy):
         logging.info("Inicio Enemigos")
@@ -563,4 +570,6 @@ class Enemigo(pygame.sprite.Sprite):
             self.balas.add(self.bala)
             self.flagDisparo = True
             self.municion -= 1
-            self.canalDisparo = self.sonidoDisparoEnemigo.musica.play()
+            if self.canalDisparo.get_busy():
+                self.canalDisparo.stop()
+            self.canalDisparo.play(self.sonidoDisparoEnemigo)

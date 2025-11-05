@@ -41,6 +41,8 @@ class Maze:
 
     posicionInitJugador = int = 0
 
+    posicionPuerta = [] # Casilla y orientación de la puerta 1 vertical 4 horizontal.
+
     MazeLaberinto = []
     MazeParedes = pygame.sprite.Group()
     MazeExtra = pygame.sprite.Group()
@@ -56,6 +58,7 @@ class Maze:
     MazeTunnel = pygame.sprite.Group()
     MazeGranada = pygame.sprite.Group()
     MazeBotiquin = pygame.sprite.Group()
+    MazePuertas = pygame.sprite.Group()
     
     imageHuesos = pygame.image.load("./Resources/Bone.png")
     imagePilaHuesos = pygame.image.load("./Resources/PileOfBones.png")
@@ -144,7 +147,7 @@ class Maze:
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 0,
-            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 44, 1, 1, 1, 1, 2, 1, 1, 1, 0,
+            0, 1, 1, 1, 1, 1, 1, 33, 1, 1, 1, 1, 1, 1, 1, 0, 1, 44, 1, 1, 1, 1, 2, 1, 1, 1, 0,
             0, 1, 6, 1, 1, 1, 2, 0, 1, 1, 1, 1, 1, 1, 1, 0, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ]
@@ -283,6 +286,12 @@ class Maze:
                 display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 Botiquin = pygame.sprite.Sprite()
                 Botiquin.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeBotiquin.add(Botiquin)
+
+            if self.mazeDataExtra[bx + (by * self.M)] == 33:
+                self.posicionPuerta.append([bx + (by * self.M), 1])  # Casilla
+                Puerta = pygame.sprite.Sprite()
+                Puerta.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 15, 32)
                 self.MazeBotiquin.add(Botiquin)
 
             bx = bx + 1

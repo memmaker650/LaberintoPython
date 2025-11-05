@@ -46,6 +46,8 @@ CYAN = (0, 255, 255)
 MAGENTA = (255, 0, 255)
 HC74225 = (199, 66, 37)
 H61CD35 = (97, 205, 53)
+COLOR_PUERTA = (160, 110, 60)
+COLOR_BORDE = (90, 60, 40)
 
 # ------------------------------
 # Clases y Funciones utilizadas
@@ -118,6 +120,20 @@ class App:
     tiempo_inicio = None
     iteracion = int = 0
 
+    # Valores de la puerta
+    door_length = 32
+    door_thickness = 10
+    door_x = int
+    door_y = int
+    pivot_x = door_x
+    pivot_y = door_y
+    door_angle = 0           # 0 = cerrada, 90 = abierta
+    openingDoor = bool = False
+    closingDoor = bool = False
+    Doorspeed = int = 3                # grados por frame
+    door_surface = pygame.Surface((32, 32))  # ✅ CORRECTO
+
+    # Gestión del Sonido.
     Sound = None
     canalmusicaFondo = None
 
@@ -205,6 +221,43 @@ class App:
         mitad = tamaño // 2
         pygame.draw.line(surface, color, (x - mitad, y), (x + mitad, y), grosor)
         pygame.draw.line(surface, color, (x, y - mitad), (x, y + mitad), grosor)
+
+    def draw_door(self, angle):
+        """Dibuja la puerta rotando sobre el lado especificado."""
+        # Rotar la superficie
+        rotated = pygame.transform.rotate(self.door_surface, -angle)
+
+        # Obtener la posición del pivote en coordenadas locales
+        pivot_local = (self.door_length / 2, self.door_thickness)
+
+        # Convertir ángulo a radianes
+        angle_rad = math.radians(-angle)
+
+        # Centro de la superficie original
+        center_x, center_y = self.door_length / 2, self.door_thickness / 2
+
+        # Vector desde el centro hasta el pivote
+        pivot_rel_to_center = (pivot_local[0] - center_x, pivot_local[1] - center_y)
+
+        # Aplicar rotación al vector relativo
+        rotated_pivot_x = (pivot_rel_to_center[0] * math.cos(angle_rad) - 
+                           pivot_rel_to_center[1] * math.sin(angle_rad))
+        rotated_pivot_y = (pivot_rel_to_center[0] * math.sin(angle_rad) + 
+                           pivot_rel_to_center[1] * math.cos(angle_rad))
+
+        # Nueva posición del pivote después de rotar (en coordenadas de la superficie original)
+        new_pivot_x = center_x + rotated_pivot_x
+        new_pivot_y = center_y + rotated_pivot_y
+
+        # Obtener el rectángulo de la superficie rotada
+        rotated_rect = rotated.get_rect()
+
+        # Calcular la posición de dibujo para que el pivote quede en (pivot_x, pivot_y)
+        draw_x = self.pivot_x - new_pivot_x
+        draw_y = self.pivot_y - new_pivot_y
+
+        self.pantalla.blit(rotated, (draw_x, draw_y))
+    
 
     def menu(self):
         color = (255, 255, 255)
@@ -687,6 +740,18 @@ class App:
         
         # Debug: verificar posiciones
         logging.info(f"Player en posición: ({self.player.x}, {self.player.y}) - Rect: {self.player.rect}")
+
+        # --- GESTIÓN PUERTA/S ---
+        if self.openingDoor:
+            self.door_angle += self.Doorspeed
+            if self.door_angle >= 90:
+                self.door_angle = 90
+                self.openingDoor = False
+        elif self.closingDoor:
+            self.door_angle -= self.Doorspeed
+            if self.door_angle <= 0:
+                self.door_angle = 0
+                self.closingDoor = False
         
         # Colisión del jugador con paredes
         colision_player = pygame.sprite.spritecollide(self.player, self.maze.MazeParedes, False)
@@ -872,6 +937,21 @@ class App:
                 self.player.x = pos.x
                 self.player.y = pos.y
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+
+                print(f"Casilla puerta : ", len(self.maze.posicionPuerta))
+                # Defino las puertas
+                for porte in self.maze.posicionPuerta:
+                    pos = self.maze.calcularPixelPorCasilla(porte[0])
+                    self.door_y = pos.y+5
+                    self.door_x = pos.x+30
+                    self.pivot_x = self.door_x
+                    self.pivot_y = self.door_y 
+
+                    self.door_surface = pygame.Surface((self.door_length, self.door_thickness), pygame.SRCALPHA)
+                    pygame.draw.rect(self.door_surface, COLOR_PUERTA, (0, 0, self.door_length, self.door_thickness))
+                    pygame.draw.rect(self.door_surface, COLOR_BORDE, (0, 0, self.door_length, self.door_thickness), 2)
+                    # if porte[1] == 1:
+                        #self.door_surface = pygame.transform.rotate(self.door_surface, 90)
             else:
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
             
@@ -880,7 +960,8 @@ class App:
 
             # self.dibujar_cruz(self.pantalla, 202, 702, 20)
 
-            smallfont = pygame.font.SysFont('Corbel', 35)
+            # --- Dibujado PUERTA/S ---
+            self.draw_door(self.door_angle)
             
             """
             position = self.maze.calcularPixelPorCasilla(665)
@@ -1158,6 +1239,14 @@ class App:
                            self.pintaRectángulos = False
                         else:
                             self.pintaRectángulos = True 
+                    if event.key == pygame.K_d:
+                        # alternar entre abrir y cerrar
+                        if self.door_angle <= 0:
+                            self.openingDoor = True
+                            self.closingDoor = False
+                        elif self.door_angle >= 90:
+                            self.closingDoor = True
+                            self.openingDoor = False
                     if event.key == pygame.K_k:
                         logging.info('Tecla K presionada')
                     if event.key == pygame.K_v:
