@@ -306,6 +306,7 @@ class Enemigo(pygame.sprite.Sprite):
     vida = int
     flagDisparo = bool = False
     isJefeEnemigo = bool = False
+    isColision = bool = False
 
     alarma = bool = False
     # bocadilloTexto vars
@@ -386,6 +387,10 @@ class Enemigo(pygame.sprite.Sprite):
 
     def definirJefeEnemigo(self):
         self.isJefeEnemigo = True
+    
+    def guardarPosicionPrevia(self):
+        self.prev_x = self.x
+        self.prev_y = self.y
 
     def inicioCelda(self, cell):
         self.casilla = cell
@@ -394,24 +399,31 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info('Posición Enemigo: x: %s e y: %s con casilla --> %s', self.x, self.y, self.casilla)
 
     def moveRight(self):
+        self.guardarPosicionPrevia()
         self.x = self.x + self.speedH
         self.orientacion = 1
         self.logMovimiento('Derecha', self.x, self.y)
 
     def moveLeft(self):
+        self.guardarPosicionPrevia()
         self.x = self.x - self.speedH
         self.orientacion = 3
         self.logMovimiento('Izquierda', self.x, self.y)
 
     def moveUp(self):
+        self.guardarPosicionPrevia()
         self.y = self.y - self.speedV
         self.orientacion = 0
         self.logMovimiento('Arriba', self.x, self.y)
 
     def moveDown(self):
+        self.guardarPosicionPrevia()
         self.y = self.y + self.speedV
         self.orientacion = 2
         self.logMovimiento('Abajo', self.x, self.y)
+
+    def moveStop(self):
+        self.guardarPosicionPrevia()
 
     def getPosicion(self):
         return self.casilla
@@ -460,21 +472,27 @@ class Enemigo(pygame.sprite.Sprite):
         self.kia.definirPosicion(self.x, self.y)
         
         self.visionRotar()
+
         dir = self.kia.update()
-        if dir == 0:
-            self.moveUp()
-        elif dir == 1:
-            self.moveRight()
-        elif dir == 2:
-            self.moveDown()
-        else:
-            self.moveLeft()
+        self.elegirDireccion(dir)
         
         # Actualizar rect tras mover
         self.rect.x = self.x
         self.rect.y = self.y
 
         self.borrarRecorridosAntiguos()
+
+    def elegirDireccion(self, dir):
+        if dir == 0:
+            self.moveUp()
+        elif dir == 1:
+            self.moveRight()
+        elif dir == 2:
+            self.moveDown()
+        elif dir == 3:
+            self.moveLeft()
+        else:
+            self.moveStop()
 
     def revertir_movimiento(self):
         # Revertir a la posición previa tras colisión
@@ -503,9 +521,13 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
 
     def detectarColision(self):
+        print("Dentro colision en ENEMIGO. <-- ")
+        self.isColision = True
         self.kia.colisionParedes = True
         self.kia.orientacion = self.orientacion
-        self.kia.update()
+        dir = self.kia.update()
+        self.elegirDireccion(dir)
+        self.isColision = False
         
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)

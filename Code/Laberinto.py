@@ -161,6 +161,7 @@ class App:
         self.player = player.Player()  # damos los valores por defecto.
         self.enemigo = player.Enemigo()
         self.JefeEnemigo = player.Enemigo()
+        self.JefeEnemigo.isJefeEnemigo = True
 
         self.Sound = Sonido.Sonido()
 
@@ -765,18 +766,55 @@ class App:
             for cl in colision_player:
                 logging.info(f'PLAYER colisionó con paRED')
 
+        # Colisión del jugador con Puerta
+        colision_playerPuerta = pygame.sprite.spritecollide(self.player, self.maze.MazePuertas, False)
+        if colision_playerPuerta:
+            logging.info(f'COLISION PLAYER & DOOOOOR - num ELem ({len(colision_playerPuerta)})')
+            print(f'COLISION PLAYER & DOOOOOR - num ELem ({len(colision_playerPuerta)})')
+            # print(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
+
+            self.player.x = self.player.prev_x
+            self.player.y = self.player.prev_y
+
+            for cl in colision_playerPuerta:
+                logging.info(f'PLAYER colisionó con paRED')
+
         # Colisión de enemigos con paredes
         colision_enemigos = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazeParedes, False, False)
         if colision_enemigos:
             logging.info('COLISION Enemigo DETECTADA %s', len(colision_enemigos))
+            print(f'COLISION Enemigo DETECTADA %s', len(colision_enemigos))
             # Opcional: procesar cada enemigo que colisionó
-            for enemigo, paredes in colision_enemigos.items():
-                logging.info(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(paredes)} paredes')
+            for nemesis, paredes in colision_enemigos.items():
+                print(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
+                logging.info(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
+                
+                
+
+                # Revertir y cambiar dirección solo del enemigo que colisiona
+                if hasattr(nemesis, 'revertir_movimiento'):
+                    nemesis.revertir_movimiento()
+
+                if nemesis.isJefeEnemigo:
+                   print("Colision Jefe Enemigo con PARED !!!")
+                   nemesis.detectarColision()
+                   
+                if hasattr(nemesis, 'cambiar_direccion'):
+                    nemesis.cambiar_direccion()
+
+        # Colisión de ENemigos con Puerta
+        colision_playerPuerta = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazePuertas, False, False)
+        if colision_playerPuerta:
+            logging.info(f'COLISION Enemigo con Puerta DETECTADA - num ELem ({len(colision_playerPuerta)})')
+            # Opcional: procesar cada enemigo que colisionó
+            for enemigo, puertas in colision_enemigos.items():
+                logging.info(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(puertas)} paredes')
                 # Revertir y cambiar dirección solo del enemigo que colisiona
                 if hasattr(enemigo, 'revertir_movimiento'):
                     enemigo.revertir_movimiento()
                 if hasattr(enemigo, 'cambiar_direccion'):
                     enemigo.cambiar_direccion()
+
         
         # Colisión de Extras Escenario con Player
         colision_PlayerConExtra = pygame.sprite.spritecollide(self.player, self.maze.MazeExtra, False)

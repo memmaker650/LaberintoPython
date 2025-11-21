@@ -23,6 +23,7 @@ class KerberosIA:
 
     colisionParedes = bool = False
     orientacion = int = 0
+    direccion = int
 
     casilla = int = 0
     posicion = MazeLab.posicion
@@ -65,6 +66,7 @@ class KerberosIA:
         # Cambio simple de dirección: invertir velocidad vertical
         self.speedV = -self.speedV 
 
+        # 0 Arriba, 1 Derecha, 2 Abajo y 3 Izquierda
         if self.orientation == 0:
             self.orientation = 2
         elif self.orientation == 2:
@@ -92,48 +94,58 @@ class KerberosIA:
         self.reiniciarArraySiguientesCasillas()
         self.reiniciarArraySiguientesCasillasVuelta()
 
-        # Izquierda
-        if self.Laberinto[self.casilla-1] == 1:
-            self.casillasLibresVuelta [3] = True
-            if self.casilla-1 not in self.KasRecorridas:
-                self.casillasLibres[3] = True
-        # Derecha
-        if self.Laberinto[self.casilla+1] == 1:
-            self.casillasLibresVuelta [1] = True
-            if self.casilla-1 not in self.KasRecorridas:
-                self.casillasLibres[1] = True
-        # Arriba
-        if self.Laberinto[self.casilla-MazeLab.NUM_CASILLAS] == 1:
-            self.casillasLibresVuelta [0] = True
-            if self.casilla-1 not in self.KasRecorridas:
-                self.casillasLibres[0] = True
-        # Abajo
-        if self.Laberinto[self.casilla+MazeLab.NUM_CASILLAS] == 1:
-            self.casillasLibresVuelta [2] = True
-            if self.casilla-1 not in self.KasRecorridas:
-                self.casillasLibres[2] = True
+        range = MazeLab.NUM_CASILLAS * MazeLab.NUM_CASILLAS
+        if self.casilla != 0 or self.casilla == range:
+            # Izquierda
+            if self.Laberinto[self.casilla-1] == 1:
+                self.casillasLibresVuelta[3] = True
+                if self.casilla-1 not in self.KasRecorridas:
+                    self.casillasLibres[3] = True
+            # Derecha
+            if self.Laberinto[self.casilla+1] == 1:
+                self.casillasLibresVuelta[1] = True
+                if self.casilla-1 not in self.KasRecorridas:
+                    self.casillasLibres[1] = True
+            # Arriba
+            if self.Laberinto[self.casilla-MazeLab.NUM_CASILLAS] == 1:
+                self.casillasLibresVuelta[0] = True
+                if self.casilla-1 not in self.KasRecorridas:
+                    self.casillasLibres[0] = True
+            # Abajo
+            if self.Laberinto[self.casilla+MazeLab.NUM_CASILLAS] == 1:
+                self.casillasLibresVuelta[2] = True
+                if self.casilla-1 not in self.KasRecorridas:
+                    self.casillasLibres[2] = True
+        else:
+            logging.info('Fuera de Rango en KIA Cálculo casilla')
+            print('Fuera de Rango en KIA Cálculo casilla')
 
     def update(self):
-        self.revisarCasillasAdyacentes()
-        result = self.casillasLibres.count(True)
-
-        if not self.colisionParedes:
+        if self.colisionParedes:
+            self.revisarCasillasAdyacentes()
+            result = self.casillasLibres.count(True)
+            
             if result > 0:
-                valor = random.randint(0, result-1)
-                # print("valor1: ", valor)
-                # print("tamaño vector: ", len(self.casillasLibres))
+                print("Dentro KerberoIA Jefe Enemigo.")
+                if result == 1:
+                    valor = 1
+                else:
+                    valor = random.randint(0, result-1)
+                print("valor1: ", valor)
+                
                 while not self.casillasLibres[valor]:
                     valor += 1
+                print("DirecciÓN a TOMAR: ", valor)
             else:
                 self.casillasLibres = self.casillasLibresVuelta
                 result = self.casillasLibres.count(True)
-                valor = random.randint(0, result-1)
-                # print("valor 2: ", valor)
-                # print("tamaño vector: ", len(self.casillasLibres))
-                while not self.casillasLibres[valor]:
-                    valor += 1
+                #valor = random.randint(0, result-1)
+                print('ENCERRADO!!!, cómo es posible')
+                logging.info('ENCERRADO!!!, cómo es posible')
+                valor = 0
+            self.colisionParedes = False
         else: 
-            self.cambiar_direccion()
+            # self.cambiar_direccion()
             valor = self.orientacion
 
         # Devolvemos la dirección a donde se va a mover el Enemigo.        

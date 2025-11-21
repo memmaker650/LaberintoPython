@@ -292,7 +292,7 @@ class Maze:
                 self.posicionPuerta.append([bx + (by * self.M), 1])  # Casilla
                 Puerta = pygame.sprite.Sprite()
                 Puerta.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 15, 32)
-                self.MazeBotiquin.add(Botiquin)
+                self.MazePuertas.add(Puerta)
 
             bx = bx + 1
             if bx > self.M - 1:
