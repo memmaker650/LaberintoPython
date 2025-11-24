@@ -131,11 +131,11 @@ class KerberosIA:
                     valor = 1
                 else:
                     valor = random.randint(0, result-1)
-                print("valor1: ", valor)
+                # print("valor1: ", valor)
                 
                 while not self.casillasLibres[valor]:
                     valor += 1
-                print("DirecciÓN a TOMAR: ", valor)
+                # print("DirecciÓN a TOMAR: ", valor)
             else:
                 self.casillasLibres = self.casillasLibresVuelta
                 result = self.casillasLibres.count(True)

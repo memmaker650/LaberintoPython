@@ -81,6 +81,14 @@ class LevelData:
                         raise ValueError(
                             f"Tile inválido en layer '{layer.name}' ({y},{x}): {v}"
                         )
+        
+    def debug_layers(self) -> None:
+        print(f"Level: {os.path.basename(self.path)}")
+        print(f"Total layers: {len(self.layers)}")
+        for idx, layer in enumerate(self.layers, start=1):
+            print(f"\nLayer #{idx}: {layer.name}")
+            for fila in layer.tiles:
+                print(" ".join(f"{v:2d}" for v in fila))
 
 
 class LevelParser:

@@ -521,12 +521,15 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
 
     def detectarColision(self):
-        print("Dentro colision en ENEMIGO. <-- ")
+        # print("Dentro colision en ENEMIGO. <-- ")
+
         self.isColision = True
         self.kia.colisionParedes = True
+        
         self.kia.orientacion = self.orientacion
         dir = self.kia.update()
         self.elegirDireccion(dir)
+        
         self.isColision = False
         
     def rotar(self, angulo):

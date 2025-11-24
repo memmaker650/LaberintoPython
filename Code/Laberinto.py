@@ -789,8 +789,6 @@ class App:
                 print(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
                 logging.info(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
                 
-                
-
                 # Revertir y cambiar dirección solo del enemigo que colisiona
                 if hasattr(nemesis, 'revertir_movimiento'):
                     nemesis.revertir_movimiento()
@@ -798,7 +796,7 @@ class App:
                 if nemesis.isJefeEnemigo:
                    print("Colision Jefe Enemigo con PARED !!!")
                    nemesis.detectarColision()
-                   
+
                 if hasattr(nemesis, 'cambiar_direccion'):
                     nemesis.cambiar_direccion()
 
@@ -1396,9 +1394,12 @@ if __name__ == "__main__":
     try:
         parser = LevelParser("./Levels")
         level_data = parser.load_by_name("Level_2.json")
-        logging.info("Level loaded: %s (%dx%d)", os.path.basename(level_data.path), level_data.width, level_data.height)
+        logging.info("Level loaded:", os.path.basename(level_data.path), level_data.width, level_data.height)
+        print("Level loaded: ", os.path.basename(level_data.path), level_data.width, level_data.height)
+        level_data.debug_layers()
     except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
         logging.error("Error cargando nivel JSON: %s", e)
+        print("Error cargando nivel JSON: %s", e)
         level_data = None
 
     notification.notify(title="Inicio", message="Inicio Juego", app_name="OctoPussy", app_icon="/assets/player.png")
