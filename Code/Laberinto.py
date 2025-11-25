@@ -107,6 +107,8 @@ class App:
     pintaRectángulos = bool = True
     pintaVision = bool = True
 
+    flagPrint_info = False
+
     casillaObjetosTocados = set()
 
     # Valores Cabecera
@@ -263,7 +265,8 @@ class App:
     def menu(self):
         color = (255, 255, 255)
 
-        print("Dentro del Menú!!")
+        if self.flagPrint_info:
+            print("Dentro del Menú!!")
 
         # Color for the buttons
         # light shade of the button
@@ -380,7 +383,8 @@ class App:
     def menuOpciones(self):
         color = (255, 255, 255)
 
-        print("Dentro de Opciones!!")
+        if self.flagPrint_info:
+            print("Dentro de Opciones!!")
 
         # Color for the buttons
         # light shade of the button
@@ -509,7 +513,8 @@ class App:
     def seleccionNivel (self):
         color = (255, 255, 255)
 
-        print("Dentro de Selecciona Nivel!!")
+        if self.flagPrint_info:
+            print("Dentro de Selecciona Nivel!!")
 
         # Color for the buttons
         # light shade of the button
@@ -690,7 +695,8 @@ class App:
 
         self._enemigo = self.enemigo.imageEnemigo
         self._JefeEnemigo = self.enemigo.imageJefeEnemigo
-        print(len(self.enemigosArray))
+        if self.flagPrint_info:
+            print(len(self.enemigosArray))
 
         i = 0
         for i in range(0, self.numEnemigos):
@@ -753,12 +759,16 @@ class App:
             if self.door_angle <= 0:
                 self.door_angle = 0
                 self.closingDoor = False
+
+        # Gestión del scroll de la pantalla.
+        
         
         # Colisión del jugador con paredes
         colision_player = pygame.sprite.spritecollide(self.player, self.maze.MazeParedes, False)
         if colision_player:
             logging.info(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
-            # print(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
+            if self.flagPrint_info:
+                print(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
 
             self.player.x = self.player.prev_x
             self.player.y = self.player.prev_y
@@ -770,8 +780,8 @@ class App:
         colision_playerPuerta = pygame.sprite.spritecollide(self.player, self.maze.MazePuertas, False)
         if colision_playerPuerta:
             logging.info(f'COLISION PLAYER & DOOOOOR - num ELem ({len(colision_playerPuerta)})')
-            print(f'COLISION PLAYER & DOOOOOR - num ELem ({len(colision_playerPuerta)})')
-            # print(f'COLISION PLAYER DETECTADA - num ELem ({len(colision_player)})')
+            if self.flagPrint_info:
+                print(f'COLISION PLAYER & DOOOOOR - num ELem ({len(colision_playerPuerta)})')
 
             self.player.x = self.player.prev_x
             self.player.y = self.player.prev_y
@@ -783,10 +793,12 @@ class App:
         colision_enemigos = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazeParedes, False, False)
         if colision_enemigos:
             logging.info('COLISION Enemigo DETECTADA %s', len(colision_enemigos))
-            print(f'COLISION Enemigo DETECTADA %s', len(colision_enemigos))
+            if self.flagPrint_info:
+                print(f'COLISION Enemigo DETECTADA %s', len(colision_enemigos))
             # Opcional: procesar cada enemigo que colisionó
             for nemesis, paredes in colision_enemigos.items():
-                print(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
+                if self.flagPrint_info:
+                    print(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
                 logging.info(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
                 
                 # Revertir y cambiar dirección solo del enemigo que colisiona
@@ -794,8 +806,9 @@ class App:
                     nemesis.revertir_movimiento()
 
                 if nemesis.isJefeEnemigo:
-                   print("Colision Jefe Enemigo con PARED !!!")
-                   nemesis.detectarColision()
+                    if self.flagPrint_info:
+                        print("Colision Jefe Enemigo con PARED !!!")
+                    nemesis.detectarColision()
 
                 if hasattr(nemesis, 'cambiar_direccion'):
                     nemesis.cambiar_direccion()
@@ -818,7 +831,8 @@ class App:
         colision_PlayerConExtra = pygame.sprite.spritecollide(self.player, self.maze.MazeExtra, False)
         if colision_PlayerConExtra:
             logging.info('Huesos  IMPACTADA')
-            # print('Huesos  IMPACTADA')
+            if self.flagPrint_info:
+                print('Huesos  IMPACTADA')
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConExtra:
                 logging.info(f'Huesos tocados')
@@ -827,7 +841,8 @@ class App:
         colision_PlayerConLlavePuerta = pygame.sprite.spritecollide(self.player, self.maze.MazeLlavePuerta, True)
         if colision_PlayerConLlavePuerta:
             logging.info('Llave PUERTA cogida')
-            print('Llave PUERTA cogida')
+            if self.flagPrint_info:
+                print('Llave PUERTA cogida')
             self.player.llavePuerta = True
             self.maze.MazeLlavePuerta.empty()
             self.maze.flagLlavePuerta = False
@@ -839,7 +854,8 @@ class App:
         colision_PlayerConChampi = pygame.sprite.spritecollide(self.player, self.maze.MazeChampi, True)
         if colision_PlayerConChampi:
             logging.info('Champi cogidO')
-            print('Champi cogida')
+            if self.flagPrint_info:
+                print('Champi cogida')
             self.player.champi = True
             self.maze.MazeChampi.empty()
             self.maze.flagChampi = False
@@ -851,7 +867,8 @@ class App:
         colision_PlayerConGranada = pygame.sprite.spritecollide(self.player, self.maze.MazeGranada, True)
         if colision_PlayerConGranada:
             logging.info('Granada cogidA')
-            print('Granada cocogidAgida')
+            if self.flagPrint_info:
+                print('Granada cocogidAgida')
             self.player.granada = True
             self.maze.MazeGranada.empty()
             self.maze.flagGranada = False
@@ -863,7 +880,8 @@ class App:
         colision_PlayerConLlaveFinal = pygame.sprite.spritecollide(self.player, self.maze.MazeLlave, True)
         if colision_PlayerConLlaveFinal:
             logging.info('Llave FINAL IMPACTADA')
-            print('Llave FINAL cogida')
+            if self.flagPrint_info:
+                print('Llave FINAL cogida')
             self.player.llaveFinNivel = True
             self.maze.MazeLlave.empty()
             self.maze.flagLlave = False
@@ -875,7 +893,8 @@ class App:
         colision_PlayerConHueso = pygame.sprite.spritecollide(self.player, self.maze.MazeHueso, True)
         if colision_PlayerConHueso:
             logging.info('Hueso simple IMPACTADO')
-            print('HuesO o BONE: ', len(colision_PlayerConHueso))
+            if self.flagPrint_info:
+                print('HuesO o BONE: ', len(colision_PlayerConHueso))
             self.HeadPuntuacion.puntos += 10
             self.HeadHuesos.NumeroHuesos += 1
             # Opcional: procesar cada enemigo que colisionó
@@ -888,7 +907,8 @@ class App:
         colision_PlayerConOro = pygame.sprite.spritecollide(self.player, self.maze.MazeOro, True)
         if colision_PlayerConOro:
             logging.info('Oro IMPACTADO')
-            print('Oro cogida')
+            if self.flagPrint_info:
+                print('Oro cogida')
             self.HeadPuntuacion.puntos += 100
             for cpcE in colision_PlayerConOro:
                 logging.info(f'Oro tocado')
@@ -904,7 +924,8 @@ class App:
         colision_PlayerConPilaHueso = pygame.sprite.spritecollide(self.player, self.maze.MazePilaHuesos, True)
         if colision_PlayerConPilaHueso:
             logging.info('Pila de Huesos IMPACTADA')
-            print('Pila de Huesos cogida')
+            if self.flagPrint_info:
+                print('Pila de Huesos cogida')
             self.maze.MazePilaHuesos.empty()
             self.maze.flagPilaHuesos = False
             self.HeadPuntuacion.puntos += 50
@@ -917,7 +938,8 @@ class App:
         colision_PlayerConBotiquin = pygame.sprite.spritecollide(self.player, self.maze.MazeBotiquin, True)
         if colision_PlayerConBotiquin:
             logging.info('Botiquin IMPACTADo')
-            print('Botiquin cogida')
+            if self.flagPrint_info:
+                print('Botiquin cogida')
             self.maze.MazeBotiquin.empty()
             self.maze.flagBotiquin = False
             self.HeadBarraDeVida.vida += 30
@@ -929,7 +951,8 @@ class App:
         colision_PlayerConBandera = pygame.sprite.spritecollide(self.player, self.maze.MazeBandera, False)
         if colision_PlayerConBandera:
             logging.info('Bandera Final IMPACTADA')
-            print('Bandera Final IMPACTADA')
+            if self.flagPrint_info:
+                print('Bandera Final IMPACTADA')
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConBandera:
                 logging.info('Bandera tocada')
@@ -967,6 +990,7 @@ class App:
             # Llamada a la IA
             if self.flagInit == True:
                 self.flagInit = False
+                # if self.flagPrint_info:
                 print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
                 self.player.casilla = self.maze.posicionInitJugador    
                 pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
@@ -974,7 +998,8 @@ class App:
                 self.player.y = pos.y
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
 
-                print(f"Casilla puerta : ", len(self.maze.posicionPuerta))
+                if self.flagPrint_info:
+                    print(f"Casilla puerta : ", len(self.maze.posicionPuerta))
                 # Defino las puertas
                 for porte in self.maze.posicionPuerta:
                     pos = self.maze.calcularPixelPorCasilla(porte[0])
@@ -999,15 +1024,15 @@ class App:
             # --- Dibujado PUERTA/S ---
             self.draw_door(self.door_angle)
             
-            """
-            position = self.maze.calcularPixelPorCasilla(665)
+            smallfont = pygame.font.SysFont('Corbel', 35)
+            position = self.maze.calcularPixelPorCasilla(977)
             if self.maze.esAlcanzable(position.x, position.y):
                 text1 = smallfont.render('X', True, (255, 165, 0))
             else:
                 text1 = smallfont.render('X', True, (255, 255, 255))
             self.pantalla.blit(text1, (position.x, position.y))
 
-             
+            """ 
             position = self.maze.calcularPixelPorCasilla(36)
             if self.maze.esAlcanzable(position.x, position.y):
                 text1 = smallfont.render('36', True, (255, 165, 0))
@@ -1042,10 +1067,12 @@ class App:
             for i in range(0, self.numEnemigos):
                 self.enemigo = self.enemigosArray[i]
                 if(self.enemigo.isJefeEnemigo):
-                    print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
+                    if self.flagPrint_info:
+                        print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
                     self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-                else:
-                    # print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
+                else:   
+                    if self.flagPrint_info:
+                        print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
                     self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
                     if self.pintaRectángulos == True:
                         pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
@@ -1225,8 +1252,8 @@ class App:
 
     def on_execute(self):
         self.clock.tick(60)
-
-        print("Dentro de on_execute.")
+        if self.flagPrint_info:
+            print("Dentro de on_execute.")
         pygame.init()
 
         if self.on_init() == False:
@@ -1270,7 +1297,8 @@ class App:
                             x.flagDisparo == True
                             x.disparo()
                     if event.key == pygame.K_c:
-                        print("Tecla C presionada")
+                        if self.flagPrint_info:
+                            print("Tecla C presionada")
                         if self.pintaRectángulos == True:
                            self.pintaRectángulos = False
                         else:
@@ -1311,25 +1339,29 @@ class App:
                     if event.key == pygame.K_RIGHT:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor DERECHO !!!')
-                        # print('¡¡¡ SOLtado cursor DERECHO !!!')
+                        if self.flagPrint_info:
+                            print('¡¡¡ SOLtado cursor DERECHO !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_LEFT:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor IZQUIERDO !!!')
-                        # print('¡¡¡ SOLtado cursor IZQUIERDO !!!')
+                        if self.flagPrint_info:
+                            print('¡¡¡ SOLtado cursor IZQUIERDO !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_UP:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor ARRIBA !!!')
-                        # print('¡¡¡ SOLtado cursor ARRIBA !!!')
+                        if self.flagPrint_info:
+                            print('¡¡¡ SOLtado cursor ARRIBA !!!')
                         self.player.stop()
 
                     if event.key == pygame.K_DOWN:
                         self.movimiento = False
                         logging.info('¡¡¡ SOLtado cursor ABAJO !!!')
-                        # print('¡¡¡ SOLtado cursor ABAJO !!!')
+                        if self.flagPrint_info:
+                            print('¡¡¡ SOLtado cursor ABAJO !!!')
                         self.player.stop()
 
             if self.movimiento == True:
@@ -1343,7 +1375,8 @@ class App:
                     self.player.moveLeft()
                 else:
                     logging.info('¡¡¡ What !!!')
-                    print('¡¡¡ What !!!')
+                    if self.flagPrint_info:
+                        print('¡¡¡ What !!!')
 
             self.on_loop()
             self.on_render()

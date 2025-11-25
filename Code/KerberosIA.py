@@ -94,7 +94,7 @@ class KerberosIA:
         self.reiniciarArraySiguientesCasillas()
         self.reiniciarArraySiguientesCasillasVuelta()
 
-        range = MazeLab.NUM_CASILLAS * MazeLab.NUM_CASILLAS
+        range = MazeLab.NUM_CASILLAS_H * MazeLab.NUM_CASILLAS_VERTI
         if self.casilla != 0 or self.casilla == range:
             # Izquierda
             if self.Laberinto[self.casilla-1] == 1:
@@ -107,12 +107,12 @@ class KerberosIA:
                 if self.casilla-1 not in self.KasRecorridas:
                     self.casillasLibres[1] = True
             # Arriba
-            if self.Laberinto[self.casilla-MazeLab.NUM_CASILLAS] == 1:
+            if self.Laberinto[self.casilla-MazeLab.NUM_CASILLAS_VERTI] == 1:
                 self.casillasLibresVuelta[0] = True
                 if self.casilla-1 not in self.KasRecorridas:
                     self.casillasLibres[0] = True
             # Abajo
-            if self.Laberinto[self.casilla+MazeLab.NUM_CASILLAS] == 1:
+            if self.Laberinto[self.casilla+MazeLab.NUM_CASILLAS_VERTI] == 1:
                 self.casillasLibresVuelta[2] = True
                 if self.casilla-1 not in self.KasRecorridas:
                     self.casillasLibres[2] = True
