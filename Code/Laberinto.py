@@ -1,3 +1,4 @@
+from typing import Any
 import mates
 import player
 import infoPantalla
@@ -225,8 +226,33 @@ class App:
         pygame.draw.line(surface, color, (x - mitad, y), (x + mitad, y), grosor)
         pygame.draw.line(surface, color, (x, y - mitad), (x, y + mitad), grosor)
 
+    def dibujarCaminoEnemigo(self, nemesis):
+        # Pintamos una cruz en el centro de cada casilla donde haya estado el enemigo.
+        puntoPrevio = posicion(0, 0)
+        flagInit = True
+        smallfont = pygame.font.SysFont('Corbel', 15)
+        position = self.maze.calcularPixelPorCasilla(977)
+
+        if self.maze.esAlcanzable(nemesis.x, nemesis.y):
+            text1 = smallfont.render('X', True, (255, 165, 0))
+        else:
+            text1 = smallfont.render('X', True, (255, 255, 255))
+        
+        self.pantalla.blit(text1, (position.x, position.y))
+        # Y pintamos también una línea que una estas cruces.
+        for elemento in reversed(nemesis.posicionesRecorridas):
+            posi: posicion = self.maze.centroCasilla(elemento)
+            if not flagInit:
+                pygame.draw.line(self.pantalla, (255, 255, 0), posi.x, posi.y, 3)
+                pygame.display.flip()
+            else:
+                flagInit = False
+
     def draw_door(self, angle):
         """Dibuja la puerta rotando sobre el lado especificado."""
+        if self.flagPrint_info:
+            print("Dentro de dibujar la puerta.")
+        
         # Rotar la superficie
         rotated = pygame.transform.rotate(self.door_surface, -angle)
 
@@ -280,7 +306,6 @@ class App:
         color_otherorange = (216, 75, 32)
         color_rojobrillante = (255, 35, 1)
         
-
         # stores the width of the
         # screen into a variable
         width = self.pantalla.get_width()
@@ -723,16 +748,17 @@ class App:
     def on_loop(self):
         self.player.update()
 
+        # Jefe Enemigo.
         self.JefeEnemigo.updateJefe()
-        ksilla = self.maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
-        self.enemigo.cargarCasillaRecorrido(ksilla)
+        self.JefeEnemigo.casilla = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+        self.JefeEnemigo.cargarCasillaRecorrido(self.JefeEnemigo.casilla)
 
+        # Resto de enemigos.
         i = 0
-        for i in range(0, self.numEnemigos):
-            self.enemigo = self.enemigosArray[i]
-            ksilla = self.maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
-            self.enemigo.cargarCasillaRecorrido(ksilla)
-            self.enemigo.update()
+        for nemi in self.EnemigosGroup:
+            nemi.casilla = self.maze.calcularCasilla(nemi.x, nemi.y)
+            nemi.cargarCasillaRecorrido(nemi.casilla)
+            nemi.update()
             # if self.enemigo.flagDisparo == True:
                 # self.enemigo.balas.update()
 
@@ -761,7 +787,42 @@ class App:
                 self.closingDoor = False
 
         # Gestión del scroll de la pantalla.
-        
+        self.maze.moverCamara(self.player.x, self.player.y)
+        if self.maze.movimientoCamara > 0 and self.maze.flagCamaraCambio:
+            self.maze.flagCamaraCambio = False
+            self.maze.flagCamara = True
+            # Desplazamos todo a la izquierda (Paredes, Jugador, Enemigos, Puertas)
+            for x in self.maze.MazeParedes:
+                x.rect.x -= CASILLA_PIXEL
+
+            self.player.x -= CASILLA_PIXEL
+
+            for x in self.EnemigosGroup:
+                x.rect.x -= CASILLA_PIXEL
+
+            # Puertas
+            for x in self.maze.MazePuertas:
+                x.rect.x -= CASILLA_PIXEL
+
+            # Objetos Extra
+            for x in self.maze.MazeBandera:
+                x.rect.x -= CASILLA_PIXEL
+            for x in self.maze.MazeBotiquin:
+                x.rect.x -= CASILLA_PIXEL
+            for x in self.maze.MazeChampi:
+                x.rect.x -= CASILLA_PIXEL
+            for x in self.maze.MazeGranada:
+                x.rect.x -= CASILLA_PIXEL
+            for x in self.maze.MazeHueso:
+                x.rect.x -= CASILLA_PIXEL
+            for x in self.maze.MazeLlave:
+                x.rect.x -= CASILLA_PIXEL
+            for x in self.maze.MazeLlavePuerta:
+                x.rect.x -= CASILLA_PIXEL
+            for x in self.maze.MazeOro:
+                x.rect.x -= CASILLA_PIXEL
+            for x in self.maze.MazePilaHuesos:
+                x.rect.x -= CASILLA_PIXEL
         
         # Colisión del jugador con paredes
         colision_player = pygame.sprite.spritecollide(self.player, self.maze.MazeParedes, False)
@@ -837,7 +898,7 @@ class App:
             for cpcE in colision_PlayerConExtra:
                 logging.info(f'Huesos tocados')
 
-        # Colisión Player con llave puerta
+        # Colisión Player con llave Puerta
         colision_PlayerConLlavePuerta = pygame.sprite.spritecollide(self.player, self.maze.MazeLlavePuerta, True)
         if colision_PlayerConLlavePuerta:
             logging.info('Llave PUERTA cogida')
@@ -997,22 +1058,6 @@ class App:
                 self.player.x = pos.x
                 self.player.y = pos.y
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-
-                if self.flagPrint_info:
-                    print(f"Casilla puerta : ", len(self.maze.posicionPuerta))
-                # Defino las puertas
-                for porte in self.maze.posicionPuerta:
-                    pos = self.maze.calcularPixelPorCasilla(porte[0])
-                    self.door_y = pos.y+5
-                    self.door_x = pos.x+30
-                    self.pivot_x = self.door_x
-                    self.pivot_y = self.door_y 
-
-                    self.door_surface = pygame.Surface((self.door_length, self.door_thickness), pygame.SRCALPHA)
-                    pygame.draw.rect(self.door_surface, COLOR_PUERTA, (0, 0, self.door_length, self.door_thickness))
-                    pygame.draw.rect(self.door_surface, COLOR_BORDE, (0, 0, self.door_length, self.door_thickness), 2)
-                    # if porte[1] == 1:
-                        #self.door_surface = pygame.transform.rotate(self.door_surface, 90)
             else:
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
             
@@ -1022,8 +1067,35 @@ class App:
             # self.dibujar_cruz(self.pantalla, 202, 702, 20)
 
             # --- Dibujado PUERTA/S ---
-            self.draw_door(self.door_angle)
+            if self.flagPrint_info:
+                print(f"Casillas con puerta  (visible): ", len(self.maze.posicionPuerta))
+                
+            # Defino las puertas
+            i = 0
+            for porte in self.maze.posicionPuerta:
+                pos = self.maze.calcularPixelPorCasilla(porte[0])
+                if i == 0:
+                    self.door_y = pos.y+5
+                    self.door_x = pos.x+30
+                else:
+                    self.door_y = pos.y
+                    self.door_x = pos.x
+                
+                if self.flagPrint_info:
+                    print("Posicion X e Y puerta: ", self.door_x, self.door_y)
+                
+                self.pivot_x = self.door_x
+                self.pivot_y = self.door_y 
+
+                self.door_surface = pygame.Surface((self.door_length, self.door_thickness), pygame.SRCALPHA)
+                pygame.draw.rect(self.door_surface, COLOR_PUERTA, (0, 0, self.door_length, self.door_thickness))
+                pygame.draw.rect(self.door_surface, COLOR_BORDE, (0, 0, self.door_length, self.door_thickness), 2)
+                # if porte[1] == 1:
+                    #self.door_surface = pygame.transform.rotate(self.door_surface, 90)
+
+                self.draw_door(self.door_angle)
             
+            """ 
             smallfont = pygame.font.SysFont('Corbel', 35)
             position = self.maze.calcularPixelPorCasilla(977)
             if self.maze.esAlcanzable(position.x, position.y):
@@ -1032,7 +1104,7 @@ class App:
                 text1 = smallfont.render('X', True, (255, 255, 255))
             self.pantalla.blit(text1, (position.x, position.y))
 
-            """ 
+           
             position = self.maze.calcularPixelPorCasilla(36)
             if self.maze.esAlcanzable(position.x, position.y):
                 text1 = smallfont.render('36', True, (255, 165, 0))

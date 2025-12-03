@@ -301,7 +301,7 @@ class Enemigo(pygame.sprite.Sprite):
     y = 12
     prev_x = None
     prev_y = None
-    casilla = 0
+    casilla = int = 0
 
     vida = int
     flagDisparo = bool = False
@@ -459,6 +459,7 @@ class Enemigo(pygame.sprite.Sprite):
 
     def updateJefe(self):
         logging.debug('Dentro Update ENEMIGOS.')
+        print('Dentro Update JEFE ENEMIGO.')
         # Guardar posición previa
         self.prev_x = self.x
         self.prev_y = self.y
@@ -466,14 +467,14 @@ class Enemigo(pygame.sprite.Sprite):
         # Actualizar el rectángulo de colisión con la posición actual
         self.rect.x = self.x
         self.rect.y = self.y
-
-        self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
-
-        self.kia.definirPosicion(self.x, self.y)
         
         self.visionRotar()
 
+        self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
+        self.kia.definirPosicion(self.x, self.y)
+
         dir = self.kia.update()
+        print("Dir = ", dir)
         self.elegirDireccion(dir)
         
         # Actualizar rect tras mover
@@ -483,16 +484,24 @@ class Enemigo(pygame.sprite.Sprite):
         self.borrarRecorridosAntiguos()
 
     def elegirDireccion(self, dir):
+        print("Dentro Elección dirección.")
+        # Arriba
         if dir == 0:
+            print("Arriba")
             self.moveUp()
+        # Derecha
         elif dir == 1:
             self.moveRight()
+        # Abajo
         elif dir == 2:
             self.moveDown()
+        # Izquierda
         elif dir == 3:
             self.moveLeft()
+        # Caso extraño    
         else:
-            self.moveStop()
+            self.moveDown()
+            print("Jefe Enemigo mueve abajo")
 
     def revertir_movimiento(self):
         # Revertir a la posición previa tras colisión
