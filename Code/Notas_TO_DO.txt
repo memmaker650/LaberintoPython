@@ -1,0 +1,7 @@
+**** Notas: Situación como estamos, TO DO things :
+---------------------------------------------------
+- Colocar 2 puertas que restan en su lugar.
+- IA Mover también de forma lateral.
+- IA de los enemigos para que disparen.
+- Mensaje de FIN ALARMA cuando el contador llegue a 0.
+- Mensaje de CUIDADO cuando reloj igual a 10.

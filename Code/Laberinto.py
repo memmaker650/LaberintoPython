@@ -173,6 +173,10 @@ class App:
 
         self.salir = False
 
+        self.ia_update_interval = 500  # milisegundos (500ms = 0.5 segundos, o 1000ms = 1 segundo)
+        self.ultimo_update_ia = pygame.time.get_ticks()
+        self.ia_necesita_update = True  
+
         # Cargando el escenario
         self.maze = MazeLab.Maze()
         logging.info("Cargado el escenario")
@@ -210,9 +214,43 @@ class App:
             pos = MazeLab.Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
             resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
 
+        # Cargamos Jefe enemigo
         self.JefeEnemigo.x = pos.x
         self.JefeEnemigo.y = pos.y
-        # Cargamos Jefe enemigo
+        
+        pygame.init()
+        
+        # PRECARGAR RECURSOS PARA EL HUD (UNA SOLA VEZ)
+        # Imágenes del HUD
+        self.imagen_llave_puerta = pygame.image.load("./Resources/llave_puerta.png")
+        self.imagen_llave_puerta = pygame.transform.scale(self.imagen_llave_puerta, (7, 21))
+
+        self.imagen_llave = pygame.image.load("./Resources/llave.png")
+        self.imagen_llave = pygame.transform.scale(self.imagen_llave, (20, 20))
+
+        self.imagen_pistola = pygame.image.load("./Resources/pistola.png")
+        self.imagen_pistola = pygame.transform.scale(self.imagen_pistola, (25, 25))
+
+        self.imagen_granada = pygame.image.load("./Resources/granada-de-mano.png")
+        self.imagen_granada = pygame.transform.scale(self.imagen_granada, (20, 20))
+
+        self.imagen_laser = pygame.image.load("./Resources/pistola-laser.png")
+        self.imagen_laser = pygame.transform.scale(self.imagen_laser, (20, 20))
+
+        self.imagen_clock = pygame.image.load("./Resources/clock.png")
+        self.imagen_clock = pygame.transform.scale(self.imagen_clock, (40, 40))
+
+        # Fuentes del HUD (crearlas una vez)
+        self.font_hud = pygame.font.SysFont('Arial', 32)
+        self.font_clock = pygame.font.SysFont('Arial', 40)
+        self.font_nivel = pygame.font.SysFont('Arial', 40)
+        self.font_vida = pygame.font.SysFont('Arial', 27)
+        self.font_fps = pygame.font.SysFont('Arial', 20)
+
+        # Superficie base para puertas (se crea una vez, se reutiliza)
+        self.door_surface_base = pygame.Surface((self.door_length, self.door_thickness), pygame.SRCALPHA)
+        pygame.draw.rect(self.door_surface_base, COLOR_PUERTA, (0, 0, self.door_length, self.door_thickness))
+        pygame.draw.rect(self.door_surface_base, COLOR_BORDE, (0, 0, self.door_length, self.door_thickness), 2)
 
     def verInfoEnemigos(self):
         enemy = player.Enemigo()
@@ -699,9 +737,7 @@ class App:
                 pygame.display.update()
 
     def on_init(self):
-        pygame.init()
-
-        pygame.display.set_caption('Laberinto SquidCastle 2025, Aurora.')
+        pygame.display.set_caption('Laberinto SquidCastle 2026, Aurora.')
         logging.info("Inicio del juego.")
 
         logging.info("Pintamos el menú del juego.")
@@ -748,8 +784,32 @@ class App:
     def on_loop(self):
         self.player.update()
 
-        # Jefe Enemigo.
-        self.JefeEnemigo.updateJefe()
+        # Jefe Enemigo - OPTIMIZACIÓN: IA solo cada X milisegundos
+        tiempo_actual = pygame.time.get_ticks()
+        tiempo_desde_ultimo_update = tiempo_actual - self.ultimo_update_ia
+
+       # Detectar cambios importantes que requieren actualización inmediata
+        cambio_importante = (
+            self.JefeEnemigo.isColision or  # Colisión detectada
+            self.JefeEnemigo.kia.colisionParedes or  # Chocó con pared
+            self.JefeEnemigo.alarma  # Alarma activada
+        )
+    
+        # Ejecutar IA solo si:
+        # 1. Ha pasado el intervalo de tiempo O
+        # 2. Hay un cambio importante (colisión, alarma, etc.)
+        if tiempo_desde_ultimo_update >= self.ia_update_interval or cambio_importante or self.ia_necesita_update:
+            self.JefeEnemigo.casilla = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+            self.JefeEnemigo.kia.casilla = self.JefeEnemigo.casilla
+            self.JefeEnemigo.kia.definirPosicion(self.JefeEnemigo.x, self.JefeEnemigo.y)
+            
+            dir = self.JefeEnemigo.kia.update()
+            self.JefeEnemigo.elegirDireccion(dir)
+            
+            self.ultimo_update_ia = tiempo_actual
+            self.ia_necesita_update = False
+        
+        # Actualizar casilla y recorrido siempre (son operaciones rápidas)
         self.JefeEnemigo.casilla = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
         self.JefeEnemigo.cargarCasillaRecorrido(self.JefeEnemigo.casilla)
 
@@ -803,6 +863,8 @@ class App:
             # Puertas
             for x in self.maze.MazePuertas:
                 x.rect.x -= CASILLA_PIXEL
+                logging.info("Desplazar puertas")
+                print("Desplazar puertas")
 
             # Objetos Extra
             for x in self.maze.MazeBandera:
@@ -819,6 +881,8 @@ class App:
                 x.rect.x -= CASILLA_PIXEL
             for x in self.maze.MazeLlavePuerta:
                 x.rect.x -= CASILLA_PIXEL
+                logging.info("Desplazar Llave Puertas")
+                print("Desplazar Llave Puertas")
             for x in self.maze.MazeOro:
                 x.rect.x -= CASILLA_PIXEL
             for x in self.maze.MazePilaHuesos:
@@ -1038,286 +1102,212 @@ class App:
                 muni.kill()
 
     def on_render(self):
-        if self.pause == False:
-            self.pantalla.fill((0, 0, 0))
-            #Defino el laberinto
-            logging.debug("Pintamos laberinto.")
-            self.maze.draw(self.pantalla, self.floor_surf, self.wall_surf, self.casillaObjetosTocados)
+       if self.pause == False:
+           self.pantalla.fill((0, 0, 0))
+           # Defino el laberinto
+           # logging.debug("Pintamos laberinto.")  # Comentado para mejorar rendimiento
+           self.maze.draw(self.pantalla, self.floor_surf, self.wall_surf, self.casillaObjetosTocados)
 
-            if self.iteracion == 35:
-                self.iteracion = 0
+           if self.iteracion == 35:
+               self.iteracion = 0
 
-            # Aquí busco lugar suelo para Jugador
-            # Llamada a la IA
-            if self.flagInit == True:
-                self.flagInit = False
-                # if self.flagPrint_info:
-                print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
-                self.player.casilla = self.maze.posicionInitJugador    
-                pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
-                self.player.x = pos.x
-                self.player.y = pos.y
-                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-            else:
-                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-            
-            if self.pintaRectángulos == True:
-                pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
-
-            # self.dibujar_cruz(self.pantalla, 202, 702, 20)
-
-            # --- Dibujado PUERTA/S ---
-            if self.flagPrint_info:
-                print(f"Casillas con puerta  (visible): ", len(self.maze.posicionPuerta))
-                
-            # Defino las puertas
-            i = 0
-            for porte in self.maze.posicionPuerta:
-                pos = self.maze.calcularPixelPorCasilla(porte[0])
-                if i == 0:
-                    self.door_y = pos.y+5
-                    self.door_x = pos.x+30
-                else:
-                    self.door_y = pos.y
-                    self.door_x = pos.x
-                
-                if self.flagPrint_info:
-                    print("Posicion X e Y puerta: ", self.door_x, self.door_y)
-                
-                self.pivot_x = self.door_x
-                self.pivot_y = self.door_y 
-
-                self.door_surface = pygame.Surface((self.door_length, self.door_thickness), pygame.SRCALPHA)
-                pygame.draw.rect(self.door_surface, COLOR_PUERTA, (0, 0, self.door_length, self.door_thickness))
-                pygame.draw.rect(self.door_surface, COLOR_BORDE, (0, 0, self.door_length, self.door_thickness), 2)
-                # if porte[1] == 1:
-                    #self.door_surface = pygame.transform.rotate(self.door_surface, 90)
-
-                self.draw_door(self.door_angle)
-            
-            """ 
-            smallfont = pygame.font.SysFont('Corbel', 35)
-            position = self.maze.calcularPixelPorCasilla(977)
-            if self.maze.esAlcanzable(position.x, position.y):
-                text1 = smallfont.render('X', True, (255, 165, 0))
-            else:
-                text1 = smallfont.render('X', True, (255, 255, 255))
-            self.pantalla.blit(text1, (position.x, position.y))
-
+           # Aquí busco lugar suelo para Jugador
+           # Llamada a la IA
+           if self.flagInit == True:
+               self.flagInit = False
+               # if self.flagPrint_info:
+               print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
+               self.player.casilla = self.maze.posicionInitJugador    
+               pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
+               self.player.x = pos.x
+               self.player.y = pos.y
+               self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+           else:
+               self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
            
-            position = self.maze.calcularPixelPorCasilla(36)
-            if self.maze.esAlcanzable(position.x, position.y):
-                text1 = smallfont.render('36', True, (255, 165, 0))
-            else:
-                text1 = smallfont.render('36', True, (255, 255, 255))
-            self.pantalla.blit(text1, (position.x, position.y))
+           if self.pintaRectángulos == True:
+               pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
 
-            position = self.maze.calcularPixelPorCasilla(41)
-            if self.maze.esAlcanzable(position.x, position.y):
-                text1 = smallfont.render('41', True, (255, 165, 0))
-            else:
-                text1 = smallfont.render('41', True, (255, 255, 255))
-            self.pantalla.blit(text1, (position.x, position.y))
+           # --- Dibujado PUERTA/S ---
+           if self.flagPrint_info:
+               print(f"Casillas con puerta  (visible): ", len(self.maze.posicionPuerta))
+               
+           # Defino las puertas - OPTIMIZADO: reutilizar superficie base
+           i = 0
+           for porte in self.maze.posicionPuerta:
+               pos = self.maze.calcularPixelPorCasilla(porte[0])
+               if i == 0:
+                   self.door_y = pos.y+5
+                   self.door_x = pos.x+30
+               else:
+                   self.door_y = pos.y
+                   self.door_x = pos.x
+               
+               if self.flagPrint_info:
+                   print("Posicion X e Y puerta: ", self.door_x, self.door_y)
+               
+               self.pivot_x = self.door_x
+               self.pivot_y = self.door_y 
 
-            position = self.maze.calcularPixelPorCasilla(134)
-            if self.maze.esAlcanzableCasilla(134):
-                text1 = smallfont.render('134', True, (255, 165, 0))
-            else:
-                text1 = smallfont.render('134', True, (255, 255, 255))
-            self.pantalla.blit(text1, (position.x, position.y))
+               # OPTIMIZACIÓN: Usar superficie precargada en lugar de crear nueva
+               self.door_surface = self.door_surface_base.copy()
+               self.draw_door(self.door_angle)
+               i += 1
 
-            position = self.maze.calcularPixelPorCasilla(24)
-            if self.maze.esAlcanzableCasilla(24):
-                text1 = smallfont.render('24', True, (255, 165, 0))
-            else:
-                text1 = smallfont.render('24', True, (255, 255, 255))
-            self.pantalla.blit(text1, (position.x, position.y)) """
+           # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
+           # logging.debug("Pintamos los enemigos.")  # Comentado para mejorar rendimiento
+           for i in range(0, self.numEnemigos):
+               self.enemigo = self.enemigosArray[i]
+               if(self.enemigo.isJefeEnemigo):
+                   if self.flagPrint_info:
+                       print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
+                   self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+               else:   
+                   if self.flagPrint_info:
+                       print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
+                   self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
+                   if self.pintaRectángulos == True:
+                       pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
 
-            # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
-            logging.debug("Pintamos los enemigos.")
-            i = 0
-            for i in range(0, self.numEnemigos):
-                self.enemigo = self.enemigosArray[i]
-                if(self.enemigo.isJefeEnemigo):
-                    if self.flagPrint_info:
-                        print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
-                    self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-                else:   
-                    if self.flagPrint_info:
-                        print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
-                    self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
-                    if self.pintaRectángulos == True:
-                        pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
+           # Jefe Enemigo + VISIÓN
+           # logging.debug('Pintamos el JEFE enemigo.')  # Comentado para mejorar rendimiento
+           self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+           if self.pintaRectángulos == True:
+               pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
+           # VISION
+           if (self.visionEnemigos == True):
+               self.JefeEnemigo.visionRotar()
+               self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
+               centro = (self.JefeEnemigo.x+10, self.JefeEnemigo.y+10)
+               radio = 20
+               x = centro[0] + radio * math.cos(math.radians(self.JefeEnemigo.angle))
+               y = centro[1] + radio * math.sin(math.radians(self.JefeEnemigo.angle))
+               rot_angle = -self.JefeEnemigo.angle + 90
+               rotated = pygame.transform.rotate(self.JefeEnemigo.visionImage, rot_angle)
+               rect = rotated.get_rect(center=(x, y))
+               self.pantalla.blit(rotated, rect)
 
-            # for nemesis in self.EnemigosGroup:
-                # nemesis.balas.draw(self.pantalla)
+           if(self.JefeEnemigo.alarma):
+               # --- Control del tiempo del bocadillo ---
+               current_time = pygame.time.get_ticks()
+               elapsed = current_time - self.JefeEnemigo.bubble_start_time
+               if elapsed < self.JefeEnemigo.bubble_duration:
+                   # Calculamos opacidad
+                   if elapsed > self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration:
+                       alphaBTexto = int(255 * (1 - (elapsed - (self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration)) / self.JefeEnemigo.fade_duration))
+                   else:
+                       alphaBTexto = 255
 
-            # Jefe Enemigo + VISIÓN
-            logging.debug('Pintamos el JEFE enemigo.')
-            self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-            if self.pintaRectángulos == True:
-                pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
-            # VISION
-            if (self.visionEnemigos == True):
-                self.JefeEnemigo.visionRotar()
-                self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
-                centro = (self.JefeEnemigo.x+10, self.JefeEnemigo.y+10)
-                radio = 20
-                x = centro[0] + radio * math.cos(math.radians(self.JefeEnemigo.angle))
-                y = centro[1] + radio * math.sin(math.radians(self.JefeEnemigo.angle))
-                # Calculamos el ángulo de rotación: la cruz debe mirar hacia afuera
-                # → sumamos 90° para que apunte al exterior en lugar de al centro
-                rot_angle = -self.JefeEnemigo.angle + 90
-                # Rotamos la imagen
-                rotated = pygame.transform.rotate(self.JefeEnemigo.visionImage, rot_angle)
-                rect = rotated.get_rect(center=(x, y))
-                # Dibujamos la cruz rotada en su posición orbital
-                self.pantalla.blit(rotated, rect)
+                   self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", (int(self.JefeEnemigo.x), int(self.JefeEnemigo.y) - 10), alpha=alphaBTexto)
+               else:
+                   self.JefeEnemigo.alarma = False
+                   self.JefeEnemigo.restarRelojBocadilloTexto()
+       
+           # Maze Extra --> Recuadros
+           if self.pintaRectángulos == True:
+               for extra in self.maze.MazeExtra:
+                   pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
 
-            if(self.JefeEnemigo.alarma):
-                # --- Control del tiempo del bocadillo ---
-                current_time = pygame.time.get_ticks()
-                elapsed = current_time - self.JefeEnemigo.bubble_start_time
-                if elapsed < self.JefeEnemigo.bubble_duration:
-                    # Calculamos opacidad
-                    if elapsed > self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration:
-                        # Fase de desvanecimiento (alpha entre 255 → 0)
-                        alphaBTexto = int(255 * (1 - (elapsed - (self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration)) / self.JefeEnemigo.fade_duration))
-                    else:
-                        alphaBTexto = 255
+           # Pintar disparos del Player
+           if self.player.flagDisparo == True:
+               # logging.debug('DISPARO DeL Player.')  # Comentado para mejorar rendimiento
+               self.player.balas.draw(self.pantalla)
 
-                    self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", (int(self.JefeEnemigo.x), int(self.JefeEnemigo.y) - 10), alpha=alphaBTexto)
-                else:
-                    self.JefeEnemigo.alarma = False
-                    self.JefeEnemigo.restarRelojBocadilloTexto()
-    
-            # Maze Extra --> Recuadros
-            if self.pintaRectángulos == True:
-                for extra in self.maze.MazeExtra:
-                    pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
+           # Pintar disparos de Jefe Enemigo
+           if self.JefeEnemigo.flagDisparo == True:
+               # logging.debug('Pintamos Disparo DEL JEFE enemigo.')  # Comentado para mejorar rendimiento
+               self.JefeEnemigo.balas.draw(self.pantalla)
 
-            # Pintar disparos del Player
-            if self.player.flagDisparo == True:
-                logging.debug('DISPARO DeL Player.')
-                self.player.balas.draw(self.pantalla)
+       self.iteracion += 1
 
-            # Pintar disparos de Jefe Enemigo
-            if self.JefeEnemigo.flagDisparo == True:
-                logging.debug('Pintamos Disparo DEL JEFE enemigo.')
-                self.JefeEnemigo.balas.draw(self.pantalla)
+       self.HeadGunAmmo.armaSeleccionada = 2
+       self.HeadGunAmmo.municionArmaSeleccionada = self.player.municion
+       self.HeadGunAmmo.update()
 
-        self.iteracion += 1
+       # Actualizo valores del HUB.
+       self.HeadBarraDeVida.crearBarraDeVida()
+       self.HeadBarraDeVida.conversionTexto()
+       self.HeadNivel.conversionTexto()
+       self.HeadReloj.conversionTexto()
+       self.HeadPuntuacion.conversionTexto()
+       self.HeadGunAmmo.conversionTexto()
+       self.HeadHuesos.conversionTexto()
 
-        self.HeadGunAmmo.armaSeleccionada = 2
-        self.HeadGunAmmo.municionArmaSeleccionada = self.player.municion
-        self.HeadGunAmmo.update()
+       # Pinto los valores del HUB o cabecera de valores.
+       # logging.debug("Pintando la Cabecera de Valores")  # Comentado para mejorar rendimiento
 
-        # Actualizo valores del HUB.
-        self.HeadBarraDeVida.crearBarraDeVida()
-        self.HeadBarraDeVida.conversionTexto()
-        self.HeadNivel.conversionTexto()
-        self.HeadReloj.conversionTexto()
-        self.HeadPuntuacion.conversionTexto()
-        self.HeadGunAmmo.conversionTexto()
-        self.HeadHuesos.conversionTexto()
+       # Objetos adquiridos (Llaves & Armas) - OPTIMIZADO: usar imágenes precargadas
+       if self.player.llavePuerta:
+           self.pantalla.blit(self.imagen_llave_puerta, (620, 110))
 
-        # Pinto los valores del HUB o cabecera de valores.
-        logging.debug("Pintando la Cabecera de Valores")
+       if self.player.llaveFinNivel:
+           self.pantalla.blit(self.imagen_llave, (660, 110))
+       
+       if self.player.pistola:
+           self.pantalla.blit(self.imagen_pistola, (700, 110))
 
-        # Objetos adquiridos (Llaves & Armas)
-        if self.player.llavePuerta:
-            imagenPanel1 = pygame.image.load("./Resources/llave_puerta.png")
-            imagen_escalada = pygame.transform.scale(imagenPanel1, (7, 21))
-            self.pantalla.blit(imagen_escalada, (620, 110))
+       if self.player.granada:
+           self.pantalla.blit(self.imagen_granada, (740, 110))
+       
+       if self.player.laser:
+           self.pantalla.blit(self.imagen_laser, (780, 110))
 
-        if self.player.llaveFinNivel:
-            imagenPanel2 = pygame.image.load("./Resources/llave.png")
-            imagen_escalada = pygame.transform.scale(imagenPanel2, (20, 20))
-            self.pantalla.blit(imagen_escalada, (660, 110))
-        
-        if self.player.pistola:
-            imagenPanel3 = pygame.image.load("./Resources/pistola.png")
-            imagen_escalada = pygame.transform.scale(imagenPanel3, (25, 25))
-            self.pantalla.blit(imagen_escalada, (700, 110))
+       # Puntuación - OPTIMIZADO: usar fuente precargada
+       puntos_text = self.font_hud.render(f"Puntos: {self.HeadPuntuacion.textoPuntos}", True, (255, 255, 0))
+       self.pantalla.blit(puntos_text, (600, 10))
 
-        if self.player.granada:
-            imagenPanel4 = pygame.image.load("./Resources/granada-de-mano.png")
-            imagen_escalada = pygame.transform.scale(imagenPanel4, (20, 20))
-            self.pantalla.blit(imagen_escalada, (740, 110))
-        
-        if self.player.laser:
-            imagenPanel5 = pygame.image.load("./Resources/pistola-laser.png")
-            imagen_escalada = pygame.transform.scale(imagenPanel5, (20, 20))
-            self.pantalla.blit(imagen_escalada, (780, 110))
+       # Arma y Munición - OPTIMIZADO: usar fuente precargada
+       puntos_text = self.font_hud.render(f"Arma: ", True, (100, 100, 100))
+       self.pantalla.blit(puntos_text, (600, 40))
+       puntos_text = self.font_hud.render(f"{self.HeadGunAmmo.textoArma}", True, (255, 255, 255))
+       self.pantalla.blit(puntos_text, (720, 40))
+       puntos_text = self.font_hud.render(f"Munición: ", True, (100, 100, 100))
+       self.pantalla.blit(puntos_text, (600, 70))
+       puntos_text = self.font_hud.render(f"{self.HeadGunAmmo.textoMunicion}", True, (255, 255, 255))
+       self.pantalla.blit(puntos_text, (750, 70))
 
-        # Puntuación
-        font = pygame.font.SysFont('Arial', 32)
-        puntos_text = font.render(f"Puntos: {self.HeadPuntuacion.textoPuntos}", True, (255, 255, 0))  # Amarillo
-        self.pantalla.blit(puntos_text, (600, 10))
+       # Reloj - OPTIMIZADO: usar imágenes y fuentes precargadas
+       tiempo_actual = pygame.time.get_ticks()
+       segundos_transcurridos = (tiempo_actual - self.tiempo_inicio) // 1000
+       tiempo_restante = max(0, self.HeadReloj.maxTiempo - segundos_transcurridos)
+       self.HeadReloj.tiempoInteger = int(tiempo_restante)
 
-        # Arma y Munición
-        font = pygame.font.SysFont('Arial', 32)
-        puntos_text = font.render(f"Arma: ", True, (100, 100, 100))  # Azul
-        self.pantalla.blit(puntos_text, (600, 40))
-        puntos_text = font.render(f"{self.HeadGunAmmo.textoArma}", True, (255, 255, 255))  # Azul
-        self.pantalla.blit(puntos_text, (720, 40))
-        puntos_text = font.render(f"Munición: ", True, (100, 100, 100))  # Azul
-        self.pantalla.blit(puntos_text, (600, 70))
-        puntos_text = font.render(f"{self.HeadGunAmmo.textoMunicion}", True, (255, 255, 255))  # Azul
-        self.pantalla.blit(puntos_text, (750, 70))
+       if self.HeadReloj.tiempoInteger == 0:
+           pass
+       
+       self.pantalla.blit(self.imagen_clock, (360, 10))
+       puntos_text = self.font_clock.render(f"{self.HeadReloj.textoReloj}", True, (255, 255, 255))
+       self.pantalla.blit(puntos_text, (420, 10))
 
-        # Reloj
-        # Calculos
-        tiempo_actual = pygame.time.get_ticks()
-        segundos_transcurridos = (tiempo_actual - self.tiempo_inicio) // 1000
-        tiempo_restante = max(0, self.HeadReloj.maxTiempo - segundos_transcurridos)
-        self.HeadReloj.tiempoInteger = int(tiempo_restante)
+       # Nivel - OPTIMIZADO: usar fuente precargada
+       puntos_text = self.font_nivel.render(f"Level: ", True, (100, 100, 100))
+       self.pantalla.blit(puntos_text, (360, 50))
+       puntos_text = self.font_nivel.render(f"{self.HeadNivel.textoNivel}", True, (0, 0, 255))
+       self.pantalla.blit(puntos_text, (480, 50))
 
-        # Si llega a cero, puedes hacer algo (ej. fin del juego)
-        if self.HeadReloj.tiempoInteger == 0:
-            # Aquí podrías mostrar mensaje "¡Tiempo agotado!"
-            pass
-        imagenPanel3 = pygame.image.load("./Resources/clock.png")
-        imagen_escalada = pygame.transform.scale(imagenPanel3, (40, 40))
-        self.pantalla.blit(imagen_escalada, (360, 10))
-        font = pygame.font.SysFont('Arial', 40)
-        puntos_text = font.render(f"{self.HeadReloj.textoReloj}", True, (255, 255, 255))  # Blanco
-        self.pantalla.blit(puntos_text, (420, 10))
+       # Huesos - OPTIMIZADO: usar fuente precargada
+       puntos_text = self.font_hud.render(f"Huesos:", True, (100, 100, 100))
+       self.pantalla.blit(puntos_text, (360, 90))
+       puntos_text = self.font_hud.render(f"{self.HeadHuesos.textoHuesos}", True, (255, 255, 255))
+       self.pantalla.blit(puntos_text, (485, 90))
 
-        # Nivel
-        font = pygame.font.SysFont('Arial', 40)
-        puntos_text = font.render(f"Level: ", True, (100, 100, 100))  # Azúl
-        self.pantalla.blit(puntos_text, (360, 50))
-        puntos_text = font.render(f"{self.HeadNivel.textoNivel}", True, (0, 0, 255))  # Azúl
-        self.pantalla.blit(puntos_text, (480, 50))
+       # Nombre Jugador - OPTIMIZADO: usar fuente precargada
+       puntos_text = self.font_hud.render(f"Memmaker650", True, (100, 100, 100))
+       self.pantalla.blit(puntos_text, (10, 10))
 
-        # Huesos
-        font = pygame.font.SysFont('Arial', 32)
-        puntos_text = font.render(f"Huesos:", True, (100, 100, 100))  # Azúl
-        self.pantalla.blit(puntos_text, (360, 90))
-        puntos_text = font.render(f"{self.HeadHuesos.textoHuesos}", True, (255, 255, 255))  # Azúl
-        self.pantalla.blit(puntos_text, (485, 90))
+       # Barra de Vida
+       self.pantalla.blit(self.HeadBarraDeVida.spriteBarraDeVida, (10, 50))
+       # Barra de Vida (Porcentaje) - OPTIMIZADO: usar fuente precargada
+       puntos_text = self.font_vida.render(f"{self.HeadBarraDeVida.textoVida}", True, (255, 255, 255))
+       self.pantalla.blit(puntos_text, (85, 60))
 
-        # Nombre Jugador
-        font = pygame.font.SysFont('Arial', 32)
-        puntos_text = font.render(f"Memmaker650", True, (100, 100, 100))  # Azúl
-        self.pantalla.blit(puntos_text, (10, 10))
+       # FPS - OPTIMIZADO: usar fuente precargada
+       fps = int(self.clock.get_fps())
+       fps_text = self.font_fps.render(f"FPS: {fps}", True, (255, 255, 0))
+       # logging.debug("FPS de pintado : %i", fps)  # Comentado para mejorar rendimiento
+       self.pantalla.blit(fps_text, (10, 110))
 
-        # Barra de Vida
-        self.pantalla.blit(self.HeadBarraDeVida.spriteBarraDeVida, (10, 50))
-        # Barra de Vida (Porcentaje)
-        font = pygame.font.SysFont('Arial', 27)
-        puntos_text = font.render(f"{self.HeadBarraDeVida.textoVida}", True, (255, 255, 255))  # Blanco
-        self.pantalla.blit(puntos_text, (85, 60))
-
-        #FPS
-        fps = int(self.clock.get_fps())
-        font = pygame.font.SysFont('Arial', 20)
-        fps_text = font.render(f"FPS: {fps}", True, (255, 255, 0))  # Amarillo
-        logging.debug("FPS de pintado : %i", fps)
-        self.pantalla.blit(fps_text, (10, 110))
-
-        pygame.display.flip() # Aquí es donde ploteamos todo.
+       pygame.display.flip() # Aquí es donde ploteamos todo.
 
     def on_cleanup(self):
         pygame.quit()

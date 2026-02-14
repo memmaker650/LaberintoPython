@@ -62,7 +62,7 @@ class KerberosIA:
         elif (self.ordenJefe == True):
             self.estado = 3
     
-    def cambiar_direccion(self):
+    def cambiarSentido(self):
         # Cambio simple de dirección: invertir velocidad vertical
         self.speedV = -self.speedV 
 
@@ -125,17 +125,34 @@ class KerberosIA:
         if self.colisionParedes:
             self.revisarCasillasAdyacentes()
             result = self.casillasLibres.count(True)
-            
+            valor = 0 # Reinit el valor a devolver.
+
             if result > 0:
                 print("Dentro KerberoIA Jefe Enemigo.")
                 if result == 1:
-                    valor = 1
+                    for i in self.casillasLibres:
+                        if i:
+                            valor += 1
+                            valor = self.casillasLibres[result]
+                            break
                 else:
-                    valor = random.randint(0, result-1)
-                print("valor1: ", valor)
+                    res = random.randint(0, result-1)
+                    x = 0
+                    for i in self.casillasLibres:
+                        if i: 
+                            x += 1
+                            valor += 1
+                            
+                            if x == res:
+                                return valor
+
+                print("valor en IA : ", valor)
                 
-                while not self.casillasLibres[valor]:
-                    valor += 1
+                try:
+                    while not self.casillasLibres[valor]:
+                        valor += 1
+                except ValueError:
+                    print("Oops!  That was no valid number.  Try again...", valor)
                 
                 print("DirecciÓN a TOMAR: ", valor)
             else:
