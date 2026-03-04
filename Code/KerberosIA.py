@@ -133,7 +133,7 @@ class KerberosIA:
                     for i in self.casillasLibres:
                         if i:
                             valor += 1
-                            valor = self.casillasLibres[result]
+                            valor = self.casillasLibres[result-1]
                             break
                 else:
                     res = random.randint(0, result-1)
@@ -148,11 +148,12 @@ class KerberosIA:
 
                 print("valor en IA : ", valor)
                 
-                try:
+                """ try:
                     while not self.casillasLibres[valor]:
-                        valor += 1
+                        if valor < 4:
+                            valor += 1
                 except ValueError:
-                    print("Oops!  That was no valid number.  Try again...", valor)
+                    print("Oops!  That was no valid number.  Try again...", valor) """
                 
                 print("DirecciÓN a TOMAR: ", valor)
             else:

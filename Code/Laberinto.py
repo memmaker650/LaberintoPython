@@ -140,6 +140,14 @@ class App:
     Sound = None
     canalmusicaFondo = None
 
+    # Estado del mensaje de alerta
+    alerta_activa = False
+    alerta_texto = "X"
+    alerta_inicio_ms = 0
+    alerta_duracion_ms = 3000  # 3 segundos
+
+    font_alerta = None # elige tu fuente
+
     salir = bool = False
 
     # Inicio el reloj y el Sonido.
@@ -175,7 +183,7 @@ class App:
 
         self.ia_update_interval = 500  # milisegundos (500ms = 0.5 segundos, o 1000ms = 1 segundo)
         self.ultimo_update_ia = pygame.time.get_ticks()
-        self.ia_necesita_update = True  
+        self.ia_necesita_update = True 
 
         # Cargando el escenario
         self.maze = MazeLab.Maze()
@@ -219,6 +227,8 @@ class App:
         self.JefeEnemigo.y = pos.y
         
         pygame.init()
+
+        self.font_alerta = pygame.font.SysFont('Impact', 32) 
         
         # PRECARGAR RECURSOS PARA EL HUD (UNA SOLA VEZ)
         # Imágenes del HUD
@@ -969,6 +979,11 @@ class App:
             if self.flagPrint_info:
                 print('Llave PUERTA cogida')
             self.player.llavePuerta = True
+
+            self.alerta_activa = True
+            self.alerta_texto = "¡Has cogido la llave!"
+            self.alerta_inicio_ms = pygame.time.get_ticks()
+
             self.maze.MazeLlavePuerta.empty()
             self.maze.flagLlavePuerta = False
             # Opcional: procesar cada enemigo que colisionó
@@ -1135,24 +1150,25 @@ class App:
            # Defino las puertas - OPTIMIZADO: reutilizar superficie base
            i = 0
            for porte in self.maze.posicionPuerta:
-               pos = self.maze.calcularPixelPorCasilla(porte[0])
-               if i == 0:
+                print(f"KASIYA ubicación puerta: ", porte[0])
+                pos = self.maze.calcularPixelPorCasilla(porte[0])
+                if i == 0:
                    self.door_y = pos.y+5
                    self.door_x = pos.x+30
-               else:
+                else:
                    self.door_y = pos.y
                    self.door_x = pos.x
                
-               if self.flagPrint_info:
+                if self.flagPrint_info:
                    print("Posicion X e Y puerta: ", self.door_x, self.door_y)
                
-               self.pivot_x = self.door_x
-               self.pivot_y = self.door_y 
+                self.pivot_x = self.door_x
+                self.pivot_y = self.door_y 
 
-               # OPTIMIZACIÓN: Usar superficie precargada en lugar de crear nueva
-               self.door_surface = self.door_surface_base.copy()
-               self.draw_door(self.door_angle)
-               i += 1
+                # OPTIMIZACIÓN: Usar superficie precargada en lugar de crear nueva
+                self.door_surface = self.door_surface_base.copy()
+                self.draw_door(self.door_angle)
+                i += 1
 
            # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
            # logging.debug("Pintamos los enemigos.")  # Comentado para mejorar rendimiento
@@ -1306,6 +1322,29 @@ class App:
        fps_text = self.font_fps.render(f"FPS: {fps}", True, (255, 255, 0))
        # logging.debug("FPS de pintado : %i", fps)  # Comentado para mejorar rendimiento
        self.pantalla.blit(fps_text, (10, 110))
+
+       self.now = pygame.time.get_ticks()
+
+       if self.alerta_activa:
+            # Si han pasado más de 3 segundos, la desactivamos
+            if self.now - self.alerta_inicio_ms > self.alerta_duracion_ms:
+                alerta_activa = False
+            else:
+                # --- Dibujar la alerta por encima de todo ---
+                # Crear texto
+                texto_surface = self.font_alerta.render(self.alerta_texto, True, (255, 255, 255))
+
+                # Fondo semi-transparente
+                ancho, alto = self.pantalla.get_size()
+                overlay = pygame.Surface((ancho, 60), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, 180))  # negro con alpha 180
+
+                # Posicionar en la parte superior (por ejemplo)
+                y = 20
+                x_texto = (ancho - texto_surface.get_width()) // 2
+
+                self.pantalla.blit(overlay, (0, y - 10))
+                self.pantalla.blit(texto_surface, (x_texto, y))
 
        pygame.display.flip() # Aquí es donde ploteamos todo.
 

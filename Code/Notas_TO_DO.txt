@@ -5,3 +5,4 @@
 - IA de los enemigos para que disparen.
 - Mensaje de FIN ALARMA cuando el contador llegue a 0.
 - Mensaje de CUIDADO cuando reloj igual a 10.
+- 
