@@ -29,6 +29,21 @@ IMG_DIR = "Resources"
 SONIDO_DIR = "Resources/Sonidos"
 FPS = 60 # desired framerate in frames per second.
 
+# Especificación de la paleta de colores
+BLANCO = (255, 255, 255)
+GRIS = (155, 155, 155)
+NEGRO = (0, 0, 0)
+ROJO = (255, 0, 0)
+VERDE = (0, 255, 0)
+AZUL = (0, 0, 255)
+AMARILLO = (255, 255, 0)
+AMARILLO_CLARO = (253, 253, 150)
+MARRON = (200, 100, 0)
+CYAN = (0, 255, 255)
+MAGENTA = (255, 0, 255)
+HC74225 = (199, 66, 37)
+H61CD35 = (97, 205, 53)
+
 class posicion:
     x = 0
     y = 0
@@ -93,6 +108,8 @@ class Maze:
     flagOro = bool = True
     flagTNT = bool = True
     flagBotiquin = bool = True
+
+    pintaKasillaSuelo = False
 
     ObjetosNoPintar = []
 
@@ -194,14 +211,22 @@ class Maze:
 
         for i in range(0, self.M * self.N):
             if (self.movimientoCamara == 0 and bx <= 27) or (self.movimientoCamara > 0 and bx >= self.movimientoCamara and bx <= 26 + self.movimientoCamara): 
+                rectSuelo = pygame.sprite.Sprite()
+                rectSuelo.image = pygame.Surface([(bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS])
+                rectSuelo.rect = pygame.Rect((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, 32, 32)
+
                 if self.maze[bx + (by * self.M)] == 1:
                     display_surf.blit(image_surf, ((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS))
                     self.rect = image_surf.get_rect()
                 else:
                     display_surf.blit(w_surf, ((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    rectSuelo = pygame.sprite.Sprite()
-                    rectSuelo.image = pygame.Surface([(bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS])
-                    rectSuelo.rect = pygame.Rect((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, 32, 32)
+                    
+
+                # Pintar el número de casilla en el suelo.
+                if self.pintaKasillaSuelo:
+                    textWallMark = xfont.render(str(i), True, (255, 0, 0))
+                    # pygame.draw.rect(display_surf, ROJO, rectSuelo)
+                    display_surf.blit(textWallMark, rectSuelo.rect.center)
 
                 casiya = bx + (by * self.M)
                 # if not len(casillasObjetos) == 0:
@@ -310,6 +335,7 @@ class Maze:
                     self.MazeBotiquin.add(Botiquin)
 
                 # Puerta/s
+                #------------------------
                 if self.mazeDataExtra[bx + (by * self.M)] == 33:
                     kasylla = bx + (by * self.M)
                     # print("CALCulo Casilla puerta: ", kasylla)
@@ -317,6 +343,11 @@ class Maze:
                     Puerta = pygame.sprite.Sprite()
                     Puerta.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 15, 32)
                     self.MazePuertas.add(Puerta)
+                    # Cálculo orientación puerta.
+                    if not self.esAlcanzableCasilla(kasylla-1) and not self.esAlcanzableCasilla(kasylla+1):
+                        Maze.posicionPuerta.append((kasylla, 4))
+                    else:
+                        Maze.posicionPuerta.append((kasylla, 1))
 
             bx = bx + 1
             if bx > self.M - 1:
@@ -357,6 +388,19 @@ class Maze:
         posi=posicion(x_final, y)
         
         return posi
+
+    @staticmethod
+    def elementoVisibleCasilla(kasiya) -> bool:
+        value = kasiya % 40
+        if value < 27:
+            return True
+        else: 
+            return False
+
+    @staticmethod
+    def elementoVisiblePosicion(posx, posy) -> bool:
+        casillas = Maze.calcularCasilla(posx, posy)
+        return Maze.elementoVisibleCasilla(casillas)        
         
     @staticmethod
     def calcularCasilla(valorX, valorY):
@@ -383,7 +427,7 @@ class Maze:
         return posicion
 
     # Casilla de suelo. Cambiar y chequear
-    def esAlcanzable(self, x, y):
+    def esAlcanzable(self, x, y) -> bool:
         logging.info("Dentro Método alcanzable")
         eqCasilla = None
 
@@ -407,7 +451,7 @@ class Maze:
         else: 
             return False
 
-    def esAlcanzableCasilla(self, casilla):
+    def esAlcanzableCasilla(self, casilla) -> bool:
         logging.info("Dentro Método alcanzable KASILLA")
         # print("MazeLab:", casilla)
 

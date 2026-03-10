@@ -20,9 +20,9 @@ import json
 from plyer import notification
 from levels_parser import LevelParser
 
-# -----------
+# ---------------
 # Constantes
-# -----------
+# ---------------
 
 SCREEN_WIDTH = 864
 SCREEN_HEIGHT = 1000
@@ -1145,22 +1145,26 @@ class App:
 
            # --- Dibujado PUERTA/S ---
            if self.flagPrint_info:
-               print(f"Casillas con puerta  (visible): ", len(self.maze.posicionPuerta))
+               print(f"Casillas con puerta (visible): ", len(self.maze.MazePuertas))
                
            # Defino las puertas - OPTIMIZADO: reutilizar superficie base
            i = 0
-           for porte in self.maze.posicionPuerta:
-                print(f"KASIYA ubicación puerta: ", porte[0])
-                pos = self.maze.calcularPixelPorCasilla(porte[0])
-                if i == 0:
-                   self.door_y = pos.y+5
-                   self.door_x = pos.x+30
-                else:
-                   self.door_y = pos.y
-                   self.door_x = pos.x
+           for porte in self.maze.MazePuertas:
+                CasillaPuerta = self.maze.calcularCasilla(porte.rect.x, porte.rect.y)
+                # print(f"KASIYA ubicación puerta: ", CasillaPuerta, " pos : ", porte.rect.x,", ", porte.rect.y, "* Se Pintan ?: ", MazeLab.Maze.elementoVisiblePosicion(porte.rect.x, porte.rect.y))
+
+                self.door_y = porte.rect.y
+                self.door_x = porte.rect.x+30
+
+                for x in self.maze.posicionPuerta:
+                    if x[0] == CasillaPuerta:
+                        if x[1] == 1:
+                            self.door_angle = 90
+                        else:
+                            self.door_angle = 0
                
                 if self.flagPrint_info:
-                   print("Posicion X e Y puerta: ", self.door_x, self.door_y)
+                   print("Posicion X e Y puerta: ", self.door_x, self.door_y, " Orientación: ", self.door_angle)
                
                 self.pivot_x = self.door_x
                 self.pivot_y = self.door_y 
@@ -1414,6 +1418,10 @@ class App:
                             self.openingDoor = False
                     if event.key == pygame.K_k:
                         logging.info('Tecla K presionada')
+                        if MazeLab.Maze.pintaKasillaSuelo:
+                            MazeLab.Maze.pintaKasillaSuelo = False
+                        else:
+                            MazeLab.Maze.pintaKasillaSuelo = True
                     if event.key == pygame.K_v:
                         logging.info('Tecla V presionada')
                         if self.pintaVision == True:
