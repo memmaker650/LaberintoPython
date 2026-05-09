@@ -188,6 +188,12 @@ class App:
         # Cargando el escenario
         self.maze = MazeLab.Maze()
         logging.info("Cargado el escenario")
+        self.conexiones = MazeLab.Maze.precalcular_conexiones(
+            self.maze.MazeLaberinto,
+            MazeLab.NUM_CASILLAS_H,
+            MazeLab.NUM_CASILLAS_VERTI
+        )
+        logging.info("GEnero las conexiones del escenario")
 
         # Llenar el vector de enemigos
         for i in range(0, self.numEnemigos):
@@ -776,6 +782,7 @@ class App:
             self.rect = enemy.imageEnemigo.get_rect()  # rectángulo Sprite Player
             # Asignar grupo de paredes al enemigo para que pueda consultarlo
             enemy.MazeInfo = self.maze.MazeLaberinto
+            enemy.conexiones = self.conexiones  # Paso las conexiones que van a liberar mucho trabajo de computación
 
         logging.info('Plot Enemigo')
 

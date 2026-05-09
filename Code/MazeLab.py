@@ -109,7 +109,7 @@ class Maze:
     flagTNT = bool = True
     flagBotiquin = bool = True
 
-    pintaKasillaSuelo = False
+    pintaKasillaSuelo = True
 
     ObjetosNoPintar = []
 
@@ -373,6 +373,48 @@ class Maze:
             self.flagCamara = False
             self.flagCamaraCambio = True
             print("Condición IZQ cámara")
+
+    @staticmethod
+    def precalcular_conexiones(laberinto, ancho, alto):
+        conexiones = {}
+
+        for casilla in range(len(laberinto)):
+
+            if laberinto[casilla] != 1:
+                continue
+
+            dirs = []
+
+            fila = casilla // ancho
+            col = casilla % ancho
+
+            # ARRIBA
+            if fila > 0:
+                arriba = casilla - ancho
+                if laberinto[arriba] == 1:
+                    dirs.append(0)
+
+            # DERECHA
+            if col < ancho - 1:
+                derecha = casilla + 1
+                if laberinto[derecha] == 1:
+                    dirs.append(1)
+
+            # ABAJO
+            if fila < alto - 1:
+                abajo = casilla + ancho
+                if laberinto[abajo] == 1:
+                    dirs.append(2)
+
+            # IZQUIERDA
+            if col > 0:
+                izquierda = casilla - 1
+                if laberinto[izquierda] == 1:
+                    dirs.append(3)
+
+            conexiones[casilla] = dirs
+
+        return conexiones
     
     def nuevaCasillaTrasCamaraMovida(self, casilla: int) -> int:
         # La pantalla original 
@@ -390,6 +432,13 @@ class Maze:
         return posi
 
     @staticmethod
+    def estaCentroCasilla(x, y) -> bool:
+        CASILLA_PIXEL
+        celda = Maze.calcularCasilla(x, y)
+
+        return False   
+
+    @staticmethod
     def elementoVisibleCasilla(kasiya) -> bool:
         value = kasiya % 40
         if value < 27:
@@ -403,7 +452,7 @@ class Maze:
         return Maze.elementoVisibleCasilla(casillas)        
         
     @staticmethod
-    def calcularCasilla(valorX, valorY):
+    def calcularCasilla(valorX, valorY) -> int:
         casilla = int(valorX / CASILLA_PIXEL) + (int((valorY-BIAS) / CASILLA_PIXEL))*NUM_CASILLAS_H
         logging.info("Valor calculado: %s", casilla)
 
@@ -423,7 +472,7 @@ class Maze:
     def centroCasilla(Casilla):
         posicion.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL
         posicion.y = (int(Casilla / NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS
-        logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
+        logging.debug("calcular Centro Casilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
         return posicion
 
     # Casilla de suelo. Cambiar y chequear

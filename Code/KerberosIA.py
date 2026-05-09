@@ -10,6 +10,7 @@ import sys
 import pygame
 from pygame.locals import *
 
+DEBUG_IA = False # Flag para controlar los print
 
 class KerberosIA:
     isPlayerDetected = bool = False
@@ -27,11 +28,12 @@ class KerberosIA:
 
     casilla = int = 0
     posicion = MazeLab.posicion
-    casillasLibres = [False] * 4
-    casillasLibresVuelta = [False] * 4
+    casillasLibres = None
+    casillasLibresVuelta = None
 
     # Info importante pasada a través del enemigo.
-    KasRecorridas = set()
+    KasRecorridas = None
+    conexiones = None
     Laberinto = []
 
     def __init__(self):
@@ -42,6 +44,12 @@ class KerberosIA:
         self.tipo = 0  # 0 soldier, 1 boss or lieutenant
         self.colisionParedes = False
 
+        self.casillasLibres = [False] * 4
+        self.casillasLibresVuelta = [False] * 4
+
+        # Info importante pasada a través del enemigo.
+        self.KasRecorridas = set()
+
     def definirPosicion(self, x, y ):
         self.posicion = MazeLab.posicion(x, y)
 
@@ -50,11 +58,12 @@ class KerberosIA:
 
     def cambiarEstado(self, state):
         self.estado = state
+    
 
     def cambioEstado(self):
-        if (self.estado == 0 & self.isPlayerDetected == True):
+        if (self.estado == 0 and self.isPlayerDetected == True):
             self.estado = 1
-        elif (self.estado == 1 & self.isPlayerDetected == True):
+        elif (self.estado == 1 and self.isPlayerDetected == True):
             self.estado = 2
         elif (self.estado == 2):
             self.gritarAlarma()
@@ -77,7 +86,7 @@ class KerberosIA:
             self.orientation = 1
 
     def gritarAlarma(self):
-        alarma = True;
+        self.alarma = True
         # Pintar el gruñido de alarma
 
     def reiniciarArraySiguientesCasillas(self):
@@ -119,16 +128,31 @@ class KerberosIA:
                     self.casillasLibres[2] = True
         else:
             logging.info('Fuera de Rango en KIA Cálculo casilla')
-            print('Fuera de Rango en KIA Cálculo casilla')
+            if DEBUG_IA:
+                print('Fuera de Rango en KIA Cálculo casilla')
+    
+    def elegirDireccion(self):
+        opciones = self.conexiones[self.casilla]
+
+        # evitar volver atrás
+        opuesta = (self.orientacion + 2) % 4
+
+        posibles = [d for d in opciones if d != opuesta]
+
+        if posibles:
+            return random.choice(posibles)
+
+        return opuesta
 
     def update(self):
         if self.colisionParedes:
-            self.revisarCasillasAdyacentes()
+            self.elegirDireccion()
             result = self.casillasLibres.count(True)
             valor = 0 # Reinit el valor a devolver.
 
             if result > 0:
-                print("Dentro KerberoIA Jefe Enemigo.")
+                if DEBUG_IA:
+                    print("Dentro KerberoIA Jefe Enemigo.")
                 if result == 1:
                     for i in self.casillasLibres:
                         if i:
@@ -145,8 +169,8 @@ class KerberosIA:
                             
                             if x == res:
                                 return valor
-
-                print("valor en IA : ", valor)
+                if DEBUG_IA:
+                    print("valor en IA : ", valor)
                 
                 """ try:
                     while not self.casillasLibres[valor]:
@@ -155,12 +179,14 @@ class KerberosIA:
                 except ValueError:
                     print("Oops!  That was no valid number.  Try again...", valor) """
                 
-                print("DirecciÓN a TOMAR: ", valor)
+                if DEBUG_IA:
+                    print("DirecciÓN a TOMAR: ", valor)
             else:
                 self.casillasLibres = self.casillasLibresVuelta
                 result = self.casillasLibres.count(True)
                 #valor = random.randint(0, result-1)
-                print('ENCERRADO!!!, cómo es posible')
+                if DEBUG_IA:
+                    print('ENCERRADO!!!, cómo es posible')
                 logging.info('ENCERRADO!!!, cómo es posible')
                 valor = 0
             self.colisionParedes = False

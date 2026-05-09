@@ -331,6 +331,7 @@ class Enemigo(pygame.sprite.Sprite):
     bala = Disparos
     balas = pygame.sprite.Group()
     MazeInfo = []
+    conexiones = None
     balasArray = []
     kia = None
 
@@ -437,7 +438,8 @@ class Enemigo(pygame.sprite.Sprite):
         # Add the rotated offset vector to the pos vector to get the rect.center.
         # self.visionImage = pygame.transform.rotate(self.visionImage, self.angle)
 
-    # MÉTODO UPDATE 
+    # MÉTODO UPDATE.
+    #----------------------
     def update(self):
         logging.debug('Dentro Update ENEMIGOS.')
         # Guardar posición previa
@@ -457,6 +459,8 @@ class Enemigo(pygame.sprite.Sprite):
 
         self.borrarRecorridosAntiguos()
 
+    # MÉTODO UPDATE JEFE ENEMIGO.
+    #---------------------------------
     def updateJefe(self):
         logging.debug('Dentro Update ENEMIGOS.')
         print('Dentro Update JEFE ENEMIGO.')
@@ -470,12 +474,16 @@ class Enemigo(pygame.sprite.Sprite):
         
         self.visionRotar()
 
-        self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
-        self.kia.definirPosicion(self.x, self.y)
+        # Sölo usar la IA al pasar el centro de la casilla actual.
+        if self.estaCentroCasilla(self.x, self.y):
+            self.orientacion = self.elegirDireccion()
 
-        dir = self.kia.update()
-        print("Dir = ", dir)
-        self.elegirDireccion(dir)
+            self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
+            self.kia.definirPosicion(self.x, self.y)
+
+            dir = self.kia.update()
+            print("Dir = ", dir)
+            self.elegirDireccion(dir)
         
         # Actualizar rect tras mover
         self.rect.x = self.x
