@@ -132,7 +132,12 @@ class KerberosIA:
                 print('Fuera de Rango en KIA Cálculo casilla')
     
     def elegirDireccion(self):
-        opciones = self.conexiones[self.casilla]
+        # opciones = self.conexiones[self.casilla]
+        opciones = self.conexiones.get(self.casilla)
+
+        if opciones is None:
+            print("Casilla inválida:", self.casilla)
+            return self.orientacion
 
         # evitar volver atrás
         opuesta = (self.orientacion + 2) % 4

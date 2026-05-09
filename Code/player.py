@@ -388,6 +388,9 @@ class Enemigo(pygame.sprite.Sprite):
 
     def definirJefeEnemigo(self):
         self.isJefeEnemigo = True
+
+    def pasarConexionesIA(self):
+        self.kia.conexiones = self.conexiones
     
     def guardarPosicionPrevia(self):
         self.prev_x = self.x
@@ -457,13 +460,16 @@ class Enemigo(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
+        if self.isJefeEnemigo:
+            self.updateJefe()
+
         self.borrarRecorridosAntiguos()
 
-    # MÉTODO UPDATE JEFE ENEMIGO.
+    # MÉTODO UPDATE JEFE JEFE BOSS.
     #---------------------------------
     def updateJefe(self):
-        logging.debug('Dentro Update ENEMIGOS.')
-        print('Dentro Update JEFE ENEMIGO.')
+        logging.debug('Dentro Update JEFE BOSS.')
+        print('Dentro Update JEFE BOSS.')
         # Guardar posición previa
         self.prev_x = self.x
         self.prev_y = self.y
@@ -475,19 +481,13 @@ class Enemigo(pygame.sprite.Sprite):
         self.visionRotar()
 
         # Sölo usar la IA al pasar el centro de la casilla actual.
-        if self.estaCentroCasilla(self.x, self.y):
-            self.orientacion = self.elegirDireccion()
-
+        if MazeLab.Maze.estaCentroCasilla(self.x, self.y):
             self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
             self.kia.definirPosicion(self.x, self.y)
 
             dir = self.kia.update()
             print("Dir = ", dir)
             self.elegirDireccion(dir)
-        
-        # Actualizar rect tras mover
-        self.rect.x = self.x
-        self.rect.y = self.y
 
         self.borrarRecorridosAntiguos()
 

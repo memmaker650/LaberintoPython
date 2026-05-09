@@ -169,10 +169,7 @@ class App:
         self._JefeEnemigo = None
         self.floor_surf = None
         self.wall_surf = None
-        self.player = player.Player()  # damos los valores por defecto.
-        self.enemigo = player.Enemigo()
-        self.JefeEnemigo = player.Enemigo()
-        self.JefeEnemigo.isJefeEnemigo = True
+
 
         self.Sound = Sonido.Sonido()
 
@@ -194,6 +191,12 @@ class App:
             MazeLab.NUM_CASILLAS_VERTI
         )
         logging.info("GEnero las conexiones del escenario")
+
+        # Init Personajes
+        self.player = player.Player()  # damos los valores por defecto.
+        self.enemigo = player.Enemigo()
+        self.JefeEnemigo = player.Enemigo()
+        self.JefeEnemigo.isJefeEnemigo = True
 
         # Llenar el vector de enemigos
         for i in range(0, self.numEnemigos):
@@ -783,6 +786,7 @@ class App:
             # Asignar grupo de paredes al enemigo para que pueda consultarlo
             enemy.MazeInfo = self.maze.MazeLaberinto
             enemy.conexiones = self.conexiones  # Paso las conexiones que van a liberar mucho trabajo de computación
+            enemy.pasarConexionesIA()
 
         logging.info('Plot Enemigo')
 
@@ -793,6 +797,8 @@ class App:
         # Asignar grupo de paredes al Jefe Enemigo
         self.JefeEnemigo.MazeInfo = self.maze.MazeLaberinto
         self.JefeEnemigo.kia.Laberinto = self.JefeEnemigo.MazeInfo
+        self.JefeEnemigo.conexiones = self.conexiones
+        self.JefeEnemigo.pasarConexionesIA()
 
         self.floor_surf = pygame.image.load("./Resources/floor.png").convert()
         self.wall_surf = pygame.image.load("./Resources/Wall.png").convert()

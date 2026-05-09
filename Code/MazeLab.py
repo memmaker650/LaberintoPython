@@ -48,9 +48,9 @@ class posicion:
     x = 0
     y = 0
 
-    def __init__(self, valorX, valorY):
-        x = valorX
-        y = valorY
+    def __init__(self, valorX=0, valorY=0):
+        self.x = valorX
+        self.y = valorY
 
 class Maze:
     M = NUM_CASILLAS_H
@@ -109,7 +109,11 @@ class Maze:
     flagTNT = bool = True
     flagBotiquin = bool = True
 
-    pintaKasillaSuelo = True
+    flagCentroCasillaJefeEnemigo = bool = True
+    PosicionCruz = posicion
+    flagPintarCasilla = bool = True
+    pintaKasillaNumSuelo = False
+    PosicionPintarCasilla = posicion
 
     ObjetosNoPintar = []
 
@@ -221,9 +225,8 @@ class Maze:
                 else:
                     display_surf.blit(w_surf, ((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                     
-
                 # Pintar el número de casilla en el suelo.
-                if self.pintaKasillaSuelo:
+                if self.pintaKasillaNumSuelo:
                     textWallMark = xfont.render(str(i), True, (255, 0, 0))
                     # pygame.draw.rect(display_surf, ROJO, rectSuelo)
                     display_surf.blit(textWallMark, rectSuelo.rect.center)
@@ -349,6 +352,22 @@ class Maze:
                     else:
                         Maze.posicionPuerta.append((kasylla, 1))
 
+                # Cruz Posición
+                #------------------------
+                if self.flagCentroCasillaJefeEnemigo:
+                    tam = 5
+                    # Color verde chillón
+                    VERDE = (0, 255, 0)
+                    # Dibujar la X
+                    pygame.draw.line(display_surf, VERDE, (self.PosicionCruz.x - tam, self.PosicionCruz.y - tam), (self.PosicionCruz.x + tam, self.PosicionCruz.y + tam), 3)
+                    pygame.draw.line(display_surf, VERDE, (self.PosicionCruz.x - tam, self.PosicionCruz.y + tam), (self.PosicionCruz.x + tam, self.PosicionCruz.y - tam), 3)
+
+                # Pintar rect Casilla
+                #------------------------
+                if self.flagPintarCasilla:
+                    Naranja = (244, 127, 38)
+                    pygame.draw.rect(display_surf, Naranja, (self.PosicionPintarCasilla.x, self.PosicionPintarCasilla.y, CASILLA_PIXEL, CASILLA_PIXEL), 1)
+
             bx = bx + 1
             if bx > self.M - 1:
                 bx = 0
@@ -433,10 +452,14 @@ class Maze:
 
     @staticmethod
     def estaCentroCasilla(x, y) -> bool:
-        CASILLA_PIXEL
+        
         celda = Maze.calcularCasilla(x, y)
+        pos = Maze.centroCasilla(celda)
 
-        return False   
+        if (x > pos.x) or (y > pos.y):
+            return True   
+        else:
+            return False
 
     @staticmethod
     def elementoVisibleCasilla(kasiya) -> bool:
@@ -463,17 +486,28 @@ class Maze:
 
     @staticmethod
     def calcularPixelPorCasilla(Casilla):
-        posicion.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL
-        posicion.y = (int(Casilla / NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS
-        logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
-        return posicion
+        pos = posicion()
+        pos.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL 
+        pos.y = (int(Casilla / NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS 
+        logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, pos.x, pos.y)
+        return pos
 
     @staticmethod
-    def centroCasilla(Casilla):
-        posicion.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL
-        posicion.y = (int(Casilla / NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS
-        logging.debug("calcular Centro Casilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
-        return posicion
+    def centroCasilla(Casilla) -> posicion:
+        position = posicion()
+        position.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL + (CASILLA_PIXEL // 2)
+        position.y = (int(Casilla / NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS + (CASILLA_PIXEL // 2)
+        
+        Maze.PosicionCruz = posicion()
+        Maze.PosicionCruz = position
+        Maze.PosicionPintarCasilla = posicion()
+        Maze.PosicionPintarCasilla.x = position.x - (CASILLA_PIXEL // 2)   # // 2 es división entera de 2.
+        Maze.PosicionPintarCasilla.y = position.y - (CASILLA_PIXEL // 2)
+        
+        logging.debug(" Centro Casilla: K %s a posición: X %s and Y %s", Casilla, position.x, position.y)
+        print(" Centro Casilla: K %s a posición: X %s and Y %s", Casilla, position.x, position.y)
+
+        return position
 
     # Casilla de suelo. Cambiar y chequear
     def esAlcanzable(self, x, y) -> bool:
@@ -482,7 +516,7 @@ class Maze:
 
         eqCasilla = Maze.calcularCasilla(x, y)
 
-        if x > SCREEN_WIDTH | y > SCREEN_HEIGHT | x < 0 | y < 0:
+        if x > SCREEN_WIDTH or y > SCREEN_HEIGHT or x < 0 or y < 0:
             logging.info("esAlcanzble : X= %s and Y= %s", x, y)
             if x > SCREEN_WIDTH | x < 0 :
                 logging.info("esAlcanzble : X fuera de rango.", x)
