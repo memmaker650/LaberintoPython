@@ -17,6 +17,10 @@ class posicion:
     def __init__(self, valorX = 0, valorY = 0):
         self.x = valorX
         self.y = valorY
+    
+    def cargar(self, valorX, valorY):
+        self.x = valorX
+        self.y = valorY
 
 class KerberosIA:
     playerDetectado = bool = False
@@ -60,7 +64,7 @@ class KerberosIA:
         self.casilla = 0
 
     def definirPosicion(self, x, y ):
-        self.posicion = MazeLab.posicion(x, y)
+        self.posicion.cargar(x, y)
 
     def detectarPlayer(self):
         logging.info('Método para detectar al jugador.')
@@ -166,7 +170,6 @@ class KerberosIA:
         visitados = set()
 
         while cola:
-
             casillaActual, camino = cola.popleft()
 
             # Objetivo encontrado
@@ -212,7 +215,9 @@ class KerberosIA:
             return random.choice(posibles)
 
         return opuesta
-
+    
+    # Update IA - Kerberos IA
+    #----------------------------------
     def update(self):
         self.casilla = MazeLab.Maze.calcularCasilla(
             self.posicion.x,
@@ -233,7 +238,6 @@ class KerberosIA:
                     self.casilla,
                     []
                 )
-
                 # Callejón
                 if len(opciones) == 1:
                     print("Callejón")

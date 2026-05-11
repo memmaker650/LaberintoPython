@@ -167,6 +167,11 @@ class App:
         self._jugador = None
         self._enemigo = None
         self._JefeEnemigo = None
+
+        # GEstión del Mapa
+        self.map_surface = pygame.Surface(
+            (self.windowWidth, self.windowHeight)).convert()
+        self.rebuild_map = True
         self.floor_surf = None
         self.wall_surf = None
 
@@ -1129,40 +1134,56 @@ class App:
                 logging.info(f'Bala Player en ({muni.x}, {muni.y}) colisionó con {len(paredes)} paredes')
                 muni.kill()
 
+    
+    # Repinto el Laberinto
+    def rebuildMap(self):
+    
+       self.map_surface.fill((0,0,0))
+    
+       self.maze.draw(
+           self.map_surface,
+           self.floor_surf,
+           self.wall_surf,
+           self.casillaObjetosTocados
+       )
+        
     def on_render(self):
        if self.pause == False:
-           self.pantalla.fill((0, 0, 0))
-           # Defino el laberinto
-           # logging.debug("Pintamos laberinto.")  # Comentado para mejorar rendimiento
-           self.maze.draw(self.pantalla, self.floor_surf, self.wall_surf, self.casillaObjetosTocados)
+           # SOLO si cambió el mapa
+            if self.rebuild_map:
+                self.rebuildMap()
+                self.rebuild_map = False
+            
+            # Dibujar mapa ya preparado
+            self.pantalla.blit(self.map_surface, (0,0))
 
-           if self.iteracion == 35:
+            if self.iteracion == 35:
                self.iteracion = 0
 
-           # Aquí busco lugar suelo para Jugador
-           # Llamada a la IA
-           if self.flagInit == True:
-               self.flagInit = False
-               # if self.flagPrint_info:
-               print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
-               self.player.casilla = self.maze.posicionInitJugador    
-               pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
-               self.player.x = pos.x
-               self.player.y = pos.y
-               self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-           else:
-               self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-           
-           if self.pintaRectángulos == True:
-               pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
-
-           # --- Dibujado PUERTA/S ---
-           if self.flagPrint_info:
-               print(f"Casillas con puerta (visible): ", len(self.maze.MazePuertas))
-               
-           # Defino las puertas - OPTIMIZADO: reutilizar superficie base
-           i = 0
-           for porte in self.maze.MazePuertas:
+            # Aquí busco lugar suelo para Jugador
+            # Llamada a la IA
+            if self.flagInit == True:
+                self.flagInit = False
+                # if self.flagPrint_info:
+                print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
+                self.player.casilla = self.maze.posicionInitJugador    
+                pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
+                self.player.x = pos.x
+                self.player.y = pos.y
+                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+            else:
+                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+            
+            if self.pintaRectángulos == True:
+                pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
+ 
+            # --- Dibujado PUERTA/S ---
+            if self.flagPrint_info:
+                print(f"Casillas con puerta (visible): ", len(self.maze.MazePuertas))
+                
+            # Defino las puertas - OPTIMIZADO: reutilizar superficie base
+            i = 0
+            for porte in self.maze.MazePuertas:
                 CasillaPuerta = self.maze.calcularCasilla(porte.rect.x, porte.rect.y)
                 # print(f"KASIYA ubicación puerta: ", CasillaPuerta, " pos : ", porte.rect.x,", ", porte.rect.y, "* Se Pintan ?: ", MazeLab.Maze.elementoVisiblePosicion(porte.rect.x, porte.rect.y))
 
@@ -1187,69 +1208,69 @@ class App:
                 self.draw_door(self.door_angle)
                 i += 1
 
-           # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
-           # logging.debug("Pintamos los enemigos.")  # Comentado para mejorar rendimiento
-           for i in range(0, self.numEnemigos):
-               self.enemigo = self.enemigosArray[i]
-               if(self.enemigo.isJefeEnemigo):
-                   if self.flagPrint_info:
-                       print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
-                   self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-               else:   
-                   if self.flagPrint_info:
-                       print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
-                   self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
-                   if self.pintaRectángulos == True:
-                       pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
-
-           # Jefe Enemigo + VISIÓN
-           # logging.debug('Pintamos el JEFE enemigo.')  # Comentado para mejorar rendimiento
-           self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-           if self.pintaRectángulos == True:
-               pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
-           # VISION
-           if (self.visionEnemigos == True):
-               self.JefeEnemigo.visionRotar()
-               self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
-               centro = (self.JefeEnemigo.x+10, self.JefeEnemigo.y+10)
-               radio = 20
-               x = centro[0] + radio * math.cos(math.radians(self.JefeEnemigo.angle))
-               y = centro[1] + radio * math.sin(math.radians(self.JefeEnemigo.angle))
-               rot_angle = -self.JefeEnemigo.angle + 90
-               rotated = pygame.transform.rotate(self.JefeEnemigo.visionImage, rot_angle)
-               rect = rotated.get_rect(center=(x, y))
-               self.pantalla.blit(rotated, rect)
-
-           if(self.JefeEnemigo.alarma):
-               # --- Control del tiempo del bocadillo ---
-               current_time = pygame.time.get_ticks()
-               elapsed = current_time - self.JefeEnemigo.bubble_start_time
-               if elapsed < self.JefeEnemigo.bubble_duration:
-                   # Calculamos opacidad
-                   if elapsed > self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration:
-                       alphaBTexto = int(255 * (1 - (elapsed - (self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration)) / self.JefeEnemigo.fade_duration))
-                   else:
-                       alphaBTexto = 255
-
-                   self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", (int(self.JefeEnemigo.x), int(self.JefeEnemigo.y) - 10), alpha=alphaBTexto)
-               else:
-                   self.JefeEnemigo.alarma = False
-                   self.JefeEnemigo.restarRelojBocadilloTexto()
-       
-           # Maze Extra --> Recuadros
-           if self.pintaRectángulos == True:
-               for extra in self.maze.MazeExtra:
-                   pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
-
-           # Pintar disparos del Player
-           if self.player.flagDisparo == True:
-               # logging.debug('DISPARO DeL Player.')  # Comentado para mejorar rendimiento
-               self.player.balas.draw(self.pantalla)
-
-           # Pintar disparos de Jefe Enemigo
-           if self.JefeEnemigo.flagDisparo == True:
-               # logging.debug('Pintamos Disparo DEL JEFE enemigo.')  # Comentado para mejorar rendimiento
-               self.JefeEnemigo.balas.draw(self.pantalla)
+            # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
+            # logging.debug("Pintamos los enemigos.")  # Comentado para mejorar rendimiento
+            for i in range(0, self.numEnemigos):
+                self.enemigo = self.enemigosArray[i]
+                if(self.enemigo.isJefeEnemigo):
+                    if self.flagPrint_info:
+                        print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
+                    self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+                else:   
+                    if self.flagPrint_info:
+                        print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
+                    self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
+                    if self.pintaRectángulos == True:
+                        pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
+ 
+            # Jefe Enemigo + VISIÓN
+            # logging.debug('Pintamos el JEFE enemigo.')  # Comentado para mejorar rendimiento
+            self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+            if self.pintaRectángulos == True:
+                pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
+            # VISION
+            if (self.visionEnemigos == True):
+                self.JefeEnemigo.visionRotar()
+                self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
+                centro = (self.JefeEnemigo.x+10, self.JefeEnemigo.y+10)
+                radio = 20
+                x = centro[0] + radio * math.cos(math.radians(self.JefeEnemigo.angle))
+                y = centro[1] + radio * math.sin(math.radians(self.JefeEnemigo.angle))
+                rot_angle = -self.JefeEnemigo.angle + 90
+                rotated = pygame.transform.rotate(self.JefeEnemigo.visionImage, rot_angle)
+                rect = rotated.get_rect(center=(x, y))
+                self.pantalla.blit(rotated, rect)
+ 
+            if(self.JefeEnemigo.alarma):
+                # --- Control del tiempo del bocadillo ---
+                current_time = pygame.time.get_ticks()
+                elapsed = current_time - self.JefeEnemigo.bubble_start_time
+                if elapsed < self.JefeEnemigo.bubble_duration:
+                    # Calculamos opacidad
+                    if elapsed > self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration:
+                        alphaBTexto = int(255 * (1 - (elapsed - (self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration)) / self.JefeEnemigo.fade_duration))
+                    else:
+                        alphaBTexto = 255
+ 
+                    self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", (int(self.JefeEnemigo.x), int(self.JefeEnemigo.y) - 10), alpha=alphaBTexto)
+                else:
+                    self.JefeEnemigo.alarma = False
+                    self.JefeEnemigo.restarRelojBocadilloTexto()
+        
+            # Maze Extra --> Recuadros
+            if self.pintaRectángulos == True:
+                for extra in self.maze.MazeExtra:
+                    pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
+ 
+            # Pintar disparos del Player
+            if self.player.flagDisparo == True:
+                # logging.debug('DISPARO DeL Player.')  # Comentado para mejorar rendimiento
+                self.player.balas.draw(self.pantalla)
+ 
+            # Pintar disparos de Jefe Enemigo
+            if self.JefeEnemigo.flagDisparo == True:
+                # logging.debug('Pintamos Disparo DEL JEFE enemigo.')  # Comentado para mejorar rendimiento
+                self.JefeEnemigo.balas.draw(self.pantalla)
 
        self.iteracion += 1
 

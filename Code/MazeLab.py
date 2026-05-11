@@ -384,14 +384,14 @@ class Maze:
                 self.movimientoCamara += 1
                 self.flagCamara = False
                 self.flagCamaraCambio = True
-                print("Condición CUMPLIDA cámara")
+                # print("Condición CUMPLIDA cámara")
         
         if UbicacionX <= 1 and self.flagCamara and self.posicionCamara > 13:
             self.posicionCamara -= 1
             self.movimientoCamara -= 1
             self.flagCamara = False
             self.flagCamaraCambio = True
-            print("Condición IZQ cámara")
+            # print("Condición IZQ cámara")
 
     # Calcular las conexiones de las casillas de SUELO solamente.
     @staticmethod
@@ -479,7 +479,7 @@ class Maze:
     @staticmethod
     def calcularCasilla(valorX, valorY) -> int:
         casilla = int(valorX / CASILLA_PIXEL) + (int((valorY-BIAS) / CASILLA_PIXEL))*NUM_CASILLAS_H
-        logging.info(f"Valor calculado: {casilla}")
+        # logging.info(f"Valor calculado: {casilla}")
 
         logging.debug(f"calcularCasilla:posición: X {valorX} and Y {valorY} ==> Casilla: {int(casilla)}")
         # print(f"calcularCasilla: posición: X {valorX} and Y {valorY} ==> Casilla: {int(casilla)}")
@@ -491,7 +491,7 @@ class Maze:
         pos = posicion()
         pos.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL 
         pos.y = ((Casilla // NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS 
-        logging.debug(f"calcularPixelPorCasilla: Casilla {Casilla} a posición: X {pos.x} and Y {pos.y}")
+        # logging.debug(f"calcularPixelPorCasilla: Casilla {Casilla} a posición: X {pos.x} and Y {pos.y}")
         
         return pos
 
@@ -507,7 +507,7 @@ class Maze:
         Maze.PosicionPintarCasilla.x = position.x - (CASILLA_PIXEL // 2)   # // 2 es división entera de 2.
         Maze.PosicionPintarCasilla.y = position.y - (CASILLA_PIXEL // 2)
         
-        logging.debug(f" Centro Casilla: K {Casilla} a posición: X {position.x} and Y {position.y}")
+        # logging.debug(f" Centro Casilla: K {Casilla} a posición: X {position.x} and Y {position.y}")
         # print(" Centro Casilla: K {Casilla} a posición: X {position.x} and Y {position.y}")
 
         return position
