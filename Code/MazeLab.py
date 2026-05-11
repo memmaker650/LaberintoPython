@@ -393,6 +393,7 @@ class Maze:
             self.flagCamaraCambio = True
             print("Condición IZQ cámara")
 
+    # Calcular las conexiones de las casillas de SUELO solamente.
     @staticmethod
     def precalcular_conexiones(laberinto, ancho, alto):
         conexiones = {}
@@ -450,6 +451,7 @@ class Maze:
         
         return posi
 
+    # Método ESTÁTICO para saber si está o no en el CENTRO de la CASILLA, para cálculos de posición.
     @staticmethod
     def estaCentroCasilla(x, y) -> bool:
         
@@ -477,10 +479,10 @@ class Maze:
     @staticmethod
     def calcularCasilla(valorX, valorY) -> int:
         casilla = int(valorX / CASILLA_PIXEL) + (int((valorY-BIAS) / CASILLA_PIXEL))*NUM_CASILLAS_H
-        logging.info("Valor calculado: %s", casilla)
+        logging.info(f"Valor calculado: {casilla}")
 
-        logging.debug("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", valorX, valorY, int(casilla))
-        # print("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", valorX, valorY, int(casilla))
+        logging.debug(f"calcularCasilla:posición: X {valorX} and Y {valorY} ==> Casilla: {int(casilla)}")
+        # print(f"calcularCasilla: posición: X {valorX} and Y {valorY} ==> Casilla: {int(casilla)}")
 
         return casilla
 
@@ -488,15 +490,16 @@ class Maze:
     def calcularPixelPorCasilla(Casilla):
         pos = posicion()
         pos.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL 
-        pos.y = (int(Casilla / NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS 
-        logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, pos.x, pos.y)
+        pos.y = ((Casilla // NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS 
+        logging.debug(f"calcularPixelPorCasilla: Casilla {Casilla} a posición: X {pos.x} and Y {pos.y}")
+        
         return pos
 
     @staticmethod
     def centroCasilla(Casilla) -> posicion:
         position = posicion()
         position.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL + (CASILLA_PIXEL // 2)
-        position.y = (int(Casilla / NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS + (CASILLA_PIXEL // 2)
+        position.y = ((Casilla // NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS + (CASILLA_PIXEL // 2)
         
         Maze.PosicionCruz = posicion()
         Maze.PosicionCruz = position
@@ -504,8 +507,8 @@ class Maze:
         Maze.PosicionPintarCasilla.x = position.x - (CASILLA_PIXEL // 2)   # // 2 es división entera de 2.
         Maze.PosicionPintarCasilla.y = position.y - (CASILLA_PIXEL // 2)
         
-        logging.debug(" Centro Casilla: K %s a posición: X %s and Y %s", Casilla, position.x, position.y)
-        print(" Centro Casilla: K %s a posición: X %s and Y %s", Casilla, position.x, position.y)
+        logging.debug(f" Centro Casilla: K {Casilla} a posición: X {position.x} and Y {position.y}")
+        # print(" Centro Casilla: K {Casilla} a posición: X {position.x} and Y {position.y}")
 
         return position
 
@@ -518,10 +521,10 @@ class Maze:
 
         if x > SCREEN_WIDTH or y > SCREEN_HEIGHT or x < 0 or y < 0:
             logging.info("esAlcanzble : X= %s and Y= %s", x, y)
-            if x > SCREEN_WIDTH | x < 0 :
+            if x > SCREEN_WIDTH or x < 0 :
                 logging.info("esAlcanzble : X fuera de rango.", x)
                 return False
-            elif y > SCREEN_HEIGHT | y < 0:
+            elif y > SCREEN_HEIGHT or y < 0:
                 logging.info("esAlcanzble : Y fuera de rango.", y)
                 return False
             else:

@@ -445,25 +445,26 @@ class Enemigo(pygame.sprite.Sprite):
     #----------------------
     def update(self):
         logging.debug('Dentro Update ENEMIGOS.')
-        # Guardar posición previa
-        self.prev_x = self.x
-        self.prev_y = self.y
-
-        # Actualizar el rectángulo de colisión con la posición actual
-        self.rect.x = self.x
-        self.rect.y = self.y
-        
-        #self.visionRotar()
-        self.moveDown()
-        
-        # Actualizar rect tras mover
-        self.rect.x = self.x
-        self.rect.y = self.y
 
         if self.isJefeEnemigo:
             self.updateJefe()
+        else:
+            # Guardar posición previa
+            self.prev_x = self.x
+            self.prev_y = self.y
 
-        self.borrarRecorridosAntiguos()
+            # Actualizar el rectángulo de colisión con la posición actual
+            self.rect.x = self.x
+            self.rect.y = self.y
+
+            #self.visionRotar()
+            self.moveDown()
+
+            # Actualizar rect tras mover
+            self.rect.x = self.x
+            self.rect.y = self.y
+
+            self.borrarRecorridosAntiguos()
 
     # MÉTODO UPDATE JEFE JEFE BOSS.
     #---------------------------------
@@ -474,6 +475,8 @@ class Enemigo(pygame.sprite.Sprite):
         self.prev_x = self.x
         self.prev_y = self.y
 
+        self.kia.definirPosicion(self.x, self.y)
+
         # Actualizar el rectángulo de colisión con la posición actual
         self.rect.x = self.x
         self.rect.y = self.y
@@ -482,6 +485,7 @@ class Enemigo(pygame.sprite.Sprite):
 
         # Sölo usar la IA al pasar el centro de la casilla actual.
         if MazeLab.Maze.estaCentroCasilla(self.x, self.y):
+            print("Dentro ZENTRO Centro Kasiya - cálculo IA.")
             self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
             self.kia.definirPosicion(self.x, self.y)
 
