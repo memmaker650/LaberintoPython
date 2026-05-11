@@ -492,7 +492,10 @@ class Enemigo(pygame.sprite.Sprite):
 
             dir = self.kia.update()
             # print("Dir = ", dir)
+        
             self.elegirDireccion(dir)
+        else: # Seguimos moviendo misma dirección de antes
+            self.elegirDireccion(self.orientacion)
 
         self.borrarRecorridosAntiguos()
 

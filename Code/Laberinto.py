@@ -168,7 +168,7 @@ class App:
         self._enemigo = None
         self._JefeEnemigo = None
 
-        # GEstión del Mapa
+        # Gestión del Mapa
         self.map_surface = pygame.Surface(
             (self.windowWidth, self.windowHeight)).convert()
         self.rebuild_map = True

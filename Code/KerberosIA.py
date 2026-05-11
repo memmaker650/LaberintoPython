@@ -23,31 +23,21 @@ class posicion:
         self.y = valorY
 
 class KerberosIA:
-    playerDetectado = bool = False
-    estado = int   # 0 Patrol, 1 Following Player, 2 Alarm, 3 Team working
-    alarma = bool = False
-    animo = int    # 0 OK, 1 Angry, 2 Sad, 3 Alarmado
-    tipo = int      # 0 soldier, 1 boss or lieutenant
-
-    ordenJefe = bool = False
-    combatir = bool = False
-
-    colisionParedes = bool = False
-    orientacion = int = 0
-    direccion = int
-
     # Info importante pasada a través del enemigo.
-    KasRecorridas = None
     conexiones = None
     Laberinto = []
 
     def __init__(self, x = 0, y = 0):
         logging.info('Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega')
-        self.isPlayerDetected = False
+        self.playerDetectado = False
         self.estado = 0  # 0 Patrol, 1 Following Player, 2 Alarm, 3 Team working
-        self.animo = 0  # 0 OK, 1 Angry, 2 Sad
+        self.alarma = False
+        self.animo = 0  # 0 OK, 1 Angry, 2 Sad, 3 Alarmado
         self.tipo = 0  # 0 soldier, 1 boss or lieutenant
         self.colisionParedes = False
+
+        self.ordenJefe = False
+        self.combatir = False
 
         self.casillasLibres = [False] * 4
         self.casillasLibresVuelta = [False] * 4
@@ -55,8 +45,10 @@ class KerberosIA:
         # Info importante pasada a través del enemigo.
         self.KasRecorridas = set()
 
+
         self.ultimaCasilla = -1
         self.direccionActual = 1
+        self.orientacion = 0
         self.playerDetectado = False
         self.path = []
         self.casillaJugador = 0
