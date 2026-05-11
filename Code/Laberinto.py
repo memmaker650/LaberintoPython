@@ -108,7 +108,8 @@ class App:
     pintaRectángulos = bool = True
     pintaVision = bool = True
 
-    flagPrint_info = False
+    flagPrint_info = True
+    flagDebugEnemigos = True
 
     casillaObjetosTocados = set()
 
@@ -171,10 +172,10 @@ class App:
         # Gestión del Mapa
         self.map_surface = pygame.Surface(
             (self.windowWidth, self.windowHeight)).convert()
+        self.flagDebugEnemigos = True
         self.rebuild_map = True
         self.floor_surf = None
         self.wall_surf = None
-
 
         self.Sound = Sonido.Sonido()
 
@@ -960,7 +961,7 @@ class App:
 
                 if nemesis.isJefeEnemigo:
                     if self.flagPrint_info:
-                        print("Colision Jefe Enemigo con PARED !!!")
+                        print(f"Colision Jefe Enemigo con PARED --> {self.maze.calcularCasilla(nemesis.x, nemesis.y)} !!!")
                     nemesis.detectarColision()
 
                 if hasattr(nemesis, 'cambiar_direccion'):
@@ -972,7 +973,7 @@ class App:
             logging.info(f'COLISION Enemigo con Puerta DETECTADA - num ELem ({len(colision_playerPuerta)})')
             # Opcional: procesar cada enemigo que colisionó
             for enemigo, puertas in colision_enemigos.items():
-                logging.info(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(puertas)} paredes')
+                print(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(puertas)} paredes')
                 # Revertir y cambiar dirección solo del enemigo que colisiona
                 if hasattr(enemigo, 'revertir_movimiento'):
                     enemigo.revertir_movimiento()
@@ -1137,7 +1138,6 @@ class App:
     
     # Repinto el Laberinto
     def rebuildMap(self):
-    
        self.map_surface.fill((0,0,0))
     
        self.maze.draw(
@@ -1149,6 +1149,7 @@ class App:
         
     def on_render(self):
        if self.pause == False:
+
            # SOLO si cambió el mapa
             if self.rebuild_map:
                 self.rebuildMap()
@@ -1156,6 +1157,9 @@ class App:
             
             # Dibujar mapa ya preparado
             self.pantalla.blit(self.map_surface, (0,0))
+
+            if self.flagDebugEnemigos:
+                self.maze.pintarDetallesCasillaEnemigo(self.pantalla)
 
             if self.iteracion == 35:
                self.iteracion = 0

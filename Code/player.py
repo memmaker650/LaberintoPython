@@ -484,8 +484,11 @@ class Enemigo(pygame.sprite.Sprite):
         
         self.visionRotar()
 
+        cx = self.x + self.rect.width // 2
+        cy = self.y + self.rect.height // 2
+
         # Sölo usar la IA al pasar el centro de la casilla actual.
-        if MazeLab.Maze.estaCentroCasilla(self.x, self.y):
+        if MazeLab.Maze.estaCentroCasilla(cx, cy):
             # print("Dentro ZENTRO Centro Kasiya - cálculo IA.")
             self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
             self.kia.definirPosicion(self.x, self.y)
