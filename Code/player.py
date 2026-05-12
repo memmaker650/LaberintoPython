@@ -549,16 +549,16 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
 
     def detectarColision(self):
-        # print("Dentro colision en ENEMIGO. <-- ")
+        print("Dentro colision en ENEMIGO. <-- ")
 
-        self.isColision = True
-        self.kia.colisionParedes = True
-        
-        self.kia.orientacion = self.orientacion
-        dir = self.kia.update()
-        self.elegirDireccion(dir)
-        
-        self.isColision = False
+        # self.isColision = True
+        # self.kia.colisionParedes = True
+        # 
+        # self.kia.orientacion = self.orientacion
+        # dir = self.kia.update()
+        # self.elegirDireccion(dir)
+        # 
+        # self.isColision = False
         
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)
@@ -577,9 +577,9 @@ class Enemigo(pygame.sprite.Sprite):
         ahora = time.time()
         self.posicionesRecorridas = [(v, t) for (v, t) in self.posicionesRecorridas if ahora - t < self.tiempoOlvido]
         
-    @staticmethod
-    def bocadilloTexto(surface, text, pos, alpha, color=(255, 255, 255), text_color=(0, 0, 0)):
-        """Dibuja un bocadillo de texto con transparencia controlada por alpha."""
+    def bocadilloTexto(self, surface, text, posx, posy, alpha, color=(255, 255, 255), text_color=(0, 0, 0)):
+        # Dibuja un bocadillo de texto con transparencia controlada por alpha.
+        print("   Dentro Bocadillo !!")
         font = pygame.font.SysFont("arial", 20)
         text_surf = font.render(text, True, text_color)
         text_rect = text_surf.get_rect()
@@ -589,7 +589,7 @@ class Enemigo(pygame.sprite.Sprite):
         bubble_height = text_rect.height + padding * 2
 
         bubble_rect = pygame.Rect(0, 0, bubble_width, bubble_height)
-        bubble_rect.midbottom = (pos[0], pos[1] - 10)
+        bubble_rect.midbottom = (posx, posy - 10)
 
         # Superficie con canal alfa
         bubble_surf = pygame.Surface((bubble_width, bubble_height + 10), pygame.SRCALPHA)
@@ -602,9 +602,9 @@ class Enemigo(pygame.sprite.Sprite):
 
         # Punta
         pygame.draw.polygon(bubble_surf, bubble_color, [
-        (bubble_width // 2 - 8, bubble_height),
-        (bubble_width // 2 + 8, bubble_height),
-        (bubble_width // 2, bubble_height + 10)
+            (bubble_width // 2 - 8, bubble_height),
+            (bubble_width // 2 + 8, bubble_height),
+            (bubble_width // 2, bubble_height + 10)
         ])
 
         # Texto (se aplica opacidad igual al bocadillo)

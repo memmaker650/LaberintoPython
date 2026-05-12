@@ -108,8 +108,11 @@ class App:
     pintaRectángulos = bool = True
     pintaVision = bool = True
 
-    flagPrint_info = True
+    # Flags de Depuración de información.
+    flagPrint_info = False
     flagDebugEnemigos = True
+    flagPintarBocadilloTexto = False
+    bocadillo_timer = 0
 
     casillaObjetosTocados = set()
 
@@ -955,14 +958,16 @@ class App:
                     print(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
                 logging.info(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
                 
+                if nemesis.isJefeEnemigo:
+                    # if self.flagPrint_info:
+                    print(f"Colision Jefe Enemigo con PARED --> {self.maze.calcularCasilla(nemesis.x, nemesis.y)} !!!")
+                    nemesis.detectarColision()
+                    self.bocadillo_timer = 180 
+                    self.flagPintarBocadilloTexto = True
+
                 # Revertir y cambiar dirección solo del enemigo que colisiona
                 if hasattr(nemesis, 'revertir_movimiento'):
                     nemesis.revertir_movimiento()
-
-                if nemesis.isJefeEnemigo:
-                    if self.flagPrint_info:
-                        print(f"Colision Jefe Enemigo con PARED --> {self.maze.calcularCasilla(nemesis.x, nemesis.y)} !!!")
-                    nemesis.detectarColision()
 
                 if hasattr(nemesis, 'cambiar_direccion'):
                     nemesis.cambiar_direccion()
@@ -1164,12 +1169,16 @@ class App:
             if self.iteracion == 35:
                self.iteracion = 0
 
+            if self.flagPintarBocadilloTexto:
+                self.bocadillo_timer -= 1
+                self.JefeEnemigo.bocadilloTexto(self.pantalla, "ChoKado Pared!", self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, 255)
+
             # Aquí busco lugar suelo para Jugador
             # Llamada a la IA
             if self.flagInit == True:
                 self.flagInit = False
-                # if self.flagPrint_info:
-                print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
+                if self.flagPrint_info:
+                    print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
                 self.player.casilla = self.maze.posicionInitJugador    
                 pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
                 self.player.x = pos.x
