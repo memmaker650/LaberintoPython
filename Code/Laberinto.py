@@ -50,6 +50,18 @@ H61CD35 = (97, 205, 53)
 COLOR_PUERTA = (160, 110, 60)
 COLOR_BORDE = (90, 60, 40)
 
+# Color for the buttons
+# light shade of the button
+color_light = (170, 170, 170)
+# dark shade of the button
+color_dark = (100, 100, 100)
+color_darkorange = (255, 140, 0)
+color_darkgreen = (0, 64, 0)
+color_darkblue = (0, 47, 66)
+color_overblue = (80, 30, 255)
+color_otherorange = (216, 75, 32)
+color_rojobrillante = (255, 35, 1)
+
 # ------------------------------
 # Clases y Funciones utilizadas
 # ------------------------------
@@ -113,6 +125,13 @@ class App:
     flagDebugEnemigos = True
     flagPintarBocadilloTexto = False
     bocadillo_timer = 0
+    grupo_explosiones = pygame.sprite.Group()
+    flagExplosion = False
+    explosion_timer = 0
+
+    grupo_humo = pygame.sprite.Group()
+    flagHumo = False
+    humo_timer = 0
 
     casillaObjetosTocados = set()
 
@@ -359,18 +378,6 @@ class App:
 
         if self.flagPrint_info:
             print("Dentro del Menú!!")
-
-        # Color for the buttons
-        # light shade of the button
-        color_light = (170, 170, 170)
-        # dark shade of the button
-        color_dark = (100, 100, 100)
-        color_darkorange = (255, 140, 0)
-        color_darkgreen = (0, 64, 0)
-        color_darkblue = (0, 47, 66)
-        color_overblue = (80, 30, 255)
-        color_otherorange = (216, 75, 32)
-        color_rojobrillante = (255, 35, 1)
         
         # stores the width of the
         # screen into a variable
@@ -605,19 +612,7 @@ class App:
         color = (255, 255, 255)
 
         if self.flagPrint_info:
-            print("Dentro de Selecciona Nivel!!")
-
-        # Color for the buttons
-        # light shade of the button
-        color_light = (170, 170, 170)
-        # dark shade of the button
-        color_dark = (100, 100, 100)
-        color_darkorange = (255, 140, 0)
-        color_otherorange = (216,75, 32)
-        color_darkgreen = (0, 64, 0)
-        color_darkblue = (0, 47, 66)
-        color_overblue = (80, 30, 255)
-        
+            print("Dentro de Selecciona Nivel!!")     
 
         # stores the width of the
         # screen into a variable
@@ -933,6 +928,20 @@ class App:
             for cl in colision_player:
                 logging.info(f'PLAYER colisionó con paRED')
 
+        # Colisión entre Enemigos para evitar pasos entre ellos.
+        #----------------------------------------------------------
+        # colision_btenemies = pygame.sprite.spritecollide(self.JefeEnemigo, self.EnemigosGroup, False)
+        # if colision_btenemies:
+        #     logging.info(f'COLISION NTRE Enemigos DETECTADA - num ELem ({len(colision_btenemies)})')
+        #     if self.flagPrint_info:
+        #         print(f'COLISION NTRE Enemigos DETECTADA - num ELem ({len(colision_btenemies)})')
+# 
+        #     self.JefeEnemigo.x = self.JefeEnemigo.prev_x
+        #     self.JefeEnemigo.y = self.JefeEnemigo.prev_y
+# 
+        #     for cl in colision_btenemies:
+        #         logging.info(f'PLAYER colisionó con paRED')
+
         # Colisión del jugador con Puerta
         colision_playerPuerta = pygame.sprite.spritecollide(self.player, self.maze.MazePuertas, False)
         if colision_playerPuerta:
@@ -965,6 +974,18 @@ class App:
                     self.bocadillo_timer = 180 
                     self.flagPintarBocadilloTexto = True
 
+                    for pared in paredes:
+                        if nemesis.rect.colliderect(pared.rect):
+                            if nemesis.rect.x < 0:
+                                print("Colisión por IZQUIERDA")
+                            elif nemesis.rect.x > 0:
+                                print("Colisión por DERECHA")
+
+                            if nemesis.rect.y > 0:
+                                print("Colisión por ABAJO") 
+                            elif nemesis.rect.y < 0:
+                                print("Colisión por ARRIBA")                              
+
                 # Revertir y cambiar dirección solo del enemigo que colisiona
                 if hasattr(nemesis, 'revertir_movimiento'):
                     nemesis.revertir_movimiento()
@@ -979,6 +1000,7 @@ class App:
             # Opcional: procesar cada enemigo que colisionó
             for enemigo, puertas in colision_enemigos.items():
                 print(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(puertas)} paredes')
+
                 # Revertir y cambiar dirección solo del enemigo que colisiona
                 if hasattr(enemigo, 'revertir_movimiento'):
                     enemigo.revertir_movimiento()
@@ -1139,7 +1161,6 @@ class App:
             for muni, paredes in colision_PlayerBalasConParedes.items():
                 logging.info(f'Bala Player en ({muni.x}, {muni.y}) colisionó con {len(paredes)} paredes')
                 muni.kill()
-
     
     # Repinto el Laberinto
     def rebuildMap(self):
@@ -1166,10 +1187,26 @@ class App:
             if self.flagDebugEnemigos:
                 self.maze.pintarDetallesCasillaEnemigo(self.pantalla)
 
+            if self.flagExplosion and self.explosion_timer > 0:
+                self.explosion_timer -= 1
+                self.grupo_explosiones.update()
+                self.grupo_explosiones.draw(self.pantalla)
+
+                if self.explosion_timer <= 0:
+                    self.flagExplosion = False
+
+            if self.flagHumo and self.humo_timer > 0:
+                self.humo_timer -= 1
+                self.grupo_humo.update()
+                self.grupo_humo.draw(self.pantalla)
+
+                if self.humo_timer <= 0:
+                    self.flagExplosion = False
+
             if self.iteracion == 35:
                self.iteracion = 0
 
-            if self.flagPintarBocadilloTexto:
+            if self.flagPintarBocadilloTexto and self.bocadillo_timer == 0:
                 self.bocadillo_timer -= 1
                 self.JefeEnemigo.bocadilloTexto(self.pantalla, "ChoKado Pared!", self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, 255)
 
@@ -1456,6 +1493,12 @@ class App:
                         else:
                             self.pintaRectángulos = True 
                     if event.key == pygame.K_d:
+                        # Defino una explosion
+                        explosion = MazeLab.Explosion(400, 300)
+                        self.grupo_explosiones.add(explosion)
+                        self.flagExplosion = True
+                        self.explosion_timer = 150
+
                         # alternar entre abrir y cerrar
                         if self.door_angle <= 0:
                             self.openingDoor = True
@@ -1465,10 +1508,10 @@ class App:
                             self.openingDoor = False
                     if event.key == pygame.K_k:
                         logging.info('Tecla K presionada')
-                        if MazeLab.Maze.pintaKasillaSuelo:
-                            MazeLab.Maze.pintaKasillaSuelo = False
+                        if MazeLab.Maze.pintaKasillaNumSuelo:
+                            MazeLab.Maze.pintaKasillaNumSuelo = False
                         else:
-                            MazeLab.Maze.pintaKasillaSuelo = True
+                            MazeLab.Maze.pintaKasillaNumSuelo = True
                     if event.key == pygame.K_v:
                         logging.info('Tecla V presionada')
                         if self.pintaVision == True:
@@ -1477,6 +1520,11 @@ class App:
                             self.pintaVision = True 
                     if event.key == pygame.K_s:
                         logging.info('Tecla S apretada')
+                        smoke = MazeLab.Smoke(200, 600, 210)
+                        self.grupo_humo.add(smoke)
+                        self.flagHumo= True
+                        self.humo_timer = 150
+
                         if self.Sound.reproducirMusica == False:
                            self.canalmusicaFondo = self.Sound.musica.play()  # 🔊 Reproduce el sonido una vez
                            # musicaFondo.play(loops=-1)  # Si quieres que se repita indefinidamente

@@ -26,6 +26,7 @@ NUM_CASILLAS_H = 40
 NUM_CASILLAS_VERTI = 27
 NUM_CASILLAS_CAMARA = 27
 IMG_DIR = "Resources"
+EXPLOSION_DIR = "assets/explosions/images/explosion/"
 SONIDO_DIR = "Resources/Sonidos"
 FPS = 60 # desired framerate in frames per second.
 
@@ -226,6 +227,7 @@ class Maze:
                     display_surf.blit(w_surf, ((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                     
                 # Pintar el número de casilla en el suelo.
+                # -------------------------------------------------
                 if self.pintaKasillaNumSuelo:
                     textWallMark = xfont.render(str(i), True, (255, 0, 0))
                     # pygame.draw.rect(display_surf, ROJO, rectSuelo)
@@ -561,3 +563,147 @@ class Maze:
             return True
         else: 
             return False
+
+#-------------------------------------
+#   ***    E X P L O S I Ó N 
+#-------------------------------------
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+
+        # Cargar frames
+        self.frames = []
+
+        for i in range(21):
+            ruta = os.path.join(
+                "Code",
+                EXPLOSION_DIR,
+                f"expl_04_00{i:02}.png"
+            )
+            print(f"Ruta file Explosiones: {ruta}")
+
+            imagen = pygame.image.load(ruta).convert_alpha()
+
+            # Opcional: escalar
+            imagen = pygame.transform.scale(imagen, (128, 128))
+
+            self.frames.append(imagen)
+
+        # Frame actual
+        self.frame_actual = 0
+
+        # Imagen inicial
+        self.image = self.frames[self.frame_actual]
+
+        # Posición
+        self.rect = self.image.get_rect(center=(x, y))
+
+        # Tiempo
+        self.tiempo_ultimo_frame = pygame.time.get_ticks()
+
+        # 2.5 segundos / 21 frames
+        self.duracion_frame = 150  # milisegundos
+
+    def update(self):
+        ahora = pygame.time.get_ticks()
+        print(" --> Explosion INTO.")
+
+        # Cambiar frame
+        if ahora - self.tiempo_ultimo_frame > self.duracion_frame:
+
+            self.tiempo_ultimo_frame = ahora
+
+            self.frame_actual += 1
+
+            # ¿Se acabó la animación?
+            if self.frame_actual >= len(self.frames):
+                self.kill()
+                return
+
+            self.image = self.frames[self.frame_actual]
+
+import pygame
+import os
+
+#-------------------------------------
+#  ***   N U B E    DE     H U M O
+#-------------------------------------
+class Smoke(pygame.sprite.Sprite):
+
+    # Cache global
+    FRAMES = None
+
+    def __init__(self, x, y, alfa=120):
+
+        super().__init__()
+
+        # Cargar imágenes una sola vez
+        if Smoke.FRAMES is None:
+            Smoke.FRAMES = []
+
+            for i in range(31):
+
+                ruta = os.path.join(
+                    "Code",
+                    EXPLOSION_DIR,
+                    f"puff_smoke_01_00{i:02}.png"
+                )
+
+                img = pygame.image.load(ruta).convert_alpha()
+
+                # -----------------------------
+                # ESCALAR
+                img = pygame.transform.scale(img, (140, 140))
+
+                # TEÑIR DE GRIS
+                # -----------------------------
+                # RGB más bajos = gris más apagado
+                img.fill(
+                    (180, 180, 180, 255),
+                    special_flags=pygame.BLEND_RGBA_MULT
+                )
+
+                # -----------------------------
+                # TRANSPARENCIA
+                img.set_alpha(alfa)
+
+                Smoke.FRAMES.append(img)
+
+        self.frames = Smoke.FRAMES
+
+        # Frame inicial
+        self.frame_actual = 0
+        self.image = self.frames[self.frame_actual]
+
+        # Centrado
+        self.rect = self.image.get_rect(center=(x, y))
+
+        # Tiempo
+        self.tiempo_ultimo_frame = pygame.time.get_ticks()
+
+        # Más lento que explosión
+        self.duracion_frame = 90
+
+    def update(self):
+        ahora = pygame.time.get_ticks()
+
+        if ahora - self.tiempo_ultimo_frame > self.duracion_frame:
+
+            self.tiempo_ultimo_frame = ahora
+
+            self.frame_actual += 1
+
+            # Final animación
+            if self.frame_actual >= len(self.frames):
+                self.kill()
+                return
+
+            escala = 140 + self.frame_actual * 2
+
+            self.image = pygame.transform.scale(
+                self.frames[self.frame_actual],
+                (escala, escala)
+            )
+
+            centro = self.rect.center
+            self.rect = self.image.get_rect(center=centro)
