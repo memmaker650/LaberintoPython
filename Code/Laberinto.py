@@ -803,9 +803,6 @@ class App:
         # Debug: verificar posiciones
         logging.info(f"Player en posición: ({self.player.x}, {self.player.y}) - Rect: {self.player.rect}")
 
-        for puerta in self.maze.MazePuertas:
-            puerta.update()
-
         # Gestión del scroll de la pantalla.
         self.maze.moverCamara(self.player.x, self.player.y)
         if self.maze.movimientoCamara > 0 and self.maze.flagCamaraCambio:
@@ -820,11 +817,10 @@ class App:
             for x in self.EnemigosGroup:
                 x.rect.x -= CASILLA_PIXEL
 
-            # Puertas
-            for x in self.maze.MazePuertas:
-                x.rect.x -= CASILLA_PIXEL
-                logging.info("Desplazar puertas")
-                print("Desplazar puertas")
+            # Puertas (bisagra y rect deben moverse juntos)
+            for puerta in self.maze.MazePuertas:
+                puerta.x -= CASILLA_PIXEL
+                puerta.pivot = (puerta.x, puerta.y)
 
             # Objetos Extra
             for x in self.maze.MazeBandera:
@@ -847,6 +843,9 @@ class App:
                 x.rect.x -= CASILLA_PIXEL
             for x in self.maze.MazePilaHuesos:
                 x.rect.x -= CASILLA_PIXEL
+
+        for puerta in self.maze.MazePuertas:
+            puerta.update()
         
         # Colisión del jugador con paredes
         colision_player = pygame.sprite.spritecollide(self.player, self.maze.MazeParedes, False)
