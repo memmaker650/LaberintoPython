@@ -367,8 +367,8 @@ class Enemigo(pygame.sprite.Sprite):
         # Coordenadas del triángulo (vértice arriba, base abajo)
         # Vértice cerca del planeta, base en el exterior
         p1 = (20, 5)   # vértice
-        p2 = (5, 55)   # esquina izquierda base
-        p3 = (35, 55)  # esquina derecha base
+        p2 = (5, 70)   # esquina izquierda base
+        p3 = (35, 70)  # esquina derecha base
         # Dibujamos triángulo amarillo con alpha 50%
         color = (199,180,70, 128)  # RGBA → alpha=128 (50%)
         pygame.draw.polygon(self.visionImage, color, [p1, p2, p3])        
@@ -458,7 +458,6 @@ class Enemigo(pygame.sprite.Sprite):
             self.rect.x = self.x
             self.rect.y = self.y
 
-            #self.visionRotar()
             self.moveDown()
 
             # Actualizar rect tras mover
@@ -532,12 +531,16 @@ class Enemigo(pygame.sprite.Sprite):
         # Cambio simple de dirección: invertir velocidad vertical
         self.speedV = -self.speedV 
 
+        # Arriba
         if self.orientacion == 0:
             self.orientacion = 2
+        # Abajo    
         elif self.orientacion == 2:
             self.orientacion = 0
+        # Derecha     
         elif self.orientacion == 1:
             self.orientacion = 3
+        # Izquierda
         elif self.orientacion == 3:
             self.orientacion = 1
 

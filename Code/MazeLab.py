@@ -44,6 +44,7 @@ CYAN = (0, 255, 255)
 MAGENTA = (255, 0, 255)
 HC74225 = (199, 66, 37)
 H61CD35 = (97, 205, 53)
+COLOR_PUERTA = (160, 110, 60)
 
 class posicion:
     x = 0
@@ -115,6 +116,18 @@ class Maze:
     flagPintarCasilla = bool = True
     pintaKasillaNumSuelo = True
     PosicionPintarCasilla = posicion
+
+    # Valores de la puerta
+    door_length = 32
+    door_thickness = 10
+    door_x = int
+    door_y = int
+    pivot_x = door_x
+    pivot_y = door_y
+    door_angle = 0           # Apertura animada: 0 = cerrada, 90 = abierta
+
+    Doorspeed = int = 3                # grados por frame
+    door_surface = pygame.Surface((32, 32))  # ✅ CORRECTO
 
     ObjetosNoPintar = []
 
@@ -229,8 +242,8 @@ class Maze:
                 # Pintar el número de casilla en el suelo.
                 # -------------------------------------------------
                 if self.pintaKasillaNumSuelo:
+                    # print("Dentro Pintar NumKasilla.")
                     textWallMark = xfont.render(str(i), True, (255, 0, 0))
-                    # pygame.draw.rect(display_surf, ROJO, rectSuelo)
                     display_surf.blit(textWallMark, rectSuelo.rect.center)
 
                 casiya = bx + (by * self.M)
@@ -343,16 +356,26 @@ class Maze:
                 #------------------------
                 if self.mazeDataExtra[bx + (by * self.M)] == 33:
                     kasylla = bx + (by * self.M)
-                    # print("CALCulo Casilla puerta: ", kasylla)
-                    self.posicionPuerta.append([bx + (by * self.M), 1])  # Casilla
-                    Puerta = pygame.sprite.Sprite()
-                    Puerta.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 15, 32)
-                    self.MazePuertas.add(Puerta)
-                    # Cálculo orientación puerta.
-                    if not self.esAlcanzableCasilla(kasylla-1) and not self.esAlcanzableCasilla(kasylla+1):
+
+                    self.posicionPuerta.append([kasylla, 1])
+
+                    x = bx * CASILLA_PIXEL
+                    y = by * CASILLA_PIXEL + BIAS
+
+                    # Determinar orientación
+                    if not self.esAlcanzableCasilla(kasylla - 1) and \
+                       not self.esAlcanzableCasilla(kasylla + 1):
+
+                        orientacion = 4
                         Maze.posicionPuerta.append((kasylla, 4))
                     else:
+                        orientacion = 1
                         Maze.posicionPuerta.append((kasylla, 1))
+
+                    # 🔥 CREAS TU CLASE PUERTA REAL
+                    puerta = Puerta(x, y, orientacion)
+
+                    self.MazePuertas.add(puerta)
 
             bx = bx + 1
             if bx > self.M - 1:
@@ -564,6 +587,76 @@ class Maze:
         else: 
             return False
 
+    # MÉTODOs para las puertas
+    #-------------------------------------------
+    #def inicioPuertas(self):
+    #    i = 0
+    #    for porte in self.MazePuertas:
+    #        CasillaPuerta = self.maze.calcularCasilla(porte.rect.x, porte.rect.y)
+    #        # print(f"KASIYA ubicación puerta: ", CasillaPuerta, " pos : ", porte.rect.x,", ", porte.rect.y, "* Se Pintan ?: ", MazeLab.Maze.elementoVisiblePosicion(porte.rect.x, porte.rect.y))
+#
+    #        door_orient = 4
+    #        for x in self.posicionPuerta:
+    #            if x[0] == CasillaPuerta:
+    #                door_orient = x[1]
+    #                break
+#
+    #        if self.flagPrint_info:
+    #           print("Puerta pivote: ", self.pivot_x, self.pivot_y,
+    #                 " Orientación: ", door_orient, " Apertura: ", self.door_angle)
+#
+    #        i += 1
+#
+    #def updatePuertas(self):
+    #    self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
+    #    centro = (self.JefeEnemigo.x+10, self.JefeEnemigo.y+10)
+    #    radio = 20
+    #    x = centro[0] + radio * math.cos(math.radians(self.JefeEnemigo.angle))
+    #    y = centro[1] + radio * math.sin(math.radians(self.JefeEnemigo.angle))
+    #    rot_angle = -self.JefeEnemigo.angle + 90
+    #    rotated = pygame.transform.rotate(self.JefeEnemigo.visionImage, rot_angle)
+    #    rect = rotated.get_rect(center=(x, y))
+    #    self.pantalla.blit(rotated, rect)
+#
+    #def draw_Puerta(self, pantalla, rectaP):
+    #    """
+    #    Rota la puerta alrededor de la bisagra (círculo gris).
+    #    El lado corto junto al pivote permanece fijo; el largo barre 90°.
+    #    """
+    #    print("Dentro dRaW PUERTA.")
+#
+    #    pygame.draw.rect(
+    #        pantalla,
+    #        (0, 0, 0),
+    #        rectaP,
+    #        2
+    #    )
+#
+    #    pygame.draw.circle(
+    #        self.pantalla, (128, 128, 128),
+    #        (int(self.pivot_x), int(self.pivot_y)), 3
+    #    )
+    #
+    #def draw_Puertas(self, pantalla):
+    #    """
+    #    Rota la puerta alrededor de la bisagra (círculo gris).
+    #    El lado corto junto al pivote permanece fijo; el largo barre 90°.
+    #    """
+    #    print("Dentro dRaW PUERTA.")
+#
+    #    for porte in self.MazePuertas:
+    #        pygame.draw.rect(
+    #            pantalla,
+    #            COLOR_PUERTA,
+    #            porte.rect,
+    #            2
+    #        )
+#
+    #        pygame.draw.circle(
+    #            self.pantalla, (128, 128, 128),
+    #            (int(self.pivot_x), int(self.pivot_y)), 3
+    #        )
+#
 #-------------------------------------
 #   ***    E X P L O S I Ó N 
 #-------------------------------------
@@ -622,14 +715,11 @@ class Explosion(pygame.sprite.Sprite):
 
             self.image = self.frames[self.frame_actual]
 
-import pygame
-import os
 
 #-------------------------------------
 #  ***   N U B E    DE     H U M O
 #-------------------------------------
 class Smoke(pygame.sprite.Sprite):
-
     # Cache global
     FRAMES = None
 
@@ -659,7 +749,7 @@ class Smoke(pygame.sprite.Sprite):
                 # -----------------------------
                 # RGB más bajos = gris más apagado
                 img.fill(
-                    (180, 180, 180, 255),
+                    (110, 110, 110, 255),
                     special_flags=pygame.BLEND_RGBA_MULT
                 )
 
@@ -698,12 +788,156 @@ class Smoke(pygame.sprite.Sprite):
                 self.kill()
                 return
 
-            escala = 140 + self.frame_actual * 2
+            # Crecimiento progresivo
+            escala = 140 + self.frame_actual
 
+            # Fade out progresivo
+            nuevo_alpha = max(0, 210 - self.frame_actual * 3)
+
+            # Escalar frame actual
             self.image = pygame.transform.scale(
                 self.frames[self.frame_actual],
                 (escala, escala)
             )
 
+            # Aplicar nueva transparencia
+            self.image.set_alpha(nuevo_alpha)
+
+            # Mantener el centro estable
             centro = self.rect.center
             self.rect = self.image.get_rect(center=centro)
+
+class Puerta(pygame.sprite.Sprite):
+
+    def __init__(self, x, y, orientacion):
+        super().__init__()
+
+        self.orientacion = orientacion
+
+        self.ancho = 15
+        self.alto = 32
+
+        self.image_original = pygame.Surface(
+            (self.ancho, self.alto),
+            pygame.SRCALPHA
+        )
+
+        # Color base
+        self.image_original.fill((160, 90, 30))
+
+        # Borde negro
+        pygame.draw.rect(
+           self.image_original,
+           (0, 0, 0),
+           (0, 0, self.ancho, self.alto),
+           2
+        )
+
+        pygame.draw.rect(
+            self.image_original,
+            (160, 90, 30),
+            (0, 0, self.ancho, self.alto)
+        )
+
+        # Línea vertical central
+        pygame.draw.line(
+            self.image_original,
+            (0, 0, 0),
+            (self.ancho // 2, 0),
+            (self.ancho // 2, self.alto),
+            1
+        )
+
+        # Línea horizontal opcional (refuerzo visual)
+        pygame.draw.line(
+            self.image_original,
+            (0, 0, 0),
+            (0, self.alto // 2),
+            (self.ancho, self.alto // 2),
+            1
+        )
+
+        vertices = [
+            (0, 0),
+            (self.ancho, 0),
+            (self.ancho, self.alto),
+            (0, self.alto)
+        ]
+        
+        pygame.draw.lines(
+            self.image_original,
+            (0, 0, 0),
+            True,
+            vertices,
+            1
+        )
+
+        self.image_original.fill((170, 100, 40))
+
+        for i in range(3):
+            x = (i + 1) * self.ancho // 4
+
+            pygame.draw.line(
+                self.image_original,
+                (90, 50, 20),
+                (x, 2),
+                (x, self.alto - 2),
+                1
+            )
+
+        self.image = self.image_original
+
+        self.angle = 0
+        self.abierta = False
+        self.velocidad = 2
+
+        # 🔥 POSICIÓN BASE (bisagra)
+        self.x = x
+        self.y = y
+
+        # radio de apertura (IMPORTANTE)
+        self.radio = self.alto  # o CASILLA_PIXEL si quieres más exagerado
+
+        # pivot fijo
+        self.pivot = (x, y)
+
+        self.rect = self.image.get_rect(center=self.pivot)
+    
+    def update(self):
+        if self.abierta:
+            if self.angle < 90:
+                self.angle += self.velocidad
+        else:
+            if self.angle > 0:
+                self.angle -= self.velocidad
+
+        self.rotar()
+    
+    def rotar(self):
+        # Ángulo en radianes
+        rad = math.radians(self.angle)
+
+        # Posición desplazada desde la bisagra
+        x = self.x + self.radio * math.cos(rad)
+        y = self.y + self.radio * math.sin(rad)
+
+        # Rotación visual
+        rot_angle = -self.angle + 90
+
+        self.image = pygame.transform.rotate(
+            self.image_original,
+            rot_angle
+        )
+
+        self.rect = self.image.get_rect(center=(x, y))
+    
+    def draw(self, pantalla):
+        pantalla.blit(self.image, self.rect)
+
+        # bisagra
+        pygame.draw.circle(
+            pantalla,
+            (128, 128, 128),
+            (int(self.x), int(self.y)),
+            3
+        )
