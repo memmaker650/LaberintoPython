@@ -860,21 +860,43 @@ class App:
             for cl in colision_player:
                 logging.info(f'PLAYER colisionó con paRED')
 
-        # Colisión entre Enemigos para evitar pasos entre ellos.
+        # Colisión entre EnEMiGos para evitar pasos entre ellos.
         #----------------------------------------------------------
-        # colision_btenemies = pygame.sprite.spritecollide(self.JefeEnemigo, self.EnemigosGroup, False)
-        # if colision_btenemies:
-        #     logging.info(f'COLISION NTRE Enemigos DETECTADA - num ELem ({len(colision_btenemies)})')
-        #     if self.flagPrint_info:
-        #         print(f'COLISION NTRE Enemigos DETECTADA - num ELem ({len(colision_btenemies)})')
+        colision_btEnemies = pygame.sprite.spritecollide(self.JefeEnemigo, self.EnemigosGroup, False)
+        # Jefe Enemigo está dentro de EnemigosGroup por lo tanto hay que filtrar para evitar colisión SIEMPRE
+        colision_btEnemies = [
+            s for s in pygame.sprite.spritecollide(self.JefeEnemigo, self.EnemigosGroup, False)
+            if s is not self.JefeEnemigo
+            ]
+        if colision_btEnemies:
+            logging.info(f'KOLLsiON NTRE Enemigos DETECTADA - num ELem ({len(colision_btEnemies)})')
+            print(f'KOLLsiON NTRE Enemigos DETECTADA - num ELem ({len(colision_btEnemies)})')
+            if self.flagPrint_info:
+                print(f'COLISION NTRE Enemigos DETECTADA - num ELem ({len(colision_btEnemies)})')
 # 
-        #     self.JefeEnemigo.x = self.JefeEnemigo.prev_x
-        #     self.JefeEnemigo.y = self.JefeEnemigo.prev_y
+            self.JefeEnemigo.x = self.JefeEnemigo.prev_x
+            self.JefeEnemigo.y = self.JefeEnemigo.prev_y
 # 
-        #     for cl in colision_btenemies:
-        #         logging.info(f'PLAYER colisionó con paRED')
+            for cl in colision_btEnemies:
+                logging.info(f'ENEMIGO colisionó con JeFE NeMesis')
+
+        # Colisión del jugador con ENEMIGOS
+        #----------------------------------------------------------
+        colision_playerNemesis = pygame.sprite.spritecollide(self.player, self.EnemigosGroup, False)
+        if colision_playerNemesis:
+            logging.info(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
+            print(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
+            if self.flagPrint_info:
+                print(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
+
+            self.player.x = self.player.prev_x
+            self.player.y = self.player.prev_y
+
+            for cl in colision_playerNemesis:
+                logging.info(f'PLAYER colisionó con ENEMIGO')
 
         # Colisión del jugador con Puerta
+        #----------------------------------------
         colision_playerPuerta = pygame.sprite.spritecollide(self.player, self.maze.MazePuertas, False)
         if colision_playerPuerta:
             logging.info(f'COLISION PLAYER & DOOOOOR - num ELem ({len(colision_playerPuerta)})')
@@ -888,6 +910,7 @@ class App:
                 logging.info(f'PLAYER colisionó con paRED')
 
         # Colisión de enemigos con paredes
+        #----------------------------------------
         colision_enemigos = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazeParedes, False, False)
         if colision_enemigos:
             logging.info('COLISION Enemigo DETECTADA %s', len(colision_enemigos))
@@ -949,6 +972,8 @@ class App:
             logging.info('Huesos  IMPACTADA')
             if self.flagPrint_info:
                 print('Huesos  IMPACTADA')
+            self.rebuildMap()
+
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConExtra:
                 logging.info(f'Huesos tocados')
@@ -960,7 +985,9 @@ class App:
             if self.flagPrint_info:
                 print('Llave PUERTA cogida')
             self.player.llavePuerta = True
+            self.rebuildMap()
 
+            # Marcar una alerta
             self.alerta_activa = True
             self.alerta_texto = "¡Has cogido la llave!"
             self.alerta_inicio_ms = pygame.time.get_ticks()
@@ -980,6 +1007,8 @@ class App:
             self.player.champi = True
             self.maze.MazeChampi.empty()
             self.maze.flagChampi = False
+            self.rebuildMap() 
+
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConChampi:
                 logging.info(f'Champi tocadO')
@@ -993,6 +1022,8 @@ class App:
             self.player.granada = True
             self.maze.MazeGranada.empty()
             self.maze.flagGranada = False
+            self.rebuildMap()
+
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConGranada:
                 logging.info(f'Granada tocadA')
@@ -1006,6 +1037,8 @@ class App:
             self.player.llaveFinNivel = True
             self.maze.MazeLlave.empty()
             self.maze.flagLlave = False
+            self.rebuildMap()
+
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConLlaveFinal:
                 logging.info(f'Llave PUERTA tocados')
@@ -1018,6 +1051,8 @@ class App:
                 print('HuesO o BONE: ', len(colision_PlayerConHueso))
             self.HeadPuntuacion.puntos += 10
             self.HeadHuesos.NumeroHuesos += 1
+            self.rebuildMap()
+
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConHueso:
                 logging.info(f'Hueso Sólo tocado')
@@ -1035,6 +1070,7 @@ class App:
                 logging.info(f'Oro tocado')
                 self.casillaObjetosTocados.add(self.maze.calcularCasilla(cpcE.rect.x, cpcE.rect.y))
                 cpcE.kill()
+            self.rebuildMap()
 
             # self.maze.flagHuesos = False
             # Opcional: procesar cada enemigo que colisionó
@@ -1051,6 +1087,8 @@ class App:
             self.maze.flagPilaHuesos = False
             self.HeadPuntuacion.puntos += 50
             self.HeadHuesos.NumeroHuesos += 10
+            self.rebuildMap()
+
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConPilaHueso:
                 logging.info(f'Pila de Huesos  tocado')
@@ -1064,6 +1102,8 @@ class App:
             self.maze.MazeBotiquin.empty()
             self.maze.flagBotiquin = False
             self.HeadBarraDeVida.vida += 30
+            self.rebuildMap()
+
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConBotiquin:
                 logging.info(f'Botiquin tocado')
