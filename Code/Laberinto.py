@@ -131,6 +131,7 @@ class App:
     flagDebugEnemigos = True
     flagPintarBocadilloTexto = False
     bocadillo_timer = 0
+    textoBocadillo = None
     grupo_explosiones = pygame.sprite.Group()
     flagExplosion = False
     explosion_timer = 0
@@ -904,6 +905,14 @@ class App:
             if pygame.sprite.collide_rect(self.player, self.JefeEnemigo):
                 print("¡C O L I SS E U M !")
                 self.impactoJefeEnemigo = True
+                
+                self.bocadillo_timer = 180
+                self.flagPintarBocadilloTexto = True
+                self.textoBocadillo = "Hay un INTRUSO !! Venid"
+
+                Kinicio = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+                Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
+                self.JefeEnemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
             else:
                 if colision_playerNemesis:
                     logging.info(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
@@ -916,10 +925,19 @@ class App:
 
                     self.impactoEnemigo = True
 
+                    self.bocadillo_timer = 180
+                    self.flagPintarBocadilloTexto = True
+                    self.textoBocadillo = "INTRUSO encontrado !! Jefe aquí !!!"
+
+                    # Aquí habria que poner a los Enemigos para que fueran a donde está el jefe contra el Player.
+                    # Kinicio = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+                    # Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
+                    # self.JefeEnemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
+
                     for cl in colision_playerNemesis:
                         logging.info(f'PLAYER colisionó con ENEMIGO')
-                        self.posEnemyImpc.x = cl.x
-                        self.posEnemyImpc.y = cl.y
+                        self.enemigo.x = cl.x
+                        self.enemigo.y = cl.y
 
         # Colisión del jugador con Puerta
         #----------------------------------------
@@ -952,8 +970,9 @@ class App:
                     # if self.flagPrint_info:
                     print(f"Colision Jefe Enemigo con PARED --> {self.maze.calcularCasilla(nemesis.x, nemesis.y)} !!!")
                     nemesis.detectarColision()
-                    self.bocadillo_timer = 180 
-                    self.flagPintarBocadilloTexto = True
+                    # self.bocadillo_timer = 180 
+                    # self.flagPintarBocadilloTexto = True
+                    # self.textoBocadillo = "ChoKado Pared!"
 
                     for pared in paredes:
                         if nemesis.rect.colliderect(pared.rect):
@@ -1173,7 +1192,9 @@ class App:
            self.wall_surf,
            self.casillaObjetosTocados
        )
-        
+    
+    # on RENDER
+    #--------------------
     def on_render(self):
         if self.pause == False:
            # SOLO si cambió el mapa
@@ -1209,9 +1230,13 @@ class App:
             if self.iteracion == 35:
                self.iteracion = 0
 
-            if self.flagPintarBocadilloTexto and self.bocadillo_timer == 0:
+            # Parte bocadillo de Texto.
+            if self.flagPintarBocadilloTexto and self.bocadillo_timer != 0:
                 self.bocadillo_timer -= 1
-                self.JefeEnemigo.bocadilloTexto(self.pantalla, "ChoKado Pared!", self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, 255)
+                if self.impactoEnemigo:
+                    self.JefeEnemigo.bocadilloTexto(self.pantalla, self.textoBocadillo, self.enemigo.rect.centerx, self.enemigo.rect.top, 255)
+                elif self.impactoJefeEnemigo:
+                    self.JefeEnemigo.bocadilloTexto(self.pantalla, self.textoBocadillo, self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, 255)
 
             # Aquí busco lugar suelo para Jugador
             # Llamada a la IA
@@ -1409,6 +1434,7 @@ class App:
                 self.pantalla.blit(overlay, (0, y - 10))
                 self.pantalla.blit(texto_surface, (x_texto, y))
 
+        # Aplicar efecto rojo y vibración cuando jugador y Enemigo/s
         if self.efecto_rojo:
             ahora = pygame.time.get_ticks()
             if self.impactoPlayer:
@@ -1418,20 +1444,19 @@ class App:
             if self.impactoJefeEnemigo:
                 self.imageJefe_roja = self.JefeEnemigo.dibujaDaño(True)
 
-
             if ahora - self.tiempo_rojo < 2000:
                 if (ahora // 100) % 2:
                     if self.impactoPlayer:
                         self.pantalla.blit(self.imagePlayer_roja, (self.player.x, self.player.y))
                     if self.impactoEnemigo:
-                        self.pantalla.blit(self.imageEnemigo_roja, (self.posEnemyImpc.x, self.posEnemyImpc.y))
+                        self.pantalla.blit(self.imageEnemigo_roja, (self.enemigo.x, self.enemigo.y))
                     if self.impactoJefeEnemigo:
                         self.pantalla.blit(self.imageJefe_roja, (self.JefeEnemigo.x, self.JefeEnemigo.y))
                 else:
                     if self.impactoPlayer:
                         self.pantalla.blit(self.player.image, (self.player.x, self.player.y))
                     if self.impactoEnemigo:
-                        self.pantalla.blit(self.enemigo.imageEnemigo, (self.posEnemyImpc.x, self.posEnemyImpc.y))
+                        self.pantalla.blit(self.enemigo.imageEnemigo, (self.enemigo.x, self.enemigo.y))
                     if self.impactoJefeEnemigo:
                         self.pantalla.blit(self.enemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
             else:
