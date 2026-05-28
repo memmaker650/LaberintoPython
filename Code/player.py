@@ -297,6 +297,23 @@ class Player(pygame.sprite.Sprite):
                 self.canalDisparo.stop()
             self.canalDisparo.play(self.sonidoDisparo)
 
+    def dibujaDañoPlayer(self) -> pygame.Surface:
+        imagen_roja = self.image.copy()
+        
+        mascara_roja = pygame.Surface(
+            imagen_roja.get_size(),
+            pygame.SRCALPHA
+        )
+
+        mascara_roja.fill((255, 0, 0, 180))  # 180 ≈ 70% opacidad
+
+        imagen_roja.blit(
+            mascara_roja,
+            (0, 0),
+            special_flags=pygame.BLEND_RGBA_MULT
+        )
+
+        return imagen_roja
 
 class Enemigo(pygame.sprite.Sprite):
     x = 12
@@ -629,3 +646,24 @@ class Enemigo(pygame.sprite.Sprite):
             if self.canalDisparo.get_busy():
                 self.canalDisparo.stop()
             self.canalDisparo.play(self.sonidoDisparoEnemigo)
+
+    def dibujaDaño(self, Jefe) -> pygame.Surface:
+        if Jefe:
+            imagen_roja = self.imageJefeEnemigo.copy()
+        else:
+            imagen_roja = self.imageEnemigo.copy()
+        
+        mascara_roja = pygame.Surface(
+            imagen_roja.get_size(),
+            pygame.SRCALPHA
+        )
+
+        mascara_roja.fill((255, 0, 0, 180))  # 180 ≈ 70% opacidad
+
+        imagen_roja.blit(
+            mascara_roja,
+            (0, 0),
+            special_flags=pygame.BLEND_RGBA_MULT
+        )
+
+        return imagen_roja

@@ -117,6 +117,12 @@ class App:
     paredesGroup = pygame.sprite.Group()
     visionEnemigos = bool
 
+    efecto_rojo = False
+    impactoPlayer = False
+    impactoEnemigo = False
+    impactoJefeEnemigo = False
+    posEnemyImpc = posicion(0, 0)
+
     pintaRectángulos = bool = True
     pintaVision = bool = True
 
@@ -862,38 +868,58 @@ class App:
 
         # Colisión entre EnEMiGos para evitar pasos entre ellos.
         #----------------------------------------------------------
-        colision_btEnemies = pygame.sprite.spritecollide(self.JefeEnemigo, self.EnemigosGroup, False)
-        # Jefe Enemigo está dentro de EnemigosGroup por lo tanto hay que filtrar para evitar colisión SIEMPRE
+        # JefeEnemigo pertenece a EnemigosGroup: filtramos autocolisión.
         colision_btEnemies = [
             s for s in pygame.sprite.spritecollide(self.JefeEnemigo, self.EnemigosGroup, False)
             if s is not self.JefeEnemigo
-            ]
+        ]
         if colision_btEnemies:
             logging.info(f'KOLLsiON NTRE Enemigos DETECTADA - num ELem ({len(colision_btEnemies)})')
             print(f'KOLLsiON NTRE Enemigos DETECTADA - num ELem ({len(colision_btEnemies)})')
             if self.flagPrint_info:
                 print(f'COLISION NTRE Enemigos DETECTADA - num ELem ({len(colision_btEnemies)})')
-# 
+ 
             self.JefeEnemigo.x = self.JefeEnemigo.prev_x
             self.JefeEnemigo.y = self.JefeEnemigo.prev_y
-# 
+            self.JefeEnemigo.rect.x = self.JefeEnemigo.x
+            self.JefeEnemigo.rect.y = self.JefeEnemigo.y
+ 
             for cl in colision_btEnemies:
                 logging.info(f'ENEMIGO colisionó con JeFE NeMesis')
 
+        if pygame.sprite.collide_rect(self.player, self.JefeEnemigo):
+            print("¡C O L I SS E U M !")
+ 
         # Colisión del jugador con ENEMIGOS
         #----------------------------------------------------------
         colision_playerNemesis = pygame.sprite.spritecollide(self.player, self.EnemigosGroup, False)
         if colision_playerNemesis:
-            logging.info(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
-            print(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
-            if self.flagPrint_info:
-                print(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
+            print("KOL Ntre player y Enemigo.")
+            # Pintar Enemigo y el player
+            self.tiempo_rojo = pygame.time.get_ticks()
+            self.efecto_rojo = True
+            self.impactoPlayer = True
 
-            self.player.x = self.player.prev_x
-            self.player.y = self.player.prev_y
+            # Enemigo es Jefe Enemigo.
+            if pygame.sprite.collide_rect(self.player, self.JefeEnemigo):
+                print("¡C O L I SS E U M !")
+                self.impactoJefeEnemigo = True
+            else:
+                if colision_playerNemesis:
+                    logging.info(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
+                    print(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
+                    if self.flagPrint_info:
+                        print(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
 
-            for cl in colision_playerNemesis:
-                logging.info(f'PLAYER colisionó con ENEMIGO')
+                    self.player.x = self.player.prev_x
+                    self.player.y = self.player.prev_y
+
+                    self.impactoEnemigo = True
+
+                    for cl in colision_playerNemesis:
+                        logging.info(f'PLAYER colisionó con ENEMIGO')
+                        self.posEnemyImpc.x = cl.x
+                        self.posEnemyImpc.y = cl.y
 
         # Colisión del jugador con Puerta
         #----------------------------------------
@@ -1149,8 +1175,7 @@ class App:
        )
         
     def on_render(self):
-       if self.pause == False:
-
+        if self.pause == False:
            # SOLO si cambió el mapa
             if self.rebuild_map:
                 self.rebuildMap()
@@ -1222,9 +1247,9 @@ class App:
                     self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
                     if self.pintaRectángulos == True:
                         pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
- 
+
             # Jefe Enemigo + VISIÓN
-            # logging.debug('Pintamos el JEFE enemigo.')  # Comentado para mejorar rendimiento
+            # logging.debug('Pintamos el JEFE enemigo.') 
             self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
             if self.pintaRectángulos == True:
                 pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
@@ -1272,98 +1297,98 @@ class App:
                 # logging.debug('Pintamos Disparo DEL JEFE enemigo.')  # Comentado para mejorar rendimiento
                 self.JefeEnemigo.balas.draw(self.pantalla)
 
-       self.iteracion += 1
+        self.iteracion += 1
 
-       self.HeadGunAmmo.armaSeleccionada = 2
-       self.HeadGunAmmo.municionArmaSeleccionada = self.player.municion
-       self.HeadGunAmmo.update()
+        self.HeadGunAmmo.armaSeleccionada = 2
+        self.HeadGunAmmo.municionArmaSeleccionada = self.player.municion
+        self.HeadGunAmmo.update()
 
-       # Actualizo valores del HUB.
-       self.HeadBarraDeVida.crearBarraDeVida()
-       self.HeadBarraDeVida.conversionTexto()
-       self.HeadNivel.conversionTexto()
-       self.HeadReloj.conversionTexto()
-       self.HeadPuntuacion.conversionTexto()
-       self.HeadGunAmmo.conversionTexto()
-       self.HeadHuesos.conversionTexto()
+        # Actualizo valores del HUB.
+        self.HeadBarraDeVida.crearBarraDeVida()
+        self.HeadBarraDeVida.conversionTexto()
+        self.HeadNivel.conversionTexto()
+        self.HeadReloj.conversionTexto()
+        self.HeadPuntuacion.conversionTexto()
+        self.HeadGunAmmo.conversionTexto()
+        self.HeadHuesos.conversionTexto()
 
-       # Pinto los valores del HUB o cabecera de valores.
-       # logging.debug("Pintando la Cabecera de Valores")  # Comentado para mejorar rendimiento
+        # Pinto los valores del HUB o cabecera de valores.
+        # logging.debug("Pintando la Cabecera de Valores")  # Comentado para mejorar rendimiento
 
-       # Objetos adquiridos (Llaves & Armas) - OPTIMIZADO: usar imágenes precargadas
-       if self.player.llavePuerta:
-           self.pantalla.blit(self.imagen_llave_puerta, (620, 110))
+        # Objetos adquiridos (Llaves & Armas) - OPTIMIZADO: usar imágenes precargadas
+        if self.player.llavePuerta:
+            self.pantalla.blit(self.imagen_llave_puerta, (620, 110))
 
-       if self.player.llaveFinNivel:
-           self.pantalla.blit(self.imagen_llave, (660, 110))
-       
-       if self.player.pistola:
-           self.pantalla.blit(self.imagen_pistola, (700, 110))
+        if self.player.llaveFinNivel:
+            self.pantalla.blit(self.imagen_llave, (660, 110))
 
-       if self.player.granada:
-           self.pantalla.blit(self.imagen_granada, (740, 110))
-       
-       if self.player.laser:
-           self.pantalla.blit(self.imagen_laser, (780, 110))
+        if self.player.pistola:
+            self.pantalla.blit(self.imagen_pistola, (700, 110))
 
-       # Puntuación - OPTIMIZADO: usar fuente precargada
-       puntos_text = self.font_hud.render(f"Puntos: {self.HeadPuntuacion.textoPuntos}", True, (255, 255, 0))
-       self.pantalla.blit(puntos_text, (600, 10))
+        if self.player.granada:
+            self.pantalla.blit(self.imagen_granada, (740, 110))
 
-       # Arma y Munición - OPTIMIZADO: usar fuente precargada
-       puntos_text = self.font_hud.render(f"Arma: ", True, (100, 100, 100))
-       self.pantalla.blit(puntos_text, (600, 40))
-       puntos_text = self.font_hud.render(f"{self.HeadGunAmmo.textoArma}", True, (255, 255, 255))
-       self.pantalla.blit(puntos_text, (720, 40))
-       puntos_text = self.font_hud.render(f"Munición: ", True, (100, 100, 100))
-       self.pantalla.blit(puntos_text, (600, 70))
-       puntos_text = self.font_hud.render(f"{self.HeadGunAmmo.textoMunicion}", True, (255, 255, 255))
-       self.pantalla.blit(puntos_text, (750, 70))
+        if self.player.laser:
+            self.pantalla.blit(self.imagen_laser, (780, 110))
 
-       # Reloj - OPTIMIZADO: usar imágenes y fuentes precargadas
-       tiempo_actual = pygame.time.get_ticks()
-       segundos_transcurridos = (tiempo_actual - self.tiempo_inicio) // 1000
-       tiempo_restante = max(0, self.HeadReloj.maxTiempo - segundos_transcurridos)
-       self.HeadReloj.tiempoInteger = int(tiempo_restante)
+        # Puntuación - OPTIMIZADO: usar fuente precargada
+        puntos_text = self.font_hud.render(f"Puntos: {self.HeadPuntuacion.textoPuntos}", True, (255, 255, 0))
+        self.pantalla.blit(puntos_text, (600, 10))
 
-       if self.HeadReloj.tiempoInteger == 0:
-           pass
-       
-       self.pantalla.blit(self.imagen_clock, (360, 10))
-       puntos_text = self.font_clock.render(f"{self.HeadReloj.textoReloj}", True, (255, 255, 255))
-       self.pantalla.blit(puntos_text, (420, 10))
+        # Arma y Munición - OPTIMIZADO: usar fuente precargada
+        puntos_text = self.font_hud.render(f"Arma: ", True, (100, 100, 100))
+        self.pantalla.blit(puntos_text, (600, 40))
+        puntos_text = self.font_hud.render(f"{self.HeadGunAmmo.textoArma}", True, (255, 255, 255))
+        self.pantalla.blit(puntos_text, (720, 40))
+        puntos_text = self.font_hud.render(f"Munición: ", True, (100, 100, 100))
+        self.pantalla.blit(puntos_text, (600, 70))
+        puntos_text = self.font_hud.render(f"{self.HeadGunAmmo.textoMunicion}", True, (255, 255, 255))
+        self.pantalla.blit(puntos_text, (750, 70))
 
-       # Nivel - OPTIMIZADO: usar fuente precargada
-       puntos_text = self.font_nivel.render(f"Level: ", True, (100, 100, 100))
-       self.pantalla.blit(puntos_text, (360, 50))
-       puntos_text = self.font_nivel.render(f"{self.HeadNivel.textoNivel}", True, (0, 0, 255))
-       self.pantalla.blit(puntos_text, (480, 50))
+        # Reloj - OPTIMIZADO: usar imágenes y fuentes precargadas
+        tiempo_actual = pygame.time.get_ticks()
+        segundos_transcurridos = (tiempo_actual - self.tiempo_inicio) // 1000
+        tiempo_restante = max(0, self.HeadReloj.maxTiempo - segundos_transcurridos)
+        self.HeadReloj.tiempoInteger = int(tiempo_restante)
 
-       # Huesos - OPTIMIZADO: usar fuente precargada
-       puntos_text = self.font_hud.render(f"Huesos:", True, (100, 100, 100))
-       self.pantalla.blit(puntos_text, (360, 90))
-       puntos_text = self.font_hud.render(f"{self.HeadHuesos.textoHuesos}", True, (255, 255, 255))
-       self.pantalla.blit(puntos_text, (485, 90))
+        if self.HeadReloj.tiempoInteger == 0:
+            pass
+           
+        self.pantalla.blit(self.imagen_clock, (360, 10))
+        puntos_text = self.font_clock.render(f"{self.HeadReloj.textoReloj}", True, (255, 255, 255))
+        self.pantalla.blit(puntos_text, (420, 10))
 
-       # Nombre Jugador - OPTIMIZADO: usar fuente precargada
-       puntos_text = self.font_hud.render(f"Memmaker650", True, (100, 100, 100))
-       self.pantalla.blit(puntos_text, (10, 10))
+        # Nivel - OPTIMIZADO: usar fuente precargada
+        puntos_text = self.font_nivel.render(f"Level: ", True, (100, 100, 100))
+        self.pantalla.blit(puntos_text, (360, 50))
+        puntos_text = self.font_nivel.render(f"{self.HeadNivel.textoNivel}", True, (0, 0, 255))
+        self.pantalla.blit(puntos_text, (480, 50))
 
-       # Barra de Vida
-       self.pantalla.blit(self.HeadBarraDeVida.spriteBarraDeVida, (10, 50))
-       # Barra de Vida (Porcentaje) - OPTIMIZADO: usar fuente precargada
-       puntos_text = self.font_vida.render(f"{self.HeadBarraDeVida.textoVida}", True, (255, 255, 255))
-       self.pantalla.blit(puntos_text, (85, 60))
+        # Huesos - OPTIMIZADO: usar fuente precargada
+        puntos_text = self.font_hud.render(f"Huesos:", True, (100, 100, 100))
+        self.pantalla.blit(puntos_text, (360, 90))
+        puntos_text = self.font_hud.render(f"{self.HeadHuesos.textoHuesos}", True, (255, 255, 255))
+        self.pantalla.blit(puntos_text, (485, 90))
 
-       # FPS - OPTIMIZADO: usar fuente precargada
-       fps = int(self.clock.get_fps())
-       fps_text = self.font_fps.render(f"FPS: {fps}", True, (255, 255, 0))
-       # logging.debug("FPS de pintado : %i", fps)  # Comentado para mejorar rendimiento
-       self.pantalla.blit(fps_text, (10, 110))
+        # Nombre Jugador - OPTIMIZADO: usar fuente precargada
+        puntos_text = self.font_hud.render(f"Memmaker650", True, (100, 100, 100))
+        self.pantalla.blit(puntos_text, (10, 10))
 
-       self.now = pygame.time.get_ticks()
+        # Barra de Vida
+        self.pantalla.blit(self.HeadBarraDeVida.spriteBarraDeVida, (10, 50))
+        # Barra de Vida (Porcentaje) - OPTIMIZADO: usar fuente precargada
+        puntos_text = self.font_vida.render(f"{self.HeadBarraDeVida.textoVida}", True, (255, 255, 255))
+        self.pantalla.blit(puntos_text, (85, 60))
 
-       if self.alerta_activa:
+        # FPS - OPTIMIZADO: usar fuente precargada
+        fps = int(self.clock.get_fps())
+        fps_text = self.font_fps.render(f"FPS: {fps}", True, (255, 255, 0))
+        # logging.debug("FPS de pintado : %i", fps)  # Comentado para mejorar rendimiento
+        self.pantalla.blit(fps_text, (10, 110))
+
+        self.now = pygame.time.get_ticks()
+
+        if self.alerta_activa:
             # Si han pasado más de 3 segundos, la desactivamos
             if self.now - self.alerta_inicio_ms > self.alerta_duracion_ms:
                 alerta_activa = False
@@ -1384,7 +1409,35 @@ class App:
                 self.pantalla.blit(overlay, (0, y - 10))
                 self.pantalla.blit(texto_surface, (x_texto, y))
 
-       pygame.display.flip() # Aquí es donde ploteamos todo.
+        if self.efecto_rojo:
+            ahora = pygame.time.get_ticks()
+            if self.impactoPlayer:
+                self.imagePlayer_roja = self.player.dibujaDañoPlayer()
+            if self.impactoEnemigo:
+                self.imageEnemigo_roja = self.enemigo.dibujaDaño(False)
+            if self.impactoJefeEnemigo:
+                self.imageJefe_roja = self.JefeEnemigo.dibujaDaño(True)
+
+
+            if ahora - self.tiempo_rojo < 2000:
+                if (ahora // 100) % 2:
+                    if self.impactoPlayer:
+                        self.pantalla.blit(self.imagePlayer_roja, (self.player.x, self.player.y))
+                    if self.impactoEnemigo:
+                        self.pantalla.blit(self.imageEnemigo_roja, (self.posEnemyImpc.x, self.posEnemyImpc.y))
+                    if self.impactoJefeEnemigo:
+                        self.pantalla.blit(self.imageJefe_roja, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+                else:
+                    if self.impactoPlayer:
+                        self.pantalla.blit(self.player.image, (self.player.x, self.player.y))
+                    if self.impactoEnemigo:
+                        self.pantalla.blit(self.enemigo.imageEnemigo, (self.posEnemyImpc.x, self.posEnemyImpc.y))
+                    if self.impactoJefeEnemigo:
+                        self.pantalla.blit(self.enemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+            else:
+                self.efecto_rojo = False
+
+        pygame.display.flip() # Aquí es donde ploteamos todo.
 
     def on_cleanup(self):
         pygame.quit()
