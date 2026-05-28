@@ -9,52 +9,65 @@ import sys
 
 import pygame
 from pygame.locals import *
+from collections import deque
 
+DEBUG_IA = False # Flag para controlar los print
+
+class posicion:
+    def __init__(self, valorX = 0, valorY = 0):
+        self.x = valorX
+        self.y = valorY
+    
+    def cargar(self, valorX, valorY):
+        self.x = valorX
+        self.y = valorY
 
 class KerberosIA:
-    isPlayerDetected = bool = False
-    estado = int   # 0 Patrol, 1 Following Player, 2 Alarm, 3 Team working
-    alarma = bool = False
-    animo = int    # 0 OK, 1 Angry, 2 Sad, 3 Alarmado
-    tipo = int      # 0 soldier, 1 boss or lieutenant
-
-    ordenJefe = bool = False
-    combatir = bool = False
-
-    colisionParedes = bool = False
-    orientacion = int = 0
-    direccion = int
-
-    casilla = int = 0
-    posicion = MazeLab.posicion
-    casillasLibres = [False] * 4
-    casillasLibresVuelta = [False] * 4
-
     # Info importante pasada a través del enemigo.
-    KasRecorridas = set()
+    conexiones = None
     Laberinto = []
 
-    def __init__(self):
+    def __init__(self, x = 0, y = 0):
         logging.info('Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega')
-        self.isPlayerDetected = False
+        self.playerDetectado = False
         self.estado = 0  # 0 Patrol, 1 Following Player, 2 Alarm, 3 Team working
-        self.animo = 0  # 0 OK, 1 Angry, 2 Sad
+        self.alarma = False
+        self.animo = 0  # 0 OK, 1 Angry, 2 Sad, 3 Alarmado
         self.tipo = 0  # 0 soldier, 1 boss or lieutenant
         self.colisionParedes = False
 
+        self.ordenJefe = False
+        self.combatir = False
+
+        self.casillasLibres = [False] * 4
+        self.casillasLibresVuelta = [False] * 4
+
+        # Info importante pasada a través del enemigo.
+        self.KasRecorridas = set()
+
+
+        self.ultimaCasilla = -1
+        self.direccionActual = 1
+        self.orientacion = 0
+        self.playerDetectado = False
+        self.path = []
+        self.casillaJugador = 0
+        self.posicion = posicion(x, y)
+        self.casilla = 0
+
     def definirPosicion(self, x, y ):
-        self.posicion = MazeLab.posicion(x, y)
+        self.posicion.cargar(x, y)
 
     def detectarPlayer(self):
         logging.info('Método para detectar al jugador.')
 
     def cambiarEstado(self, state):
         self.estado = state
-
+    
     def cambioEstado(self):
-        if (self.estado == 0 & self.isPlayerDetected == True):
+        if (self.estado == 0 and self.isPlayerDetected == True):
             self.estado = 1
-        elif (self.estado == 1 & self.isPlayerDetected == True):
+        elif (self.estado == 1 and self.isPlayerDetected == True):
             self.estado = 2
         elif (self.estado == 2):
             self.gritarAlarma()
@@ -76,8 +89,13 @@ class KerberosIA:
         elif self.orientation == 3:
             self.orientation = 1
 
+    def esInterseccion(self):
+        opciones = self.conexiones.get(self.casilla, [])
+
+        return len(opciones) >= 3
+
     def gritarAlarma(self):
-        alarma = True;
+        self.alarma = True
         # Pintar el gruñido de alarma
 
     def reiniciarArraySiguientesCasillas(self):
@@ -88,85 +106,150 @@ class KerberosIA:
         self.casillasLibresVuelta.clear()
         self.casillasLibresVuelta = [False] * 4
 
-    def revisarCasillasAdyacentes(self):
-        # Calculo de casillas para elegir siguiente posición de movimiento del personaje.
-        logging.info('Revisar casillas para movimiento.')
-        self.reiniciarArraySiguientesCasillas()
-        self.reiniciarArraySiguientesCasillasVuelta()
+    def calcularDireccion(self, origen, destino):
+        diferencia = destino - origen
 
-        range = MazeLab.NUM_CASILLAS_H * MazeLab.NUM_CASILLAS_VERTI
-        if self.casilla != 0 or self.casilla == range:
-            # Izquierda
-            if self.Laberinto[self.casilla-1] == 1:
-                self.casillasLibresVuelta[3] = True
-                if self.casilla-1 not in self.KasRecorridas:
-                    self.casillasLibres[3] = True
-            # Derecha
-            if self.Laberinto[self.casilla+1] == 1:
-                self.casillasLibresVuelta[1] = True
-                if self.casilla-1 not in self.KasRecorridas:
-                    self.casillasLibres[1] = True
-            # Arriba
-            if self.Laberinto[self.casilla-MazeLab.NUM_CASILLAS_VERTI] == 1:
-                self.casillasLibresVuelta[0] = True
-                if self.casilla-1 not in self.KasRecorridas:
-                    self.casillasLibres[0] = True
-            # Abajo
-            if self.Laberinto[self.casilla+MazeLab.NUM_CASILLAS_VERTI] == 1:
-                self.casillasLibresVuelta[2] = True
-                logging.info("Error, no se puede cargar la casilla: ")
-                if self.casilla-1 not in self.KasRecorridas:
-                    self.casillasLibres[2] = True
-        else:
-            logging.info('Fuera de Rango en KIA Cálculo casilla')
-            print('Fuera de Rango en KIA Cálculo casilla')
+        if diferencia == -MazeLab.NUM_CASILLAS_H:
+            return 0
 
+        elif diferencia == 1:
+            return 1
+
+        elif diferencia == MazeLab.NUM_CASILLAS_H:
+            return 2
+
+        elif diferencia == -1:
+            return 3
+
+        return self.orientacion
+
+    def obtenerCasillaSiguiente(self, casilla, direccion):
+        # 0 Arriba
+        if direccion == 0:
+            return casilla - MazeLab.NUM_CASILLAS_H
+
+        # 1 Derecha
+        elif direccion == 1:
+            return casilla + 1
+
+        # 2 Abajo
+        elif direccion == 2:
+            return casilla + MazeLab.NUM_CASILLAS_H
+
+        # 3 Izquierda
+        elif direccion == 3:
+            return casilla - 1
+
+        return casilla
+    
+    def mover(self, casilla, direccion):
+        if direccion == 0:
+            return casilla - MazeLab.NUM_CASILLAS_H
+
+        elif direccion == 1:
+            return casilla + 1
+
+        elif direccion == 2:
+            return casilla + MazeLab.NUM_CASILLAS_H
+
+        elif direccion == 3:
+            return casilla - 1
+
+    def calcular_camino_BFS(self, casillaInicio, casillaObjetivo):
+        cola = deque()
+        cola.append((casillaInicio, [casillaInicio]))
+
+        visitados = set()
+
+        while cola:
+            casillaActual, camino = cola.popleft()
+
+            # Objetivo encontrado
+            if casillaActual == casillaObjetivo:
+                return camino
+
+            if casillaActual in visitados:
+                continue
+
+            visitados.add(casillaActual)
+
+            # Obtener conexiones
+            direcciones = self.conexiones.get(casillaActual, [])
+
+            for direccion in direcciones:
+
+                siguiente = self.obtenerCasillaSiguiente(
+                    casillaActual,
+                    direccion
+                )
+
+                if siguiente not in visitados:
+
+                    cola.append(
+                        (siguiente, camino + [siguiente])
+                    )
+
+        # Sin camino
+        return []    
+    
+    def elegirDireccion(self):
+        opciones = self.conexiones.get(self.casilla, [])
+
+        if not opciones:
+            return self.orientacion
+
+        # evitar dar media vuelta
+        opuesta = (self.orientacion + 2) % 4
+
+        posibles = [d for d in opciones if d != opuesta]
+
+        if posibles:
+            return random.choice(posibles)
+
+        return opuesta
+    
+    # Update IA - Kerberos IA
+    #----------------------------------
     def update(self):
-        if self.colisionParedes:
-            self.revisarCasillasAdyacentes()
-            result = self.casillasLibres.count(True)
-            valor = 0 # Reinit el valor a devolver.
+        self.casilla = MazeLab.Maze.calcularCasilla(
+            self.posicion.x,
+            self.posicion.y
+        )
 
-            if result > 0:
-                print("Dentro KerberoIA Jefe Enemigo.")
-                if result == 1:
-                    for i in self.casillasLibres:
-                        if i:
-                            valor += 1
-                            valor = self.casillasLibres[result-1]
-                            break
-                else:
-                    res = random.randint(0, result-1)
-                    x = 0
-                    for i in self.casillasLibres:
-                        if i: 
-                            x += 1
-                            valor += 1
-                            
-                            if x == res:
-                                return valor
+        if self.playerDetectado:
+            self.path = self.calcular_camino_BFS(
+                self.casilla,
+                self.casillaJugador
+            )
+        else:
+            # SOLO actuar al entrar en nueva casilla
+            if self.casilla != self.ultimaCasilla:
+                self.ultimaCasilla = self.casilla
 
-                print("valor en IA : ", valor)
-                
-                """ try:
-                    while not self.casillasLibres[valor]:
-                        if valor < 4:
-                            valor += 1
-                except ValueError:
-                    print("Oops!  That was no valid number.  Try again...", valor) """
-                
-                print("DirecciÓN a TOMAR: ", valor)
-            else:
-                self.casillasLibres = self.casillasLibresVuelta
-                result = self.casillasLibres.count(True)
-                #valor = random.randint(0, result-1)
-                print('ENCERRADO!!!, cómo es posible')
-                logging.info('ENCERRADO!!!, cómo es posible')
-                valor = 0
-            self.colisionParedes = False
-        else: 
-            # self.cambiar_direccion()
-            valor = self.orientacion
+                opciones = self.conexiones.get(
+                    self.casilla,
+                    []
+                )
+                # Callejón
+                if len(opciones) == 1:
+                    print("Callejón")
+                    self.orientacion = opciones[0]
 
-        # Devolvemos la dirección a donde se va a mover el Enemigo.        
-        return valor
+                # Pasillo
+                elif len(opciones) == 2:
+                    print("Pasillo")
+                    opuesta = (self.orientacion + 2) % 4
+
+                    posibles = [
+                        d for d in opciones
+                        if d != opuesta
+                    ]
+                    if posibles:
+                        self.orientacion = posibles[0]
+
+                # Intersección
+                elif len(opciones) >= 3:
+                    print("Intersección")
+                    self.orientacion = self.elegirDireccion()
+
+        return self.orientacion

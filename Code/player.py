@@ -19,6 +19,7 @@ import pygame as pg
 from pygame.math import Vector2
 
 IMG_DIR = "Resources"
+DEBUG_IA = False
 
 # Especificación de la paleta de colores
 BLANCO = (255, 255, 255)
@@ -44,6 +45,8 @@ BIAS = 136
 carpeta_imagenes = os.path.join(IMG_DIR, "imagenes")
 
 IMG_DIR = "./Resources"
+DEBUG_IA = False # Flag para controlar los print
+
 # Especificación de la paleta de colores
 BLANCO = (255, 255, 255)
 NEGRO = (0, 0, 0)
@@ -199,7 +202,6 @@ class Player(pygame.sprite.Sprite):
         self.sonidoDisparo = pygame.mixer.Sound("./Resources/Sonidos/gunshot.mp3")
 
     def inicio(self, vx, vy):
-        logging.info("Inicio Player")
         self.x = random.randint(0, vx)
         self.y = random.randint(BIAS, vy)
         self.prev_x = self.x
@@ -237,7 +239,8 @@ class Player(pygame.sprite.Sprite):
         self.guardarPosicionPrevia()
 
         self.x = self.x - self.speedH
-        self.logMovimiento('Izquierda', self.x, self.y)
+        
+        # self.logMovimiento('Izquierda', self.x, self.y)
         self.orientacion = 3
 
     def moveUp(self):
@@ -245,7 +248,7 @@ class Player(pygame.sprite.Sprite):
         self.guardarPosicionPrevia()
 
         self.y = self.y - self.speedV
-        self.logMovimiento('Arriba', self.x, self.y)
+        # self.logMovimiento('Arriba', self.x, self.y)
         self.orientacion = 0
 
     def moveDown(self):
@@ -253,7 +256,7 @@ class Player(pygame.sprite.Sprite):
         self.guardarPosicionPrevia()
 
         self.y = self.y + self.speedV
-        self.logMovimiento('Abajo', self.x, self.y)
+        # self.logMovimiento('Abajo', self.x, self.y)
         self.orientacion = 2
 
     def asignarVida(self, valor):
@@ -272,11 +275,10 @@ class Player(pygame.sprite.Sprite):
         logging.info("Pintamos Jugador")
 
     def update(self):
-        logging.debug('Dentro Update JUGADOR.')
         # Actualizar el rectángulo de colisión con la posición actual
         self.rect.x = self.x
         self.rect.y = self.y
-        logging.info("Player INFO: Velocidad V %s y VeloH %s", self.speedV, self.speedH)
+        # logging.info("Player INFO: Velocidad V %s y VeloH %s", self.speedV, self.speedH)
 
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)
@@ -286,7 +288,7 @@ class Player(pygame.sprite.Sprite):
 
     def disparo(self):
         if self.municion > 0:
-            logging.info("Player DISPARO: Hay munición.")
+            # logging.info("Player DISPARO: Hay munición.")
             self.bala = Disparos(self.x, self.y, True, self.orientacion)
             self.balas.add(self.bala)
             self.flagDisparo = True
@@ -295,6 +297,23 @@ class Player(pygame.sprite.Sprite):
                 self.canalDisparo.stop()
             self.canalDisparo.play(self.sonidoDisparo)
 
+    def dibujaDañoPlayer(self) -> pygame.Surface:
+        imagen_roja = self.image.copy()
+        
+        mascara_roja = pygame.Surface(
+            imagen_roja.get_size(),
+            pygame.SRCALPHA
+        )
+
+        mascara_roja.fill((255, 0, 0, 180))  # 180 ≈ 70% opacidad
+
+        imagen_roja.blit(
+            mascara_roja,
+            (0, 0),
+            special_flags=pygame.BLEND_RGBA_MULT
+        )
+
+        return imagen_roja
 
 class Enemigo(pygame.sprite.Sprite):
     x = 12
@@ -331,6 +350,7 @@ class Enemigo(pygame.sprite.Sprite):
     bala = Disparos
     balas = pygame.sprite.Group()
     MazeInfo = []
+    conexiones = None
     balasArray = []
     kia = None
 
@@ -339,7 +359,6 @@ class Enemigo(pygame.sprite.Sprite):
     canalDisparo = pygame.mixer.Channel(0)
 
     def __init__(self):
-        logging.info("Init Enemigo")
         super().__init__()
         self.orientacion = 'N'
 
@@ -365,8 +384,8 @@ class Enemigo(pygame.sprite.Sprite):
         # Coordenadas del triángulo (vértice arriba, base abajo)
         # Vértice cerca del planeta, base en el exterior
         p1 = (20, 5)   # vértice
-        p2 = (5, 55)   # esquina izquierda base
-        p3 = (35, 55)  # esquina derecha base
+        p2 = (5, 70)   # esquina izquierda base
+        p3 = (35, 70)  # esquina derecha base
         # Dibujamos triángulo amarillo con alpha 50%
         color = (199,180,70, 128)  # RGBA → alpha=128 (50%)
         pygame.draw.polygon(self.visionImage, color, [p1, p2, p3])        
@@ -379,7 +398,7 @@ class Enemigo(pygame.sprite.Sprite):
         self.sonidoDisparoEnemigo = pygame.mixer.Sound("./Resources/Sonidos/gunfire.mp3")
 
     def inicio(self, vx, vy):
-        logging.info("Inicio Enemigos")
+        # logging.info("Inicio Enemigos")
         self.x = random.randint(0, vx)
         self.y = random.randint(BIAS, vy)
         self.prev_x = self.x
@@ -387,6 +406,9 @@ class Enemigo(pygame.sprite.Sprite):
 
     def definirJefeEnemigo(self):
         self.isJefeEnemigo = True
+
+    def pasarConexionesIA(self):
+        self.kia.conexiones = self.conexiones
     
     def guardarPosicionPrevia(self):
         self.prev_x = self.x
@@ -402,25 +424,25 @@ class Enemigo(pygame.sprite.Sprite):
         self.guardarPosicionPrevia()
         self.x = self.x + self.speedH
         self.orientacion = 1
-        self.logMovimiento('Derecha', self.x, self.y)
+        # self.logMovimiento('Derecha', self.x, self.y)
 
     def moveLeft(self):
         self.guardarPosicionPrevia()
         self.x = self.x - self.speedH
         self.orientacion = 3
-        self.logMovimiento('Izquierda', self.x, self.y)
+        # self.logMovimiento('Izquierda', self.x, self.y)
 
     def moveUp(self):
         self.guardarPosicionPrevia()
         self.y = self.y - self.speedV
         self.orientacion = 0
-        self.logMovimiento('Arriba', self.x, self.y)
+        # self.logMovimiento('Arriba', self.x, self.y)
 
     def moveDown(self):
         self.guardarPosicionPrevia()
         self.y = self.y + self.speedV
         self.orientacion = 2
-        self.logMovimiento('Abajo', self.x, self.y)
+        # self.logMovimiento('Abajo', self.x, self.y)
 
     def moveStop(self):
         self.guardarPosicionPrevia()
@@ -432,37 +454,45 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info("Pintamos cono de visión")
         
     def visionRotar(self):
-        logging.info("visión Rotar")
+        # logging.info("visión Rotar")
         self.angle = (self.angle + self.velocidadVisionRotacion) % 360
         # Add the rotated offset vector to the pos vector to get the rect.center.
         # self.visionImage = pygame.transform.rotate(self.visionImage, self.angle)
 
-    # MÉTODO UPDATE 
+    # MÉTODO UPDATE.
+    #----------------------
     def update(self):
-        logging.debug('Dentro Update ENEMIGOS.')
-        # Guardar posición previa
-        self.prev_x = self.x
-        self.prev_y = self.y
+        # logging.debug('Dentro Update ENEMIGOS.')
 
-        # Actualizar el rectángulo de colisión con la posición actual
-        self.rect.x = self.x
-        self.rect.y = self.y
-        
-        #self.visionRotar()
-        self.moveDown()
-        
-        # Actualizar rect tras mover
-        self.rect.x = self.x
-        self.rect.y = self.y
+        if self.isJefeEnemigo:
+            self.updateJefe()
+        else:
+            # Guardar posición previa
+            self.prev_x = self.x
+            self.prev_y = self.y
 
-        self.borrarRecorridosAntiguos()
+            # Actualizar el rectángulo de colisión con la posición actual
+            self.rect.x = self.x
+            self.rect.y = self.y
 
+            self.moveDown()
+
+            # Actualizar rect tras mover
+            self.rect.x = self.x
+            self.rect.y = self.y
+
+            self.borrarRecorridosAntiguos()
+
+    # MÉTODO UPDATE JEFE JEFE BOSS.
+    #---------------------------------
     def updateJefe(self):
-        logging.debug('Dentro Update ENEMIGOS.')
-        print('Dentro Update JEFE ENEMIGO.')
+        # logging.debug('Dentro Update JEFE BOSS.')
+        # print('Dentro Update JEFE BOSS.')
         # Guardar posición previa
         self.prev_x = self.x
         self.prev_y = self.y
+
+        self.kia.definirPosicion(self.x, self.y)
 
         # Actualizar el rectángulo de colisión con la posición actual
         self.rect.x = self.x
@@ -470,24 +500,29 @@ class Enemigo(pygame.sprite.Sprite):
         
         self.visionRotar()
 
-        self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
-        self.kia.definirPosicion(self.x, self.y)
+        cx = self.x + self.rect.width // 2
+        cy = self.y + self.rect.height // 2
 
-        dir = self.kia.update()
-        print("Dir = ", dir)
-        self.elegirDireccion(dir)
+        # Sölo usar la IA al pasar el centro de la casilla actual.
+        if MazeLab.Maze.estaCentroCasilla(cx, cy):
+            # print("Dentro ZENTRO Centro Kasiya - cálculo IA.")
+            self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
+            self.kia.definirPosicion(self.x, self.y)
+
+            dir = self.kia.update()
+            # print("Dir = ", dir)
         
-        # Actualizar rect tras mover
-        self.rect.x = self.x
-        self.rect.y = self.y
+            self.elegirDireccion(dir)
+        else: # Seguimos moviendo misma dirección de antes
+            self.elegirDireccion(self.orientacion)
 
         self.borrarRecorridosAntiguos()
 
     def elegirDireccion(self, dir):
-        print("Dentro Elección dirección.")
+        # print("Dentro Elección dirección.")
         # Arriba
         if dir == 0:
-            print("Arriba")
+            # print("Arriba")
             self.moveUp()
         # Derecha
         elif dir == 1:
@@ -513,12 +548,16 @@ class Enemigo(pygame.sprite.Sprite):
         # Cambio simple de dirección: invertir velocidad vertical
         self.speedV = -self.speedV 
 
+        # Arriba
         if self.orientacion == 0:
             self.orientacion = 2
+        # Abajo    
         elif self.orientacion == 2:
             self.orientacion = 0
+        # Derecha     
         elif self.orientacion == 1:
             self.orientacion = 3
+        # Izquierda
         elif self.orientacion == 3:
             self.orientacion = 1
 
@@ -530,16 +569,16 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
 
     def detectarColision(self):
-        # print("Dentro colision en ENEMIGO. <-- ")
+        print("Dentro colision en ENEMIGO. <-- ")
 
-        self.isColision = True
-        self.kia.colisionParedes = True
-        
-        self.kia.orientacion = self.orientacion
-        dir = self.kia.update()
-        self.elegirDireccion(dir)
-        
-        self.isColision = False
+        # self.isColision = True
+        # self.kia.colisionParedes = True
+        # 
+        # self.kia.orientacion = self.orientacion
+        # dir = self.kia.update()
+        # self.elegirDireccion(dir)
+        # 
+        # self.isColision = False
         
     def rotar(self, angulo):
         return pygame.transform.rotate(self.imagen, angulo)
@@ -558,9 +597,9 @@ class Enemigo(pygame.sprite.Sprite):
         ahora = time.time()
         self.posicionesRecorridas = [(v, t) for (v, t) in self.posicionesRecorridas if ahora - t < self.tiempoOlvido]
         
-    @staticmethod
-    def bocadilloTexto(surface, text, pos, alpha, color=(255, 255, 255), text_color=(0, 0, 0)):
-        """Dibuja un bocadillo de texto con transparencia controlada por alpha."""
+    def bocadilloTexto(self, surface, text, posx, posy, alpha, color=(255, 255, 255), text_color=(0, 0, 0)):
+        # Dibuja un bocadillo de texto con transparencia controlada por alpha.
+        print("   Dentro Bocadillo !!")
         font = pygame.font.SysFont("arial", 20)
         text_surf = font.render(text, True, text_color)
         text_rect = text_surf.get_rect()
@@ -570,7 +609,7 @@ class Enemigo(pygame.sprite.Sprite):
         bubble_height = text_rect.height + padding * 2
 
         bubble_rect = pygame.Rect(0, 0, bubble_width, bubble_height)
-        bubble_rect.midbottom = (pos[0], pos[1] - 10)
+        bubble_rect.midbottom = (posx, posy - 10)
 
         # Superficie con canal alfa
         bubble_surf = pygame.Surface((bubble_width, bubble_height + 10), pygame.SRCALPHA)
@@ -583,9 +622,9 @@ class Enemigo(pygame.sprite.Sprite):
 
         # Punta
         pygame.draw.polygon(bubble_surf, bubble_color, [
-        (bubble_width // 2 - 8, bubble_height),
-        (bubble_width // 2 + 8, bubble_height),
-        (bubble_width // 2, bubble_height + 10)
+            (bubble_width // 2 - 8, bubble_height),
+            (bubble_width // 2 + 8, bubble_height),
+            (bubble_width // 2, bubble_height + 10)
         ])
 
         # Texto (se aplica opacidad igual al bocadillo)
@@ -607,3 +646,24 @@ class Enemigo(pygame.sprite.Sprite):
             if self.canalDisparo.get_busy():
                 self.canalDisparo.stop()
             self.canalDisparo.play(self.sonidoDisparoEnemigo)
+
+    def dibujaDaño(self, Jefe) -> pygame.Surface:
+        if Jefe:
+            imagen_roja = self.imageJefeEnemigo.copy()
+        else:
+            imagen_roja = self.imageEnemigo.copy()
+        
+        mascara_roja = pygame.Surface(
+            imagen_roja.get_size(),
+            pygame.SRCALPHA
+        )
+
+        mascara_roja.fill((255, 0, 0, 180))  # 180 ≈ 70% opacidad
+
+        imagen_roja.blit(
+            mascara_roja,
+            (0, 0),
+            special_flags=pygame.BLEND_RGBA_MULT
+        )
+
+        return imagen_roja

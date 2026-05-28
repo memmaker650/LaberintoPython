@@ -26,6 +26,7 @@ NUM_CASILLAS_H = 40
 NUM_CASILLAS_VERTI = 27
 NUM_CASILLAS_CAMARA = 27
 IMG_DIR = "Resources"
+EXPLOSION_DIR = "assets/explosions/images/explosion/"
 SONIDO_DIR = "Resources/Sonidos"
 FPS = 60 # desired framerate in frames per second.
 
@@ -43,14 +44,15 @@ CYAN = (0, 255, 255)
 MAGENTA = (255, 0, 255)
 HC74225 = (199, 66, 37)
 H61CD35 = (97, 205, 53)
+COLOR_PUERTA = (160, 110, 60)
 
 class posicion:
     x = 0
     y = 0
 
-    def __init__(self, valorX, valorY):
-        x = valorX
-        y = valorY
+    def __init__(self, valorX=0, valorY=0):
+        self.x = valorX
+        self.y = valorY
 
 class Maze:
     M = NUM_CASILLAS_H
@@ -109,7 +111,23 @@ class Maze:
     flagTNT = bool = True
     flagBotiquin = bool = True
 
-    pintaKasillaSuelo = False
+    flagCentroCasillaJefeEnemigo = bool = True
+    PosicionCruz = posicion
+    flagPintarCasilla = bool = True
+    pintaKasillaNumSuelo = True
+    PosicionPintarCasilla = posicion
+
+    # Valores de la puerta
+    door_length = 32
+    door_thickness = 10
+    door_x = int
+    door_y = int
+    pivot_x = door_x
+    pivot_y = door_y
+    door_angle = 0           # Apertura animada: 0 = cerrada, 90 = abierta
+
+    Doorspeed = int = 3                # grados por frame
+    door_surface = pygame.Surface((32, 32))  # ✅ CORRECTO
 
     ObjetosNoPintar = []
 
@@ -202,7 +220,10 @@ class Maze:
         bx = 0
         by = 0
 
-        xfont = pygame.font.SysFont('Corbel', 13)
+        self.MazePuertas.empty()
+        self.posicionPuerta = []
+
+        xfont = pygame.font.SysFont('Corbel', 14)
 
         textWallDebug = pygame.sprite.Group()
         # rendering a text written in Corbel font.
@@ -221,11 +242,11 @@ class Maze:
                 else:
                     display_surf.blit(w_surf, ((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                     
-
                 # Pintar el número de casilla en el suelo.
-                if self.pintaKasillaSuelo:
+                # -------------------------------------------------
+                if self.pintaKasillaNumSuelo:
+                    # print("Dentro Pintar NumKasilla.")
                     textWallMark = xfont.render(str(i), True, (255, 0, 0))
-                    # pygame.draw.rect(display_surf, ROJO, rectSuelo)
                     display_surf.blit(textWallMark, rectSuelo.rect.center)
 
                 casiya = bx + (by * self.M)
@@ -338,21 +359,44 @@ class Maze:
                 #------------------------
                 if self.mazeDataExtra[bx + (by * self.M)] == 33:
                     kasylla = bx + (by * self.M)
-                    # print("CALCulo Casilla puerta: ", kasylla)
-                    self.posicionPuerta.append([bx + (by * self.M), 1])  # Casilla
-                    Puerta = pygame.sprite.Sprite()
-                    Puerta.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 15, 32)
-                    self.MazePuertas.add(Puerta)
-                    # Cálculo orientación puerta.
-                    if not self.esAlcanzableCasilla(kasylla-1) and not self.esAlcanzableCasilla(kasylla+1):
-                        Maze.posicionPuerta.append((kasylla, 4))
+
+                    pivot_x = (bx - self.movimientoCamara) * CASILLA_PIXEL
+                    pivot_y = by * CASILLA_PIXEL + BIAS
+
+                    # Determinar orientación
+                    if not self.esAlcanzableCasilla(kasylla - 1) and \
+                       not self.esAlcanzableCasilla(kasylla + 1):
+
+                        orientacion = 4
+                        self.posicionPuerta.append((kasylla, 4))
                     else:
-                        Maze.posicionPuerta.append((kasylla, 1))
+                        orientacion = 1
+                        self.posicionPuerta.append((kasylla, 1))
+
+                    puerta = Puerta(pivot_x, pivot_y, orientacion, kasylla)
+                    self.MazePuertas.add(puerta)
 
             bx = bx + 1
             if bx > self.M - 1:
                 bx = 0
                 by = by + 1
+
+    def pintarDetallesCasillaEnemigo(self, display_surface):
+        # Cruz Posición
+        #------------------------
+        if self.flagCentroCasillaJefeEnemigo:
+            tam = 5
+            # Color verde chillón
+            VERDE = (0, 255, 0)
+            # Dibujar la X
+            pygame.draw.line(display_surface, VERDE, (self.PosicionCruz.x - tam, self.PosicionCruz.y - tam), (self.PosicionCruz.x + tam, self.PosicionCruz.y + tam), 3)
+            pygame.draw.line(display_surface, VERDE, (self.PosicionCruz.x - tam, self.PosicionCruz.y + tam), (self.PosicionCruz.x + tam, self.PosicionCruz.y - tam), 3)
+
+        # Pintar rect Casilla
+        #------------------------
+        if self.flagPintarCasilla:
+            Naranja = (244, 127, 38)
+            pygame.draw.rect(display_surface, Naranja, (self.PosicionPintarCasilla.x, self.PosicionPintarCasilla.y, CASILLA_PIXEL, CASILLA_PIXEL), 1)
 
     def moverCamara(self, posicionX, posicionY):
         # Debo calcular cuando el player está en la columna 27 y en una casilla de suelo.
@@ -365,19 +409,62 @@ class Maze:
                 self.movimientoCamara += 1
                 self.flagCamara = False
                 self.flagCamaraCambio = True
-                print("Condición CUMPLIDA cámara")
+                # print("Condición CUMPLIDA cámara")
         
         if UbicacionX <= 1 and self.flagCamara and self.posicionCamara > 13:
             self.posicionCamara -= 1
             self.movimientoCamara -= 1
             self.flagCamara = False
             self.flagCamaraCambio = True
-            print("Condición IZQ cámara")
+            # print("Condición IZQ cámara")
+
+    # Calcular las conexiones de las casillas de SUELO solamente.
+    @staticmethod
+    def precalcular_conexiones(laberinto, ancho, alto):
+        conexiones = {}
+
+        for casilla in range(len(laberinto)):
+
+            if laberinto[casilla] != 1:
+                continue
+
+            dirs = []
+
+            fila = casilla // ancho
+            col = casilla % ancho
+
+            # ARRIBA
+            if fila > 0:
+                arriba = casilla - ancho
+                if laberinto[arriba] == 1:
+                    dirs.append(0)
+
+            # DERECHA
+            if col < ancho - 1:
+                derecha = casilla + 1
+                if laberinto[derecha] == 1:
+                    dirs.append(1)
+
+            # ABAJO
+            if fila < alto - 1:
+                abajo = casilla + ancho
+                if laberinto[abajo] == 1:
+                    dirs.append(2)
+
+            # IZQUIERDA
+            if col > 0:
+                izquierda = casilla - 1
+                if laberinto[izquierda] == 1:
+                    dirs.append(3)
+
+            conexiones[casilla] = dirs
+
+        return conexiones
     
     def nuevaCasillaTrasCamaraMovida(self, casilla: int) -> int:
         # La pantalla original 
         columna = casilla % self.N
-        fila = casilla / self.N
+        fila = casilla // self.N
         nuevaCasilla = (fila*self.N) + columna
 
         return nuevaCasilla
@@ -388,6 +475,17 @@ class Maze:
         posi=posicion(x_final, y)
         
         return posi
+
+    # Método ESTÁTICO para saber si está o no en el CENTRO de la CASILLA, para cálculos de posición.
+    @staticmethod
+    def estaCentroCasilla(x, y) -> bool:
+        celda = Maze.calcularCasilla(x, y)
+        pos = Maze.centroCasilla(celda)
+
+        if (x > pos.x) or (y > pos.y):
+            return True   
+        else:
+            return False
 
     @staticmethod
     def elementoVisibleCasilla(kasiya) -> bool:
@@ -403,28 +501,44 @@ class Maze:
         return Maze.elementoVisibleCasilla(casillas)        
         
     @staticmethod
-    def calcularCasilla(valorX, valorY):
-        casilla = int(valorX / CASILLA_PIXEL) + (int((valorY-BIAS) / CASILLA_PIXEL))*NUM_CASILLAS_H
-        logging.info("Valor calculado: %s", casilla)
+    def calcularCasilla(valorX, valorY) -> int:
+        columna = valorX // CASILLA_PIXEL
+        fila = (valorY - BIAS) // CASILLA_PIXEL
 
-        logging.debug("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", valorX, valorY, int(casilla))
-        # print("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", valorX, valorY, int(casilla))
+        casilla = columna + fila * NUM_CASILLAS_H
+        # logging.info(f"Valor calculado: {casilla}")
+
+        logging.debug(f"calcularCasilla:posición: X {valorX} and Y {valorY} ==> Casilla: {int(casilla)}")
+        # print(f"calcularCasilla: posición: X {valorX} and Y {valorY} ==> Casilla: {int(casilla)}")
 
         return casilla
 
     @staticmethod
     def calcularPixelPorCasilla(Casilla):
-        posicion.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL
-        posicion.y = (int(Casilla / NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS
-        logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
-        return posicion
+        pos = posicion()
+        pos.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL 
+        pos.y = ((Casilla // NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS 
+        # logging.debug(f"calcularPixelPorCasilla: Casilla {Casilla} a posición: X {pos.x} and Y {pos.y}")
+        
+        return pos
 
     @staticmethod
-    def centroCasilla(Casilla):
-        posicion.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL
-        posicion.y = (int(Casilla / NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS
-        logging.debug("calcularPixelPorCasilla: Casilla %s a posición: X %s and Y %s", Casilla, posicion.x, posicion.y)
-        return posicion
+    def centroCasilla(Casilla) -> posicion:
+        position = posicion()
+        position.x = (Casilla % NUM_CASILLAS_H) * CASILLA_PIXEL + (CASILLA_PIXEL // 2)
+        position.y = ((Casilla // NUM_CASILLAS_H) * CASILLA_PIXEL) + BIAS + (CASILLA_PIXEL // 2)
+        
+        Maze.PosicionCruz = posicion()
+        Maze.PosicionCruz = position
+        # Se pinta a partir de la esquina superior izquierda.
+        Maze.PosicionPintarCasilla = posicion()
+        Maze.PosicionPintarCasilla.x = position.x - (CASILLA_PIXEL // 2)   # // 2 es división entera de 2.
+        Maze.PosicionPintarCasilla.y = position.y - (CASILLA_PIXEL // 2)
+        
+        # logging.debug(f" Centro Casilla: K {Casilla} a posición: X {position.x} and Y {position.y}")
+        # print(" Centro Casilla: K {Casilla} a posición: X {position.x} and Y {position.y}")
+
+        return position
 
     # Casilla de suelo. Cambiar y chequear
     def esAlcanzable(self, x, y) -> bool:
@@ -433,12 +547,12 @@ class Maze:
 
         eqCasilla = Maze.calcularCasilla(x, y)
 
-        if x > SCREEN_WIDTH | y > SCREEN_HEIGHT | x < 0 | y < 0:
+        if x > SCREEN_WIDTH or y > SCREEN_HEIGHT or x < 0 or y < 0:
             logging.info("esAlcanzble : X= %s and Y= %s", x, y)
-            if x > SCREEN_WIDTH | x < 0 :
+            if x > SCREEN_WIDTH or x < 0 :
                 logging.info("esAlcanzble : X fuera de rango.", x)
                 return False
-            elif y > SCREEN_HEIGHT | y < 0:
+            elif y > SCREEN_HEIGHT or y < 0:
                 logging.info("esAlcanzble : Y fuera de rango.", y)
                 return False
             else:
@@ -471,3 +585,287 @@ class Maze:
             return True
         else: 
             return False
+
+#-------------------------------------
+#   ***    E X P L O S I Ó N 
+#-------------------------------------
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+
+        # Cargar frames
+        self.frames = []
+
+        for i in range(21):
+            ruta = os.path.join(
+                "Code",
+                EXPLOSION_DIR,
+                f"expl_04_00{i:02}.png"
+            )
+            print(f"Ruta file Explosiones: {ruta}")
+
+            imagen = pygame.image.load(ruta).convert_alpha()
+
+            # Opcional: escalar
+            imagen = pygame.transform.scale(imagen, (128, 128))
+
+            self.frames.append(imagen)
+
+        # Frame actual
+        self.frame_actual = 0
+
+        # Imagen inicial
+        self.image = self.frames[self.frame_actual]
+
+        # Posición
+        self.rect = self.image.get_rect(center=(x, y))
+
+        # Tiempo
+        self.tiempo_ultimo_frame = pygame.time.get_ticks()
+
+        # 2.5 segundos / 21 frames
+        self.duracion_frame = 150  # milisegundos
+
+    def update(self):
+        ahora = pygame.time.get_ticks()
+        print(" --> Explosion INTO.")
+
+        # Cambiar frame
+        if ahora - self.tiempo_ultimo_frame > self.duracion_frame:
+
+            self.tiempo_ultimo_frame = ahora
+
+            self.frame_actual += 1
+
+            # ¿Se acabó la animación?
+            if self.frame_actual >= len(self.frames):
+                self.kill()
+                return
+
+            self.image = self.frames[self.frame_actual]
+
+
+#-------------------------------------
+#  ***   N U B E    DE     H U M O
+#-------------------------------------
+class Smoke(pygame.sprite.Sprite):
+    # Cache global
+    FRAMES = None
+
+    def __init__(self, x, y, alfa=120):
+
+        super().__init__()
+
+        # Cargar imágenes una sola vez
+        if Smoke.FRAMES is None:
+            Smoke.FRAMES = []
+
+            for i in range(31):
+
+                ruta = os.path.join(
+                    "Code",
+                    EXPLOSION_DIR,
+                    f"puff_smoke_01_00{i:02}.png"
+                )
+
+                img = pygame.image.load(ruta).convert_alpha()
+
+                # -----------------------------
+                # ESCALAR
+                img = pygame.transform.scale(img, (140, 140))
+
+                # TEÑIR DE GRIS
+                # -----------------------------
+                # RGB más bajos = gris más apagado
+                img.fill(
+                    (110, 110, 110, 255),
+                    special_flags=pygame.BLEND_RGBA_MULT
+                )
+
+                # -----------------------------
+                # TRANSPARENCIA
+                img.set_alpha(alfa)
+
+                Smoke.FRAMES.append(img)
+
+        self.frames = Smoke.FRAMES
+
+        # Frame inicial
+        self.frame_actual = 0
+        self.image = self.frames[self.frame_actual]
+
+        # Centrado
+        self.rect = self.image.get_rect(center=(x, y))
+
+        # Tiempo
+        self.tiempo_ultimo_frame = pygame.time.get_ticks()
+
+        # Más lento que explosión
+        self.duracion_frame = 90
+
+    def update(self):
+        ahora = pygame.time.get_ticks()
+
+        if ahora - self.tiempo_ultimo_frame > self.duracion_frame:
+
+            self.tiempo_ultimo_frame = ahora
+
+            self.frame_actual += 1
+
+            # Final animación
+            if self.frame_actual >= len(self.frames):
+                self.kill()
+                return
+
+            # Crecimiento progresivo
+            escala = 140 + self.frame_actual
+
+            # Fade out progresivo
+            nuevo_alpha = max(0, 210 - self.frame_actual * 3)
+
+            # Escalar frame actual
+            self.image = pygame.transform.scale(
+                self.frames[self.frame_actual],
+                (escala, escala)
+            )
+
+            # Aplicar nueva transparencia
+            self.image.set_alpha(nuevo_alpha)
+
+            # Mantener el centro estable
+            centro = self.rect.center
+            self.rect = self.image.get_rect(center=centro)
+
+class Puerta(pygame.sprite.Sprite):
+
+    def __init__(self, pivot_x, pivot_y, orientacion, casilla=None):
+        super().__init__()
+
+        self.orientacion = orientacion
+        self.casilla = casilla
+
+        self.ancho = 15
+        self.alto = 32
+
+        self.image_original = pygame.Surface(
+            (self.ancho, self.alto),
+            pygame.SRCALPHA
+        )
+
+        # Color base
+        self.image_original.fill((160, 90, 30))
+
+        # Borde negro
+        pygame.draw.rect(
+           self.image_original,
+           (0, 0, 0),
+           (0, 0, self.ancho, self.alto),
+           2
+        )
+
+        pygame.draw.rect(
+            self.image_original,
+            (160, 90, 30),
+            (0, 0, self.ancho, self.alto)
+        )
+
+        # Línea vertical central
+        pygame.draw.line(
+            self.image_original,
+            (0, 0, 0),
+            (self.ancho // 2, 0),
+            (self.ancho // 2, self.alto),
+            1
+        )
+
+        # Línea horizontal opcional (refuerzo visual)
+        pygame.draw.line(
+            self.image_original,
+            (0, 0, 0),
+            (0, self.alto // 2),
+            (self.ancho, self.alto // 2),
+            1
+        )
+
+        vertices = [
+            (0, 0),
+            (self.ancho, 0),
+            (self.ancho, self.alto),
+            (0, self.alto)
+        ]
+        
+        pygame.draw.lines(
+            self.image_original,
+            (0, 0, 0),
+            True,
+            vertices,
+            1
+        )
+
+        self.image_original.fill((170, 100, 40))
+
+        for i in range(3):
+            rayita_x = (i + 1) * self.ancho // 4
+            pygame.draw.line(
+                self.image_original,
+                (90, 50, 20),
+                (rayita_x, 2),
+                (rayita_x, self.alto - 2),
+                1
+            )
+
+        self.image = self.image_original
+
+        self.angle = 0
+        self.abierta = False
+        self.velocidad = 2
+
+        # Bisagra en coordenadas de pantalla
+        self.x = pivot_x
+        self.y = pivot_y
+
+        # Mitad del largo: el centro queda en el borde de la bisagra, sin hueco
+        self.radio = self.alto / 2
+
+        self.pivot = (pivot_x, pivot_y)
+
+        self.rotar()
+    
+    def update(self):
+        if self.abierta:
+            if self.angle < 90:
+                self.angle += self.velocidad
+        else:
+            if self.angle > 0:
+                self.angle -= self.velocidad
+
+        self.rotar()
+    
+    def rotar(self):
+        # Ángulo en radianes
+        rad = math.radians(self.angle)
+
+        # Posición desplazada desde la bisagra
+        x = self.x + self.radio * math.cos(rad)
+        y = self.y + self.radio * math.sin(rad)
+
+        # Rotación visual
+        rot_angle = -self.angle + 90
+
+        self.image = pygame.transform.rotate(
+            self.image_original,
+            rot_angle
+        )
+
+        self.rect = self.image.get_rect(center=(x, y))
+    
+    def draw(self, pantalla):
+        pantalla.blit(self.image, self.rect)
+
+        # bisagra
+        pygame.draw.circle(
+            pantalla,
+            (128, 128, 128),
+            (int(self.x), int(self.y)),
+            3
+        )
