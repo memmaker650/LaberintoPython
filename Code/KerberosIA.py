@@ -26,6 +26,7 @@ class KerberosIA:
     # Info importante pasada a través del enemigo.
     conexiones = None
     Laberinto = []
+    log_debug = False
 
     def __init__(self, x = 0, y = 0):
         logging.info('Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega')
@@ -44,7 +45,6 @@ class KerberosIA:
 
         # Info importante pasada a través del enemigo.
         self.KasRecorridas = set()
-
 
         self.ultimaCasilla = -1
         self.direccionActual = 1
@@ -182,9 +182,7 @@ class KerberosIA:
                     casillaActual,
                     direccion
                 )
-
                 if siguiente not in visitados:
-
                     cola.append(
                         (siguiente, camino + [siguiente])
                     )
@@ -207,20 +205,51 @@ class KerberosIA:
             return random.choice(posibles)
 
         return opuesta
+
+    # Método para seguir un camino tras detectar Player
+    #----------------------------------------------------------
+    def seguirCamino(self):
+        logging("Dentro de Seguir Kamino.")
+        print("Dentro de Seguir Kamino.")
+        if len(self.path) == 0:
+            return
+
+        # Si hemos llegado a una casilla del camino,
+        # eliminar todas las anteriores.
+        while len(self.path) > 0 and self.path[0] == self.casilla:
+            self.path.pop(0)
+
+        # Destino alcanzado
+        if len(self.path) == 0:
+            return
+
+        siguienteCasilla = self.path[0]
+
+        self.orientacion = self.calcularDireccion(
+            self.casilla,
+            siguienteCasilla
+        )
     
     # Update IA - Kerberos IA
     #----------------------------------
     def update(self):
+        print("kia Update !!")
         self.casilla = MazeLab.Maze.calcularCasilla(
             self.posicion.x,
             self.posicion.y
         )
 
+        # Salto la alarma y buscamos y seguimos el camino.
         if self.playerDetectado:
-            self.path = self.calcular_camino_BFS(
-                self.casilla,
-                self.casillaJugador
-            )
+            print("** Dentro Detectado.")
+            print(f"Path BFS: {self.path}")
+            if len(self.path) == 0:
+                self.path = self.calcular_camino_BFS(
+                    self.casilla,
+                    self.casillaJugador
+                )
+            else:
+                self.seguirCamino()
         else:
             # SOLO actuar al entrar en nueva casilla
             if self.casilla != self.ultimaCasilla:
@@ -232,12 +261,14 @@ class KerberosIA:
                 )
                 # Callejón
                 if len(opciones) == 1:
-                    print("Callejón")
+                    if self.log_debug:
+                        print("Callejón")
                     self.orientacion = opciones[0]
 
                 # Pasillo
                 elif len(opciones) == 2:
-                    print("Pasillo")
+                    if self.log_debug:
+                        print("Pasillo")
                     opuesta = (self.orientacion + 2) % 4
 
                     posibles = [
@@ -249,7 +280,8 @@ class KerberosIA:
 
                 # Intersección
                 elif len(opciones) >= 3:
-                    print("Intersección")
+                    if self.log_debug:
+                        print("Intersección")
                     self.orientacion = self.elegirDireccion()
 
         return self.orientacion

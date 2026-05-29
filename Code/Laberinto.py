@@ -128,6 +128,7 @@ class App:
 
     # Flags de Depuración de información.
     flagPrint_info = False
+    flagPrint_ColisionInfo = False
     flagDebugEnemigos = True
     flagPintarBocadilloTexto = False
     bocadillo_timer = 0
@@ -910,9 +911,13 @@ class App:
                 self.flagPintarBocadilloTexto = True
                 self.textoBocadillo = "Hay un INTRUSO !! Venid"
 
-                Kinicio = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
-                Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
-                self.JefeEnemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
+                for nemesis in self.EnemigosGroup:
+                    self.JefeEnemigo.kia.playerDetectado = True
+                    self.enemigo = nemesis
+                    Kinicio = self.maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
+                    Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
+                    self.enemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
+                
             else:
                 if colision_playerNemesis:
                     logging.info(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
@@ -928,7 +933,7 @@ class App:
                     self.bocadillo_timer = 180
                     self.flagPintarBocadilloTexto = True
                     self.textoBocadillo = "INTRUSO encontrado !! Jefe aquí !!!"
-
+                    
                     # Aquí habria que poner a los Enemigos para que fueran a donde está el jefe contra el Player.
                     # Kinicio = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
                     # Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
@@ -938,6 +943,22 @@ class App:
                         logging.info(f'PLAYER colisionó con ENEMIGO')
                         self.enemigo.x = cl.x
                         self.enemigo.y = cl.y
+
+                        self.enemigo = cl
+                        self.enemigo.kia.playerDetectado = True
+
+                        Kinicio = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+                        Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
+
+                        self.JefeEnemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
+
+                        for nemesis in self.EnemigosGroup:
+                            if nemesis.x != cl.x and nemesis.y != cl.y:
+                                self.JefeEnemigo.kia.playerDetectado = True
+                                self.enemigo = nemesis
+                                Kinicio = self.maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
+                                Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
+                                self.enemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
 
         # Colisión del jugador con Puerta
         #----------------------------------------
@@ -977,22 +998,26 @@ class App:
                     for pared in paredes:
                         if nemesis.rect.colliderect(pared.rect):
                             if nemesis.rect.x < 0:
-                                print("Colisión por IZQUIERDA")
+                                if self.flagPrint_ColisionInfo:
+                                    print("Colisión por IZQUIERDA")
                             elif nemesis.rect.x > 0:
-                                print("Colisión por DERECHA")
+                                if self.flagPrint_ColisionInfo:
+                                    print("Colisión por DERECHA")
 
                             if nemesis.rect.y > 0:
-                                print("Colisión por ABAJO") 
+                                if self.flagPrint_ColisionInfo:
+                                    print("Colisión por ABAJO") 
                             elif nemesis.rect.y < 0:
-                                print("Colisión por ARRIBA")                              
+                                if flagPrint_ColisionInfo:
+                                    print("Colisión por ARRIBA")                              
 
                 # Revertir y cambiar dirección solo del enemigo que colisiona
                 if hasattr(nemesis, 'revertir_movimiento'):
-                    print("    Dentro Reventir MOV")
+                    #print("    Dentro Reventir MOV")
                     nemesis.revertir_movimiento()
 
                 if hasattr(nemesis, 'cambiar_direccion'):
-                    print("Dentro Cambiar DIR")
+                    #print("Dentro Cambiar DIR")
                     nemesis.cambiar_direccion()
 
         # Colisión de ENemigos con Puerta
