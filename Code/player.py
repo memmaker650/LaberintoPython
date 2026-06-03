@@ -492,7 +492,10 @@ class Enemigo(pygame.sprite.Sprite):
         self.prev_x = self.x
         self.prev_y = self.y
 
-        self.kia.definirPosicion(self.x, self.y)
+        self.kia.definirPosicion(
+            self.x + (self.rect.width // 2),
+            self.y + (self.rect.height // 2)
+        )
 
         # Actualizar el rectángulo de colisión con la posición actual
         self.rect.x = self.x
@@ -506,8 +509,8 @@ class Enemigo(pygame.sprite.Sprite):
         # Sölo usar la IA al pasar el centro de la casilla actual.
         if MazeLab.Maze.estaCentroCasilla(cx, cy):
             # print("Dentro ZENTRO Centro Kasiya - cálculo IA.")
-            self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
-            self.kia.definirPosicion(self.x, self.y)
+            self.kia.casilla = MazeLab.Maze.calcularCasilla(cx, cy)
+            self.kia.definirPosicion(cx, cy)
 
             dir = self.kia.update()
             # print("Dir = ", dir)
@@ -545,6 +548,11 @@ class Enemigo(pygame.sprite.Sprite):
             self.y = self.prev_y
 
     def cambiar_direccion(self):
+        if self.isJefeEnemigo:
+            if self.kia is not None:
+                self.kia.colisionParedes = True
+            return
+
         # Cambio simple de dirección: invertir velocidad vertical
         self.speedV = -self.speedV 
 
@@ -569,7 +577,8 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
 
     def detectarColision(self):
-        print("Dentro colision en ENEMIGO. <-- ")
+        # print("Dentro colision en ENEMIGO. <-- ")
+        print("")
 
         # self.isColision = True
         # self.kia.colisionParedes = True

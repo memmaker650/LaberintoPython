@@ -243,20 +243,35 @@ class App:
         
         # Ubicar al jefe enemigo.
         self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-        self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+        self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(
+            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+        )
         pos = posicion(0, 0)
         pos = MazeLab.Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
         resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
         while not self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla):
             self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-            self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+            self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(
+                self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+                self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+            )
             pos = posicion(0, 0)
             pos = MazeLab.Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
             resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
 
         # Cargamos Jefe enemigo
-        self.JefeEnemigo.x = pos.x
-        self.JefeEnemigo.y = pos.y
+        self.JefeEnemigo.x = pos.x - (self.JefeEnemigo.rect.width // 2)
+        self.JefeEnemigo.y = pos.y - (self.JefeEnemigo.rect.height // 2)
+        self.JefeEnemigo.rect.x = self.JefeEnemigo.x
+        self.JefeEnemigo.rect.y = self.JefeEnemigo.y
+        self.JefeEnemigo.prev_x = self.JefeEnemigo.x
+        self.JefeEnemigo.prev_y = self.JefeEnemigo.y
+        self.JefeEnemigo.kia.definirPosicion(
+            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+        )
+        self.JefeEnemigo.kia.casilla = self.JefeEnemigo.casilla
         
         pygame.init()
 
@@ -776,9 +791,15 @@ class App:
         # 1. Ha pasado el intervalo de tiempo O
         # 2. Hay un cambio importante (colisión, alarma, etc.)
         if tiempo_desde_ultimo_update >= self.ia_update_interval or cambio_importante or self.ia_necesita_update:
-            self.JefeEnemigo.casilla = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+            self.JefeEnemigo.casilla = self.maze.calcularCasilla(
+                self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+                self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+            )
             self.JefeEnemigo.kia.casilla = self.JefeEnemigo.casilla
-            self.JefeEnemigo.kia.definirPosicion(self.JefeEnemigo.x, self.JefeEnemigo.y)
+            self.JefeEnemigo.kia.definirPosicion(
+                self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+                self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+            )
             
             dir = self.JefeEnemigo.kia.update()
             self.JefeEnemigo.elegirDireccion(dir)
@@ -787,7 +808,10 @@ class App:
             self.ia_necesita_update = False
         
         # Actualizar casilla y recorrido siempre (son operaciones rápidas)
-        self.JefeEnemigo.casilla = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+        self.JefeEnemigo.casilla = self.maze.calcularCasilla(
+            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+        )
         self.JefeEnemigo.cargarCasillaRecorrido(self.JefeEnemigo.casilla)
 
         # Resto de enemigos.
@@ -947,7 +971,10 @@ class App:
                         self.enemigo = cl
                         self.enemigo.kia.playerDetectado = True
 
-                        Kinicio = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+                        Kinicio = self.maze.calcularCasilla(
+                            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+                            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+                        )
                         Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
 
                         self.JefeEnemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
@@ -989,7 +1016,10 @@ class App:
                 
                 if nemesis.isJefeEnemigo:
                     # if self.flagPrint_info:
-                    print(f"Colision Jefe Enemigo con PARED --> {self.maze.calcularCasilla(nemesis.x, nemesis.y)} !!!")
+                    print(
+                        f"Colision Jefe Enemigo con PARED --> "
+                        f"{self.maze.calcularCasilla(nemesis.x + (nemesis.rect.width // 2), nemesis.y + (nemesis.rect.height // 2))} !!!"
+                    )
                     nemesis.detectarColision()
                     # self.bocadillo_timer = 180 
                     # self.flagPintarBocadilloTexto = True
@@ -1008,13 +1038,33 @@ class App:
                                 if self.flagPrint_ColisionInfo:
                                     print("Colisión por ABAJO") 
                             elif nemesis.rect.y < 0:
-                                if flagPrint_ColisionInfo:
-                                    print("Colisión por ARRIBA")                              
+                                if self.flagPrint_ColisionInfo:
+                                    print("Colisión por ARRIBA")
+
+                    # Recolocar al jefe en el centro de la casilla segura anterior.
+                    casilla_segura = MazeLab.Maze.calcularCasilla(
+                        nemesis.prev_x + (nemesis.rect.width // 2),
+                        nemesis.prev_y + (nemesis.rect.height // 2)
+                    )
+                    centro = MazeLab.Maze.centroCasilla(casilla_segura)
+                    nemesis.x = centro.x - (nemesis.rect.width // 2)
+                    nemesis.y = centro.y - (nemesis.rect.height // 2)
+                    nemesis.rect.x = nemesis.x
+                    nemesis.rect.y = nemesis.y
+                    nemesis.casilla = casilla_segura
+                    nemesis.kia.casilla = casilla_segura
+                    nemesis.kia.definirPosicion(
+                        nemesis.x + (nemesis.rect.width // 2),
+                        nemesis.y + (nemesis.rect.height // 2)
+                    )
+                    nemesis.kia.colisionParedes = True
+                    self.ia_necesita_update = True
 
                 # Revertir y cambiar dirección solo del enemigo que colisiona
-                if hasattr(nemesis, 'revertir_movimiento'):
+                if hasattr(nemesis, 'revertir_movimiento') and not nemesis.isJefeEnemigo:
                     #print("    Dentro Reventir MOV")
                     nemesis.revertir_movimiento()
+                    
 
                 if hasattr(nemesis, 'cambiar_direccion'):
                     #print("Dentro Cambiar DIR")

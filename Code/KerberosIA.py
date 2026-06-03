@@ -155,6 +155,46 @@ class KerberosIA:
         elif direccion == 3:
             return casilla - 1
 
+    def _casillas_recorridas(self):
+        casillas = set()
+
+        if not self.KasRecorridas:
+            return casillas
+
+        for elemento in self.KasRecorridas:
+            if isinstance(elemento, tuple) and len(elemento) > 0:
+                casillas.add(elemento[0])
+            else:
+                casillas.add(elemento)
+
+        return casillas
+
+    def elegirDireccionEvitar(self, direccionBloqueada=None):
+        opciones = list(self.conexiones.get(self.casilla, []))
+
+        if not opciones:
+            return self.orientacion
+
+        if direccionBloqueada in opciones and len(opciones) > 1:
+            opciones = [d for d in opciones if d != direccionBloqueada]
+
+        # Evitar dar media vuelta salvo que no quede otra.
+        opuesta = (self.orientacion + 2) % 4
+        opciones_sin_opuesta = [d for d in opciones if d != opuesta]
+        if opciones_sin_opuesta:
+            opciones = opciones_sin_opuesta
+
+        casillas_recorridas = self._casillas_recorridas()
+        candidatas = sorted(
+            opciones,
+            key=lambda d: (
+                self.obtenerCasillaSiguiente(self.casilla, d) in casillas_recorridas,
+                d == self.orientacion
+            )
+        )
+
+        return candidatas[0]
+
     def calcular_camino_BFS(self, casillaInicio, casillaObjetivo):
         cola = deque()
         cola.append((casillaInicio, [casillaInicio]))
@@ -230,7 +270,7 @@ class KerberosIA:
             siguienteCasilla
         )
     
-    # Update IA - Kerberos IA
+    # Update IA - Kerberos IA8888888
     #----------------------------------
     def update(self):
         print("kia Update !!")
@@ -238,6 +278,12 @@ class KerberosIA:
             self.posicion.x,
             self.posicion.y
         )
+
+        if self.colisionParedes:
+            self.path = []
+            self.orientacion = self.elegirDireccionEvitar(self.orientacion)
+            self.colisionParedes = False
+            return self.orientacion
 
         # Salto la alarma y buscamos y seguimos el camino.
         if self.playerDetectado:
@@ -269,19 +315,12 @@ class KerberosIA:
                 elif len(opciones) == 2:
                     if self.log_debug:
                         print("Pasillo")
-                    opuesta = (self.orientacion + 2) % 4
-
-                    posibles = [
-                        d for d in opciones
-                        if d != opuesta
-                    ]
-                    if posibles:
-                        self.orientacion = posibles[0]
+                    self.orientacion = self.elegirDireccionEvitar()
 
                 # Intersección
                 elif len(opciones) >= 3:
                     if self.log_debug:
                         print("Intersección")
-                    self.orientacion = self.elegirDireccion()
+                    self.orientacion = self.elegirDireccionEvitar()
 
         return self.orientacion

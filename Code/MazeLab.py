@@ -482,10 +482,7 @@ class Maze:
         celda = Maze.calcularCasilla(x, y)
         pos = Maze.centroCasilla(celda)
 
-        if (x > pos.x) or (y > pos.y):
-            return True   
-        else:
-            return False
+        return x == pos.x and y == pos.y
 
     @staticmethod
     def elementoVisibleCasilla(kasiya) -> bool:
