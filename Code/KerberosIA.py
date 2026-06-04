@@ -249,7 +249,7 @@ class KerberosIA:
     # Método para seguir un camino tras detectar Player
     #----------------------------------------------------------
     def seguirCamino(self):
-        logging("Dentro de Seguir Kamino.")
+        logging.info("Dentro de Seguir Kamino.")
         print("Dentro de Seguir Kamino.")
         if len(self.path) == 0:
             return
@@ -289,12 +289,12 @@ class KerberosIA:
         if self.playerDetectado:
             print("** Dentro Detectado.")
             print(f"Path BFS: {self.path}")
-            if len(self.path) == 0:
+            if len(self.path) == 0 or (len(self.path) > 0 and self.path[-1] != self.casillaJugador):
                 self.path = self.calcular_camino_BFS(
                     self.casilla,
                     self.casillaJugador
                 )
-            else:
+            if len(self.path) > 0:
                 self.seguirCamino()
         else:
             # SOLO actuar al entrar en nueva casilla

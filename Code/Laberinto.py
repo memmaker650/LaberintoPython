@@ -787,13 +787,18 @@ class App:
             self.JefeEnemigo.alarma  # Alarma activada
         )
     
-        # Ejecutar IA solo si:
+        # Ejecutar IA sólo si:
+        #-------------------------
         # 1. Ha pasado el intervalo de tiempo O
         # 2. Hay un cambio importante (colisión, alarma, etc.)
         if tiempo_desde_ultimo_update >= self.ia_update_interval or cambio_importante or self.ia_necesita_update:
             self.JefeEnemigo.casilla = self.maze.calcularCasilla(
                 self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
                 self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+            )
+            self.JefeEnemigo.kia.casillaJugador = self.maze.calcularCasilla(
+                self.player.x + (self.player.rect.width // 2),
+                self.player.y + (self.player.rect.height // 2)
             )
             self.JefeEnemigo.kia.casilla = self.JefeEnemigo.casilla
             self.JefeEnemigo.kia.definirPosicion(
@@ -811,6 +816,10 @@ class App:
         self.JefeEnemigo.casilla = self.maze.calcularCasilla(
             self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
             self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+        )
+        self.JefeEnemigo.kia.casillaJugador = self.maze.calcularCasilla(
+            self.player.x + (self.player.rect.width // 2),
+            self.player.y + (self.player.rect.height // 2)
         )
         self.JefeEnemigo.cargarCasillaRecorrido(self.JefeEnemigo.casilla)
 
@@ -939,7 +948,10 @@ class App:
                     self.JefeEnemigo.kia.playerDetectado = True
                     self.enemigo = nemesis
                     Kinicio = self.maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
-                    Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
+                    Kfinal = self.maze.calcularCasilla(
+                        self.player.x + (self.player.rect.width // 2),
+                        self.player.y + (self.player.rect.height // 2)
+                    )
                     self.enemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
                 
             else:
@@ -957,35 +969,31 @@ class App:
                     self.bocadillo_timer = 180
                     self.flagPintarBocadilloTexto = True
                     self.textoBocadillo = "INTRUSO encontrado !! Jefe aquí !!!"
-                    
-                    # Aquí habria que poner a los Enemigos para que fueran a donde está el jefe contra el Player.
-                    # Kinicio = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
-                    # Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
-                    # self.JefeEnemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
 
-                    for cl in colision_playerNemesis:
-                        logging.info(f'PLAYER colisionó con ENEMIGO')
-                        self.enemigo.x = cl.x
-                        self.enemigo.y = cl.y
+                    logging.info("PLAYER ha activado alerta del Jefe Enemigo")
 
-                        self.enemigo = cl
-                        self.enemigo.kia.playerDetectado = True
+                    Kinicio = self.maze.calcularCasilla(
+                        self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+                        self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+                    )
+                    Kfinal = self.maze.calcularCasilla(
+                        self.player.x + (self.player.rect.width // 2),
+                        self.player.y + (self.player.rect.height // 2)
+                    )
 
-                        Kinicio = self.maze.calcularCasilla(
-                            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
-                            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+                    self.JefeEnemigo.kia.playerDetectado = True
+                    self.JefeEnemigo.kia.path = self.JefeEnemigo.kia.calcular_camino_BFS(
+                        Kinicio,
+                        Kfinal
+                    )
+                    self.ia_necesita_update = True
+
+                    for enemigo_tocado in colision_playerNemesis:
+                        logging.info(
+                            "PLAYER colisionó con ENEMIGO en (%s, %s)",
+                            enemigo_tocado.x,
+                            enemigo_tocado.y
                         )
-                        Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
-
-                        self.JefeEnemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
-
-                        for nemesis in self.EnemigosGroup:
-                            if nemesis.x != cl.x and nemesis.y != cl.y:
-                                self.JefeEnemigo.kia.playerDetectado = True
-                                self.enemigo = nemesis
-                                Kinicio = self.maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
-                                Kfinal = self.maze.calcularCasilla(self.player.x, self.player.y)
-                                self.enemigo.kia.calcular_camino_BFS(Kinicio, Kfinal)
 
         # Colisión del jugador con Puerta
         #----------------------------------------
