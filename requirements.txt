@@ -1,0 +1,10 @@
+# Laberinto SquidCastle - dependencias (Python 3.11)
+# Instalar con:  python3.11 -m venv venv2 && venv2/bin/python -m pip install -r requirements.txt
+
+# Juego
+pygame==2.6.1
+plyer==2.1.0
+pyobjus==1.2.3   # lo usa plyer en macOS para las notificaciones
+
+# Tests
+pytest==9.1.1

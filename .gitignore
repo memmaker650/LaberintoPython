@@ -4,3 +4,11 @@
 .DS_Store
 
 log/squidcastle.log
+
+# Entornos virtuales
+venv/
+venv2/
+
+# Caché de Python y pytest
+__pycache__/
+.pytest_cache/
