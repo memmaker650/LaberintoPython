@@ -135,7 +135,7 @@ class Disparos(pygame.sprite.Sprite):
             self.municion += valor
 
     def rotarBala(self, angulo):
-        return pygame.transform.rotate(self.imagen, angulo)
+        return pygame.transform.rotate(self.image, angulo)
 
     def update(self):
         if self.orientacion == 0: # Arriba
@@ -282,10 +282,10 @@ class Player(pygame.sprite.Sprite):
         # logging.info("Player INFO: Velocidad V %s y VeloH %s", self.speedV, self.speedH)
 
     def rotar(self, angulo):
-        return pygame.transform.rotate(self.imagen, angulo)
+        return pygame.transform.rotate(self.image, angulo)
 
     def escalaGrises(self):
-        return pygame.transform.grayscale(self.imagen)
+        return pygame.transform.grayscale(self.image)
 
     def disparo(self):
         if self.municion > 0:
@@ -594,11 +594,14 @@ class Enemigo(pygame.sprite.Sprite):
         # 
         # self.isColision = False
         
+    def imagenActual(self):
+        return self.imageJefeEnemigo if self.isJefeEnemigo else self.imageEnemigo
+
     def rotar(self, angulo):
-        return pygame.transform.rotate(self.imagen, angulo)
+        return pygame.transform.rotate(self.imagenActual(), angulo)
 
     def escalaGrises(self):
-        return pygame.transform.grayscale(self.imagen)
+        return pygame.transform.grayscale(self.imagenActual())
 
     # Aquí guardamos la posición donde está el enemigo donde no está el jugador.
     def cargarCasillaRecorrido(self, casilla):

@@ -220,6 +220,8 @@ class Maze:
         bx = 0
         by = 0
 
+        # Guardar el estado de las puertas para no cerrarlas al repintar el mapa.
+        estadoPuertas = {p.casilla: (p.abierta, p.angle) for p in self.MazePuertas}
         self.MazePuertas.empty()
         self.posicionPuerta = []
 
@@ -374,6 +376,9 @@ class Maze:
                         self.posicionPuerta.append((kasylla, 1))
 
                     puerta = Puerta(pivot_x, pivot_y, orientacion, kasylla)
+                    if kasylla in estadoPuertas:
+                        puerta.abierta, puerta.angle = estadoPuertas[kasylla]
+                        puerta.rotar()
                     self.MazePuertas.add(puerta)
 
             bx = bx + 1
@@ -554,7 +559,11 @@ class Maze:
                 return False
             else:
                 logging.info("Raro en esAlcanzble ")
-            
+
+        # La cabecera (HUD) no forma parte del laberinto: la casilla saldría negativa.
+        if y < BIAS:
+            return False
+
         if self.maze[eqCasilla] == 0:
             return False
         elif self.maze[eqCasilla] == 1: 

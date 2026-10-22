@@ -249,7 +249,7 @@ class App:
             self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
         )
         pos = posicion(0, 0)
-        pos = MazeLab.Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
+        pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
         resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
         while not self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla):
             self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -258,7 +258,7 @@ class App:
                 self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
             )
             pos = posicion(0, 0)
-            pos = MazeLab.Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
+            pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
             resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
 
         # Cargamos Jefe enemigo
@@ -331,13 +331,15 @@ class App:
         
         self.pantalla.blit(text1, (position.x, position.y))
         # Y pintamos también una línea que una estas cruces.
+        # posicionesRecorridas guarda tuplas (casilla, tiempo).
         for elemento in reversed(nemesis.posicionesRecorridas):
-            posi: posicion = self.maze.centroCasilla(elemento)
+            casilla = elemento[0] if isinstance(elemento, tuple) else elemento
+            posi: posicion = self.maze.centroCasilla(casilla)
             if not flagInit:
-                pygame.draw.line(self.pantalla, (255, 255, 0), posi.x, posi.y, 3)
-                pygame.display.flip()
+                pygame.draw.line(self.pantalla, (255, 255, 0), (puntoPrevio.x, puntoPrevio.y), (posi.x, posi.y), 3)
             else:
                 flagInit = False
+            puntoPrevio = posi
 
     def menu(self):
         color = (255, 255, 255)
@@ -1166,13 +1168,13 @@ class App:
                 print('HuesO o BONE: ', len(colision_PlayerConHueso))
             self.HeadPuntuacion.puntos += 10
             self.HeadHuesos.NumeroHuesos += 1
-            self.rebuildMap()
 
-            # Opcional: procesar cada enemigo que colisionó
+            # Marcar los huesos como cogidos ANTES de repintar, para que no se vuelvan a crear.
             for cpcE in colision_PlayerConHueso:
                 logging.info(f'Hueso Sólo tocado')
                 self.casillaObjetosTocados.add(self.maze.calcularCasilla(cpcE.rect.x, cpcE.rect.y))
                 cpcE.kill()
+            self.rebuildMap()
 
         # Colisión de Player con Oro.
         colision_PlayerConOro = pygame.sprite.spritecollide(self.player, self.maze.MazeOro, True)
@@ -1372,7 +1374,7 @@ class App:
                     else:
                         alphaBTexto = 255
  
-                    self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", (int(self.JefeEnemigo.x), int(self.JefeEnemigo.y) - 10), alpha=alphaBTexto)
+                    self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, alphaBTexto)
                 else:
                     self.JefeEnemigo.alarma = False
                     self.JefeEnemigo.restarRelojBocadilloTexto()
@@ -1574,6 +1576,7 @@ class App:
                     if event.key == pygame.K_RETURN:
                         logging.info('¡¡¡ INTRO !!!')
                         self.JefeEnemigo.alarma = True
+                        self.JefeEnemigo.restarRelojBocadilloTexto()
                         for x in self.EnemigosGroup:
                             x.disparo()
                     if event.key == pygame.K_c:
