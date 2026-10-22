@@ -138,7 +138,6 @@ class Disparos(pygame.sprite.Sprite):
         return pygame.transform.rotate(self.imagen, angulo)
 
     def update(self):
-        logging.info('Dentro UPDATE BALA.')
         if self.orientacion == 0: # Arriba
             self.rect.y -= 3
         elif self.orientacion == 1: # Derecha
@@ -155,6 +154,8 @@ class Disparos(pygame.sprite.Sprite):
         elif self.rect.x > SCREEN_WIDTH:
             self.kill()
         elif self.rect.y < BIAS:
+            self.kill()
+        elif self.rect.y > SCREEN_HEIGHT:
             self.kill()
 
 
@@ -220,7 +221,7 @@ class Player(pygame.sprite.Sprite):
         if (self.speedV < 6):
             self.speedV = self.speedV + 1
         else:
-            self.speedH = 2
+            self.speedV = 2
 
     def guardarPosicionPrevia(self):
         self.prev_x = self.x
@@ -332,6 +333,7 @@ class Enemigo(pygame.sprite.Sprite):
     bubble_start_time = pygame.time.get_ticks()
     bubble_duration = 10000  # 10 segundos
     fade_duration = 2000     # últimos 2 segundos para desvanecerse
+    fontBocadillo = None
 
     posicionesRecorridas = []
     tiempoOlvido = 5
@@ -360,7 +362,10 @@ class Enemigo(pygame.sprite.Sprite):
 
     def __init__(self):
         super().__init__()
-        self.orientacion = 'N'
+        self.orientacion = 2  # Abajo
+
+        # Lista propia de cada enemigo (no compartida a nivel de clase).
+        self.posicionesRecorridas = []
 
         # Inicio IA enemigos
         self.kia = KerberosIA.KerberosIA()
@@ -539,7 +544,7 @@ class Enemigo(pygame.sprite.Sprite):
         # Caso extraño    
         else:
             self.moveDown()
-            print("Jefe Enemigo mueve abajo")
+            logging.debug("Jefe Enemigo mueve abajo")
 
     def revertir_movimiento(self):
         # Revertir a la posición previa tras colisión
@@ -578,7 +583,7 @@ class Enemigo(pygame.sprite.Sprite):
 
     def detectarColision(self):
         # print("Dentro colision en ENEMIGO. <-- ")
-        print("")
+        pass
 
         # self.isColision = True
         # self.kia.colisionParedes = True
@@ -597,20 +602,22 @@ class Enemigo(pygame.sprite.Sprite):
 
     # Aquí guardamos la posición donde está el enemigo donde no está el jugador.
     def cargarCasillaRecorrido(self, casilla):
-        existe = any(v == 3 for v, t in self.posicionesRecorridas)
+        existe = any(v == casilla for v, t in self.posicionesRecorridas)
         # Sólo cargamos posiciones que no hayamos recorrido.
         if not existe:
             self.posicionesRecorridas.append((casilla, time.time()))
 
     def borrarRecorridosAntiguos(self):
         ahora = time.time()
-        self.posicionesRecorridas = [(v, t) for (v, t) in self.posicionesRecorridas if ahora - t < self.tiempoOlvido]
+        # Se modifica la lista en sitio para que kia.KasRecorridas siga apuntando a ella.
+        self.posicionesRecorridas[:] = [(v, t) for (v, t) in self.posicionesRecorridas if ahora - t < self.tiempoOlvido]
         
     def bocadilloTexto(self, surface, text, posx, posy, alpha, color=(255, 255, 255), text_color=(0, 0, 0)):
         # Dibuja un bocadillo de texto con transparencia controlada por alpha.
-        print("   Dentro Bocadillo !!")
-        font = pygame.font.SysFont("arial", 20)
-        text_surf = font.render(text, True, text_color)
+        # La fuente se crea una sola vez y se reutiliza.
+        if Enemigo.fontBocadillo is None:
+            Enemigo.fontBocadillo = pygame.font.SysFont("arial", 20)
+        text_surf = Enemigo.fontBocadillo.render(text, True, text_color)
         text_rect = text_surf.get_rect()
 
         padding = 10

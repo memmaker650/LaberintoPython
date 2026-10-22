@@ -505,7 +505,7 @@ class Maze:
         casilla = columna + fila * NUM_CASILLAS_H
         # logging.info(f"Valor calculado: {casilla}")
 
-        logging.debug(f"calcularCasilla:posición: X {valorX} and Y {valorY} ==> Casilla: {int(casilla)}")
+        logging.debug("calcularCasilla:posición: X %s and Y %s ==> Casilla: %s", valorX, valorY, casilla)
         # print(f"calcularCasilla: posición: X {valorX} and Y {valorY} ==> Casilla: {int(casilla)}")
 
         return casilla
@@ -547,10 +547,10 @@ class Maze:
         if x > SCREEN_WIDTH or y > SCREEN_HEIGHT or x < 0 or y < 0:
             logging.info("esAlcanzble : X= %s and Y= %s", x, y)
             if x > SCREEN_WIDTH or x < 0 :
-                logging.info("esAlcanzble : X fuera de rango.", x)
+                logging.info("esAlcanzble : X fuera de rango. %s", x)
                 return False
             elif y > SCREEN_HEIGHT or y < 0:
-                logging.info("esAlcanzble : Y fuera de rango.", y)
+                logging.info("esAlcanzble : Y fuera de rango. %s", y)
                 return False
             else:
                 logging.info("Raro en esAlcanzble ")

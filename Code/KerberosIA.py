@@ -65,9 +65,9 @@ class KerberosIA:
         self.estado = state
     
     def cambioEstado(self):
-        if (self.estado == 0 and self.isPlayerDetected == True):
+        if (self.estado == 0 and self.playerDetectado == True):
             self.estado = 1
-        elif (self.estado == 1 and self.isPlayerDetected == True):
+        elif (self.estado == 1 and self.playerDetectado == True):
             self.estado = 2
         elif (self.estado == 2):
             self.gritarAlarma()
@@ -76,18 +76,15 @@ class KerberosIA:
             self.estado = 3
     
     def cambiarSentido(self):
-        # Cambio simple de dirección: invertir velocidad vertical
-        self.speedV = -self.speedV 
-
         # 0 Arriba, 1 Derecha, 2 Abajo y 3 Izquierda
-        if self.orientation == 0:
-            self.orientation = 2
-        elif self.orientation == 2:
-            self.orientation = 0
-        elif self.orientation == 1:
-            self.orientation = 3
-        elif self.orientation == 3:
-            self.orientation = 1
+        if self.orientacion == 0:
+            self.orientacion = 2
+        elif self.orientacion == 2:
+            self.orientacion = 0
+        elif self.orientacion == 1:
+            self.orientacion = 3
+        elif self.orientacion == 3:
+            self.orientacion = 1
 
     def esInterseccion(self):
         opciones = self.conexiones.get(self.casilla, [])
@@ -249,8 +246,7 @@ class KerberosIA:
     # Método para seguir un camino tras detectar Player
     #----------------------------------------------------------
     def seguirCamino(self):
-        logging.info("Dentro de Seguir Kamino.")
-        print("Dentro de Seguir Kamino.")
+        logging.debug("Dentro de Seguir Kamino.")
         if len(self.path) == 0:
             return
 
@@ -273,7 +269,6 @@ class KerberosIA:
     # Update IA - Kerberos IA8888888
     #----------------------------------
     def update(self):
-        print("kia Update !!")
         self.casilla = MazeLab.Maze.calcularCasilla(
             self.posicion.x,
             self.posicion.y
@@ -287,8 +282,8 @@ class KerberosIA:
 
         # Salto la alarma y buscamos y seguimos el camino.
         if self.playerDetectado:
-            print("** Dentro Detectado.")
-            print(f"Path BFS: {self.path}")
+            if self.log_debug:
+                print(f"Path BFS: {self.path}")
             if len(self.path) == 0 or (len(self.path) > 0 and self.path[-1] != self.casillaJugador):
                 self.path = self.calcular_camino_BFS(
                     self.casilla,
