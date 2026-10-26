@@ -566,18 +566,33 @@ def test_menuOpciones_pinta_estados_hover(monkeypatch, app, raton):
         app.menuOpciones()
 
 
-@pytest.mark.parametrize("pos, destino", [
-    ((500, 460), "seleccionNivel"),
-    ((500, 510), "inventarioJuego"),
-    ((500, 560), "seleccionNivel"),
-    ((500, 610), "menu"),
-    ((500, 660), "menu"),
-    ((500, 720), "menu"),            # Volver
-])
-def test_seleccionNivel_botones(monkeypatch, app, pos, destino):
-    lanzar(monkeypatch, app, destino)
-    clic(monkeypatch, pos)
-    with pytest.raises(Salida, match=destino):
+@pytest.mark.parametrize("dy, numero", [(dy, n) for dy, n in App.BOTONES_NIVEL if n])
+def test_seleccionNivel_boton_pide_confirmacion(monkeypatch, app, dy, numero):
+    pedidos = []
+
+    def confirmar(n):
+        pedidos.append(n)
+        raise Salida("confirmar")
+    monkeypatch.setattr(app, "confirmarCargaNivel", confirmar)
+    # Clic en el borde superior del botón (antes esa franja no respondía).
+    clic(monkeypatch, (500, 500 + dy + 2))
+    with pytest.raises(Salida):
+        app.seleccionNivel()
+    assert pedidos == [numero]
+
+
+def test_seleccionNivel_volver(monkeypatch, app):
+    lanzar(monkeypatch, app, "menu")
+    clic(monkeypatch, (500, 720))
+    with pytest.raises(Salida, match="menu"):
+        app.seleccionNivel()
+
+
+def test_seleccionNivel_cancelar_sigue_en_el_menu(monkeypatch, app):
+    # Si el diálogo se cancela, el menú sigue funcionando (y se puede salir).
+    monkeypatch.setattr(app, "confirmarCargaNivel", lambda n: False)
+    clic(monkeypatch, (500, 450), pygame.event.Event(pygame.QUIT))
+    with pytest.raises(SystemExit):
         app.seleccionNivel()
 
 
@@ -587,12 +602,18 @@ def test_seleccionNivel_quit(app):
         app.seleccionNivel()
 
 
-@pytest.mark.parametrize("raton", [(500, 450), (500, 500), (500, 550), (500, 600), (500, 650), (500, 720), (10, 10)])
-def test_seleccionNivel_pinta_estados_hover(monkeypatch, app, raton):
+@pytest.mark.parametrize("dy, numero", App.BOTONES_NIVEL)
+def test_seleccionNivel_resalta_boton_y_pinta_texto(monkeypatch, app, dy, numero):
+    raton = (600, 500 + dy + 3)
     monkeypatch.setattr(pygame.mouse, "get_pos", lambda: raton)
     monkeypatch.setattr(pygame.display, "update", lambda: (_ for _ in ()).throw(Salida("frame")))
     with pytest.raises(Salida):
         app.seleccionNivel()
+    esperado = Laberinto.color_overblue if numero is None else Laberinto.color_darkorange
+    assert app.pantalla.get_at((434, 500 + dy + 2))[:3] == esperado
+    # El texto (blanco) está dentro del rectángulo del botón.
+    blancos = [x for x in range(482, 600) if app.pantalla.get_at((x, 500 + dy + 22))[:3] == (255, 255, 255)]
+    assert blancos
 
 
 def test_on_init_con_menu(monkeypatch, app):

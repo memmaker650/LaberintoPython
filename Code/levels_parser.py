@@ -82,6 +82,125 @@ class LevelData:
                             f"Tile inválido en layer '{layer.name}' ({y},{x}): {v}"
                         )
         
+    # ----------------------------------------------------------------
+    # Análisis de coherencia del nivel.
+    # Los ids de tile empiezan en 1 y apuntan a tileNames (0 = vacío):
+    # 1 Floor, 2 Wall, 3 Bone, 4 DogDown1, 5 Exit...
+    # ----------------------------------------------------------------
+    def tile_name(self, tile_id: int) -> Optional[str]:
+        if 1 <= tile_id <= len(self.tileNames):
+            return self.tileNames[tile_id - 1]
+        return None
+
+    def es_suelo(self, x: int, y: int) -> bool:
+        return self.tile_name(self.get_tile("Background", x, y) or 0) == "Floor"
+
+    def casillas_suelo(self) -> set:
+        return {(x, y) for y, x, _ in self.tiles_iter("Background") if self.es_suelo(x, y)}
+
+    def alcanzables_desde(self, x: int, y: int) -> set:
+        # Casillas de suelo a las que se llega andando (4 direcciones) desde (x, y).
+        suelo = self.casillas_suelo()
+        if (x, y) not in suelo:
+            return set()
+        visitadas = {(x, y)}
+        pendientes = [(x, y)]
+        while pendientes:
+            cx, cy = pendientes.pop()
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                vecina = (cx + dx, cy + dy)
+                if vecina in suelo and vecina not in visitadas:
+                    visitadas.add(vecina)
+                    pendientes.append(vecina)
+        return visitadas
+
+    def zonas_suelo(self) -> List[int]:
+        # Tamaño de cada zona de suelo conectada, de mayor a menor.
+        restantes = self.casillas_suelo()
+        zonas = []
+        while restantes:
+            zona = self.alcanzables_desde(*next(iter(restantes)))
+            zonas.append(len(zona))
+            restantes -= zona
+        return sorted(zonas, reverse=True)
+
+    def objetos(self) -> Dict[str, List[tuple]]:
+        # {nombre: [(x, y), ...]} de la capa Objects.
+        resultado: Dict[str, List[tuple]] = {}
+        for y, x, tile_id in self.tiles_iter("Objects"):
+            if tile_id:
+                nombre = self.tile_name(tile_id) or f"id {tile_id}"
+                resultado.setdefault(nombre, []).append((x, y))
+        return resultado
+
+    def analizar(self) -> List[str]:
+        # Devuelve la lista de problemas encontrados (vacía si el nivel tiene sentido).
+        problemas: List[str] = []
+        for capa in ("Background", "Objects"):
+            if self.get_layer(capa) is None:
+                problemas.append(f"Falta la capa '{capa}'")
+        if problemas:
+            return problemas
+
+        ids_fondo = {t for _, _, t in self.tiles_iter("Background")}
+        raros = sorted(t for t in ids_fondo if self.tile_name(t) not in ("Floor", "Wall"))
+        if raros:
+            problemas.append(f"El fondo usa ids que no son Floor ni Wall: {raros}")
+
+        suelo = self.casillas_suelo()
+        if not suelo:
+            problemas.append("El nivel no tiene ninguna casilla de suelo")
+            return problemas
+
+        sx, sy = self.playerSpawnX, self.playerSpawnY
+        if not (0 <= sx < self.width and 0 <= sy < self.height):
+            problemas.append(f"La salida del jugador ({sx}, {sy}) está fuera del mapa")
+            alcanzables = set()
+        elif not self.es_suelo(sx, sy):
+            problemas.append(f"El jugador aparece sobre una pared en ({sx}, {sy})")
+            alcanzables = set()
+        else:
+            alcanzables = self.alcanzables_desde(sx, sy)
+            if len(alcanzables) < len(suelo):
+                problemas.append(
+                    f"{len(suelo) - len(alcanzables)} de {len(suelo)} casillas de suelo "
+                    f"no se pueden alcanzar desde el inicio del jugador")
+
+        zonas = self.zonas_suelo()
+        if len(zonas) > 1:
+            problemas.append(f"El suelo está dividido en {len(zonas)} zonas separadas: {zonas}")
+
+        borde = [(x, y) for (x, y) in suelo
+                 if x in (0, self.width - 1) or y in (0, self.height - 1)]
+        if borde:
+            problemas.append(f"El borde no está cerrado: {len(borde)} casillas de suelo en el borde del mapa")
+
+        objetos = self.objetos()
+        for nombre, posiciones in sorted(objetos.items()):
+            if nombre == "Floor":
+                problemas.append(f"La capa Objects contiene {len(posiciones)} tile 'Floor' "
+                                 f"(no es un objeto) en {posiciones}")
+                continue
+            if nombre.startswith("id "):
+                problemas.append(f"La capa Objects usa un {nombre} que no existe en tileNames")
+            en_pared = [p for p in posiciones if p not in suelo]
+            if en_pared:
+                problemas.append(f"{len(en_pared)} de {len(posiciones)} '{nombre}' están sobre una pared")
+            inalcanzables = [p for p in posiciones if p in suelo and p not in alcanzables]
+            if inalcanzables and alcanzables:
+                problemas.append(f"{len(inalcanzables)} '{nombre}' no se pueden alcanzar")
+
+        salidas = objetos.get("Exit", [])
+        if not salidas:
+            problemas.append("El nivel no tiene salida ('Exit')")
+        elif len(salidas) > 1:
+            problemas.append(f"El nivel tiene {len(salidas)} salidas")
+        return problemas
+
+    def mismo_mapa(self, otro: "LevelData") -> bool:
+        return (self.width, self.height, [l.tiles for l in self.layers]) == \
+               (otro.width, otro.height, [l.tiles for l in otro.layers])
+
     def debug_layers(self) -> None:
         print(f"Level: {os.path.basename(self.path)}")
         print(f"Total layers: {len(self.layers)}")
@@ -147,3 +266,26 @@ class LevelParser:
             playerSpawnY=spawn_y,
             layers=layers,
         )
+
+def informe_niveles(levels_dir: str) -> str:
+    # Texto con el análisis de todos los niveles de la carpeta, incluidos los repetidos.
+    niveles = LevelParser(levels_dir).load_all()
+    lineas: List[str] = []
+    for i, nivel in enumerate(niveles):
+        nombre = os.path.basename(nivel.path)
+        objetos = nivel.objetos()
+        resumen = ", ".join(f"{len(v)} {k}" for k, v in sorted(objetos.items()))
+        lineas.append(f"{nombre}: {nivel.width}x{nivel.height}, inicio ({nivel.playerSpawnX}, "
+                      f"{nivel.playerSpawnY}), {len(nivel.casillas_suelo())} casillas de suelo, {resumen}")
+        iguales = [os.path.basename(o.path) for o in niveles[:i] if o.mismo_mapa(nivel)]
+        if iguales:
+            lineas.append(f"  - Es idéntico a {', '.join(iguales)}")
+        problemas = nivel.analizar()
+        lineas.extend(f"  - {p}" for p in problemas)
+        if not problemas and not iguales:
+            lineas.append("  - OK")
+    return "\n".join(lineas)
+
+
+if __name__ == "__main__":
+    print(informe_niveles(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Levels")))

@@ -57,6 +57,24 @@ def entorno_limpio():
     _vaciar_grupos_maze()
 
 
+_obtener_eventos = pygame.event.get
+
+
+@pytest.fixture(autouse=True)
+def eventos_sin_bloqueo(monkeypatch):
+    # Los menús y el diálogo esperan eventos en un bucle infinito. Si un test se queda
+    # esperando eventos que nunca llegan, falla en vez de bloquear toda la suite.
+    vacios = [0]
+
+    def obtener(*args, **kwargs):
+        eventos = _obtener_eventos(*args, **kwargs)
+        vacios[0] = 0 if eventos else vacios[0] + 1
+        if vacios[0] > 600:
+            raise RuntimeError("El test espera eventos de pygame que nunca llegan (bucle bloqueado)")
+        return eventos
+    monkeypatch.setattr(pygame.event, "get", obtener)
+
+
 @pytest.fixture
 def maze():
     return MazeLab.Maze()

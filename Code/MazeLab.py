@@ -62,6 +62,7 @@ class Maze:
     movimientoCamara = int = 0
     flagCamara = bool = True
     flagCamaraCambio = bool = False
+    camaraFija = False  # True si todo el suelo cabe en pantalla: la cámara no se desplaza.
 
     posicionInitJugador = int = 0
 
@@ -131,9 +132,12 @@ class Maze:
 
     ObjetosNoPintar = []
 
-    def __init__(self):
+    def __init__(self, nivel=None):
         self.M = NUM_CASILLAS_H
         self.N = NUM_CASILLAS_VERTI
+
+        # Casillas donde el nivel sitúa enemigos (vacía con el laberinto por defecto).
+        self.posicionesEnemigos = []
 
         self.maze = [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -193,9 +197,69 @@ class Maze:
             0, 1, 6, 1, 1, 1, 2, 0, 1, 1, 1, 1, 1, 1, 1, 0, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ]
+        if nivel is not None:
+            self.cargarNivel(nivel)  # Si el nivel no es válido lanza ValueError antes de tocar nada.
+
+        # Los grupos de sprites son atributos de clase: se vacían para no acumular
+        # paredes y objetos del laberinto anterior al cargar otro nivel.
+        for grupo in vars(Maze).values():
+            if isinstance(grupo, pygame.sprite.Group):
+                grupo.empty()
+
         self.MazeLaberinto = self.maze
         self._crear_paredes()
         notification.notify(title='Maze created', message='X', app_name='OctoPussy', app_icon='./Resources/player.icns')
+
+    # Convierte un nivel JSON (levels_parser.LevelData) a los arrays del laberinto.
+    # El nivel se coloca dentro de la rejilla de NUM_CASILLAS_H x NUM_CASILLAS_VERTI,
+    # desplazado una casilla si cabe, para que quede rodeado de paredes aunque su borde esté abierto.
+    def cargarNivel(self, nivel):
+        if nivel.width > self.M or nivel.height > self.N:
+            raise ValueError(f"El nivel mide {nivel.width}x{nivel.height}; el máximo es {self.M}x{self.N}")
+
+        ox = 1 if nivel.width + 2 <= self.M else 0
+        oy = 1 if nivel.height + 2 <= self.N else 0
+        self.desplazamientoNivel = (ox, oy)
+
+        self.maze = [0] * (self.M * self.N)
+        self.mazeDataExtra = [0] * (self.M * self.N)
+        self.posicionesEnemigos = []
+
+        def casilla(x, y):
+            return (y + oy) * self.M + (x + ox)
+
+        for y, x, _ in nivel.tiles_iter("Background"):
+            if nivel.es_suelo(x, y):
+                self.maze[casilla(x, y)] = 1
+                self.mazeDataExtra[casilla(x, y)] = 1
+
+        # Objetos del nivel -> códigos de mazeDataExtra. Los que caen sobre pared se ignoran.
+        for nombre, posiciones in nivel.objetos().items():
+            for x, y in posiciones:
+                c = casilla(x, y)
+                if self.maze[c] != 1:
+                    continue
+                if nombre == "Bone":
+                    self.mazeDataExtra[c] = 2
+                elif nombre == "Exit":
+                    self.mazeDataExtra[c] = 4
+                elif nombre.startswith("Dog"):
+                    self.posicionesEnemigos.append(c)
+
+        # Si todo el suelo está en las columnas visibles no hace falta desplazar la cámara.
+        columnas = [c % self.M for c, v in enumerate(self.maze) if v == 1]
+        self.camaraFija = bool(columnas) and max(columnas) < NUM_CASILLAS_CAMARA
+
+        inicio = casilla(nivel.playerSpawnX, nivel.playerSpawnY)
+        if 0 <= nivel.playerSpawnX < nivel.width and 0 <= nivel.playerSpawnY < nivel.height \
+                and self.maze[inicio] == 1:
+            self.mazeDataExtra[inicio] = 44
+        else:
+            raise ValueError(f"El inicio del jugador ({nivel.playerSpawnX}, {nivel.playerSpawnY}) no está sobre suelo")
+
+    # Casilla de inicio del jugador según los datos del laberinto (código 44), o None.
+    def casillaInicioJugador(self):
+        return self.mazeDataExtra.index(44) if 44 in self.mazeDataExtra else None
 
     def _crear_paredes(self):
         bx = 0
@@ -404,6 +468,9 @@ class Maze:
             pygame.draw.rect(display_surface, Naranja, (self.PosicionPintarCasilla.x, self.PosicionPintarCasilla.y, CASILLA_PIXEL, CASILLA_PIXEL), 1)
 
     def moverCamara(self, posicionX, posicionY):
+        if self.camaraFija:
+            return
+
         # Debo calcular cuando el player está en la columna 27 y en una casilla de suelo.
         # print("Mov Cámara", self.movimientoCamara)
         UbicacionX = int(posicionX / CASILLA_PIXEL) 

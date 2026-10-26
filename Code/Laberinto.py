@@ -11,6 +11,7 @@ if DIR_CODIGO not in sys.path:
 # para que el juego arranque igual desde la raíz, desde Code/ o desde PyCharm.
 DIR_PROYECTO = os.path.dirname(DIR_CODIGO)
 os.chdir(DIR_PROYECTO)
+DIR_NIVELES = os.path.join(DIR_PROYECTO, "Levels")
 
 from typing import Any
 import mates
@@ -220,74 +221,12 @@ class App:
         self.ultimo_update_ia = pygame.time.get_ticks()
         self.ia_necesita_update = True 
 
-        # Cargando el escenario
-        self.maze = MazeLab.Maze()
-        logging.info("Cargado el escenario")
-        self.conexiones = MazeLab.Maze.precalcular_conexiones(
-            self.maze.MazeLaberinto,
-            MazeLab.NUM_CASILLAS_H,
-            MazeLab.NUM_CASILLAS_VERTI
-        )
-        logging.info("GEnero las conexiones del escenario")
-
         # Init Personajes
         self.player = player.Player()  # damos los valores por defecto.
-        self.enemigo = player.Enemigo()
-        self.JefeEnemigo = player.Enemigo()
-        self.JefeEnemigo.isJefeEnemigo = True
 
-        # Llenar el vector de enemigos
-        for i in range(0, self.numEnemigos):
-            self.enemigo = player.Enemigo()
-            self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-            self.enemigo.casilla = MazeLab.Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
-            resultado = self.maze.esAlcanzableCasilla(self.enemigo.casilla)
-            pos = posicion(0, 0)
-            pos = MazeLab.Maze.calcularPixelPorCasilla(self.enemigo.casilla)
-            while not self.maze.esAlcanzableCasilla(self.enemigo.casilla):
-                self.enemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-                self.enemigo.casilla = MazeLab.Maze.calcularCasilla(self.enemigo.x, self.enemigo.y)
-                pos = posicion(0, 0)
-                pos = MazeLab.Maze.calcularPixelPorCasilla(self.enemigo.casilla)
-                resultado = self.maze.esAlcanzableCasilla(self.enemigo.casilla)
-            
-            self.enemigo.x = pos.x
-            self.enemigo.y = pos.y
-            self.enemigosArray.append(self.enemigo)
-            self.EnemigosGroup.add(self.enemigo)
-        
-        # Ubicar al jefe enemigo.
-        self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-        self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(
-            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
-            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
-        )
-        pos = posicion(0, 0)
-        pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
-        resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
-        while not self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla):
-            self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-            self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(
-                self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
-                self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
-            )
-            pos = posicion(0, 0)
-            pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
-            resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
+        # Cargando el escenario por defecto y colocando enemigos y jefe.
+        self.prepararNivel()
 
-        # Cargamos Jefe enemigo
-        self.JefeEnemigo.x = pos.x - (self.JefeEnemigo.rect.width // 2)
-        self.JefeEnemigo.y = pos.y - (self.JefeEnemigo.rect.height // 2)
-        self.JefeEnemigo.rect.x = self.JefeEnemigo.x
-        self.JefeEnemigo.rect.y = self.JefeEnemigo.y
-        self.JefeEnemigo.prev_x = self.JefeEnemigo.x
-        self.JefeEnemigo.prev_y = self.JefeEnemigo.y
-        self.JefeEnemigo.kia.definirPosicion(
-            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
-            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
-        )
-        self.JefeEnemigo.kia.casilla = self.JefeEnemigo.casilla
-        
         pygame.init()
 
         self.font_alerta = pygame.font.SysFont('Impact', 32) 
@@ -318,6 +257,77 @@ class App:
         self.font_nivel = pygame.font.SysFont('Arial', 40)
         self.font_vida = pygame.font.SysFont('Arial', 27)
         self.font_fps = pygame.font.SysFont('Arial', 20)
+
+    # Prepara el laberinto (el de por defecto o un nivel JSON de la carpeta Levels)
+    # y coloca a los enemigos y al jefe sobre casillas de suelo.
+    def prepararNivel(self, nivel=None):
+        self.maze = MazeLab.Maze(nivel)
+        logging.info("Cargado el escenario")
+        self.conexiones = MazeLab.Maze.precalcular_conexiones(
+            self.maze.MazeLaberinto,
+            MazeLab.NUM_CASILLAS_H,
+            MazeLab.NUM_CASILLAS_VERTI
+        )
+        logging.info("GEnero las conexiones del escenario")
+
+        # Estado de la partida que depende del laberinto.
+        self.enemigosArray = []
+        self.EnemigosGroup = pygame.sprite.Group()
+        self.casillaObjetosTocados = set()
+        self.flagInit = True
+        self.rebuild_map = True
+        self.tiempo_inicio = pygame.time.get_ticks()
+
+        candidatas = self.casillasInicioEnemigos()
+
+        # Llenar el vector de enemigos
+        for i in range(0, self.numEnemigos):
+            self.enemigo = player.Enemigo()
+            self.enemigo.casilla = candidatas.pop(0)
+            pos = MazeLab.Maze.calcularPixelPorCasilla(self.enemigo.casilla)
+            self.enemigo.x = pos.x
+            self.enemigo.y = pos.y
+            self.enemigo.prev_x = self.enemigo.x
+            self.enemigo.prev_y = self.enemigo.y
+            self.enemigosArray.append(self.enemigo)
+            self.EnemigosGroup.add(self.enemigo)
+
+        # Ubicar al jefe enemigo en el centro de su casilla.
+        self.JefeEnemigo = player.Enemigo()
+        self.JefeEnemigo.isJefeEnemigo = True
+        self.JefeEnemigo.casilla = candidatas.pop(0)
+        pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
+        self.JefeEnemigo.x = pos.x - (self.JefeEnemigo.rect.width // 2)
+        self.JefeEnemigo.y = pos.y - (self.JefeEnemigo.rect.height // 2)
+        self.JefeEnemigo.rect.x = self.JefeEnemigo.x
+        self.JefeEnemigo.rect.y = self.JefeEnemigo.y
+        self.JefeEnemigo.prev_x = self.JefeEnemigo.x
+        self.JefeEnemigo.prev_y = self.JefeEnemigo.y
+        self.JefeEnemigo.kia.definirPosicion(pos.x, pos.y)
+        self.JefeEnemigo.kia.casilla = self.JefeEnemigo.casilla
+
+    # Casillas de suelo visibles donde pueden empezar los enemigos, sin repetir y lejos del jugador.
+    # Primero las que marca el nivel (perros del JSON) y luego el resto, ambas en orden aleatorio.
+    def casillasInicioEnemigos(self):
+        ancho = MazeLab.NUM_CASILLAS_H
+        inicio = self.maze.casillaInicioJugador()
+
+        def valida(c):
+            if self.maze.MazeLaberinto[c] != 1 or not MazeLab.Maze.elementoVisibleCasilla(c):
+                return False
+            if inicio is None:
+                return True
+            distancia = abs(c % ancho - inicio % ancho) + abs(c // ancho - inicio // ancho)
+            return distancia >= 4
+
+        delNivel = [c for c in dict.fromkeys(self.maze.posicionesEnemigos) if valida(c)]
+        resto = [c for c in range(len(self.maze.MazeLaberinto)) if valida(c) and c not in delNivel]
+        random.shuffle(delNivel)
+        random.shuffle(resto)
+        candidatas = delNivel + resto
+        if len(candidatas) < self.numEnemigos + 1:
+            raise ValueError("El laberinto no tiene suficientes casillas de suelo para los enemigos")
+        return candidatas
 
     def verInfoEnemigos(self):
         enemy = player.Enemigo()
@@ -589,32 +599,26 @@ class App:
                 # updates the frames of the game
                 pygame.display.update()
                 
+    # Botones del menú Seleccionar Nivel: (y relativa a la mitad de la pantalla, número de nivel).
+    # None es el botón Volver. El nivel N se carga del fichero Levels/Level_N.json.
+    BOTONES_NIVEL = [(-60, 1), (-10, 2), (40, 3), (90, 4), (140, 5), (200, None)]
+
     def seleccionNivel (self):
         color = (255, 255, 255)
 
         if self.flagPrint_info:
             print("Dentro de Selecciona Nivel!!")     
 
-        # stores the width of the
-        # screen into a variable
         width = self.pantalla.get_width()
-
-        # stores the height of the
-        # screen into a variable
         height = self.pantalla.get_height()
 
         # defining a font
         smallfont = pygame.font.SysFont('Corbel', 35)
         Titlefont = pygame.font.SysFont('Impact', 150)
 
-        # rendering a text written in Corbel font.
         textTitle = Titlefont.render('Octopussy', True, color_otherorange)
-        text1 = smallfont.render('Nivel 1: x1', True, color)
-        text2 = smallfont.render('Nivel 2: y2', True, color)
-        text3 = smallfont.render('Nivel 3: z3', True, color)
-        text4 = smallfont.render('Nivel 4: a4', True, color)
-        text5 = smallfont.render('Nivel 5: B5', True, color)
-        text6 = smallfont.render('Volver', True, color)
+        textos = {numero: smallfont.render(f'Nivel {numero}' if numero else 'Volver', True, color)
+                  for _, numero in self.BOTONES_NIVEL}
 
         mouse = pygame.mouse.get_pos()
 
@@ -626,122 +630,157 @@ class App:
                     pygame.quit()
                     sys.exit()
 
-                # Chequeamos click del ratón
+                # Chequeamos click del ratón (zona = rectángulo pintado del botón)
                 if ev.type == pygame.MOUSEBUTTONDOWN:
-
-                    # Chequeamos si click en algún botón
-                    # Botón 1 - Nivel 1
-                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 50, 230, 40):
-                        logging.info("Pulsado Botón Selección de Nivel.")
-                        self.tocaMenu = False
-                        self.seleccionNivel()
-
-                    # Botón 2 - Nivel 3
-                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2), 230, 40):
-                        logging.info("Pulsado entrar al Inventario del Juego")
-                        self.tocaMenu = False
-                        self.inventarioJuego()
-
-                    # Botón 3 - Nivel 2
-                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) + 50, 230, 40):
-                        logging.info("Pulsado Botón : Estadísticas de Juego del Jugadr.")
-                        self.tocaMenu = False
-                        self.seleccionNivel()
-
-                    # Botón 4 - Nivel 4
-                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 100, 230, 40):
-                        logging.info("Pulsado Botón Voler al Menú Principal")
-                        self.tocaMenu = False
-                        self.menu()
-
-                    # Botón 5 - Nivel 5
-                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 150, 230, 40):
-                        logging.info("Pulsado Botón Voler al Menú Principal")
-                        self.tocaMenu = False
-                        self.menu()
-                    
-                    # Botón 5 - Volver al menú principal del Juego
-                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 210, 230, 40):
-                        logging.info("Pulsado Botón Voler al Menú Principal")
-                        self.tocaMenu = False
-                        self.menu()
+                    mouse = ev.pos
+                    for dy, numero in self.BOTONES_NIVEL:
+                        if not mates.dentroBoton(mouse, int(width / 2), int(height / 2) + dy, 230, 40):
+                            continue
+                        if numero is None:
+                            logging.info("Pulsado Botón Voler al Menú Principal")
+                            self.tocaMenu = False
+                            self.menu()
+                        else:
+                            logging.info("Pulsado Botón Nivel %s", numero)
+                            self.confirmarCargaNivel(numero)
 
             if self.salir == False:
-                # fills the screen with a color
                 self.pantalla.fill((60, 25, 60))
-
-                # stores the (x,y) coordinates into
-                # the variable as a tuple
                 mouse = pygame.mouse.get_pos()
 
-                # Compruebo si el ratón está dentro de botón.
-                # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
-                if mates.dentroBoton(mouse, width / 2, (height / 2) - 60, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [width / 2, (height / 2) - 60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
-                # Botón 2 - Cargar partida
-                elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
-                # Botón 3 - Opciones
-                elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
-                # Botón 4 - Nivel 
-                elif mates.dentroBoton(mouse, width / 2, (height / 2) +100, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 90, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
-                # Botón 5 - Nivel
-                elif mates.dentroBoton(mouse, width / 2, (height / 2) +150, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int((height / 2)) + 140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
-                # Botón Volver
-                elif mates.dentroBoton(mouse, width / 2, (height / 2) +210, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_overblue, [int(width / 2), int((height / 2)) + 200, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                else:
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +90, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +140, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +200, 230, 40])
+                for dy, numero in self.BOTONES_NIVEL:
+                    encima = mates.dentroBoton(mouse, int(width / 2), int(height / 2) + dy, 230, 40)
+                    if numero is None:
+                        colorBoton = color_overblue if encima else color_darkblue
+                    else:
+                        colorBoton = color_darkorange if encima else color_dark
+                    pygame.draw.rect(self.pantalla, colorBoton, [int(width / 2), int(height / 2) + dy, 230, 40])
+                    self.pantalla.blit(textos[numero], ((width / 2) + 50, (height / 2) + dy + 10))
 
-                # superimposing the text onto our button
                 self.pantalla.blit(textTitle, ((width / 2) - 400, (height / 2) - 400))
-                self.pantalla.blit(text1, ((width / 2) + 50, (height / 2) - 50))
-                self.pantalla.blit(text2, ((width / 2) + 50, (height / 2)))
-                self.pantalla.blit(text3, ((width / 2) + 50, (height / 2) + 50))
-                self.pantalla.blit(text4, ((width / 2) + 50, (height / 2) + 100))
-                self.pantalla.blit(text5, ((width / 2) + 50, (height / 2) + 150))
-                self.pantalla.blit(text6, ((width / 2) + 50, (height / 2) + 210))
 
                 # updates the frames of the game
                 pygame.display.update()
+
+    # Pide confirmación y, si el usuario acepta, carga Levels/Level_<numero>.json y empieza la partida.
+    # Devuelve False si se cancela o el nivel no se puede cargar.
+    def confirmarCargaNivel(self, numero):
+        fichero = f"Level_{numero}.json"
+        try:
+            nivel = LevelParser(DIR_NIVELES).load_by_name(fichero)
+        except (FileNotFoundError, json.JSONDecodeError, ValueError) as error:
+            logging.error("No se puede cargar %s: %s", fichero, error)
+            self.dialogoConfirmacion(f"No se puede cargar el Nivel {numero}", [str(error)],
+                                     textoSi="Aceptar", textoNo=None)
+            return False
+
+        detalle = [f"Fichero {fichero}: {nivel.width}x{nivel.height} casillas"]
+        problemas = nivel.analizar()
+        if problemas:
+            detalle.append(f"Aviso: el nivel tiene {len(problemas)} problema(s). {problemas[0]}")
+
+        if not self.dialogoConfirmacion(f"¿Cargar el Nivel {numero}?", detalle):
+            logging.info("Carga del Nivel %s cancelada", numero)
+            return False
+
+        try:
+            self.prepararNivel(nivel)
+        except ValueError as error:
+            logging.error("Nivel %s no válido: %s", numero, error)
+            self.dialogoConfirmacion(f"No se puede cargar el Nivel {numero}", [str(error)],
+                                     textoSi="Aceptar", textoNo=None)
+            return False
+
+        logging.info("Cargado el Nivel %s desde %s", numero, fichero)
+        self.HeadNivel.definirNumeroNivel(numero)
+        self.tocaMenu = False
+        self.on_execute()
+        return True
+
+    # Ventana de diálogo modal sobre la pantalla actual.
+    # Devuelve True con el botón de aceptar o INTRO, y False con el de cancelar o ESC.
+    # Con textoNo=None sólo muestra el botón de aceptar (mensaje informativo).
+    def dialogoConfirmacion(self, titulo, detalle=(), textoSi="Sí", textoNo="Cancelar"):
+        anchoPantalla, altoPantalla = self.pantalla.get_size()
+        fondo = self.pantalla.copy()
+        oscuro = pygame.Surface((anchoPantalla, altoPantalla), pygame.SRCALPHA)
+        oscuro.fill((0, 0, 0, 160))
+
+        fuenteTitulo = pygame.font.SysFont('Impact', 34)
+        fuenteTexto = pygame.font.SysFont('Corbel', 24)
+        fuenteBoton = pygame.font.SysFont('Corbel', 30)
+
+        anchoCaja = 600
+        lineas = []
+        for texto in detalle:
+            lineas.extend(self.partirTexto(texto, fuenteTexto, anchoCaja - 40))
+
+        caja = pygame.Rect(0, 0, anchoCaja, 170 + len(lineas) * 28)
+        caja.center = (anchoPantalla // 2, altoPantalla // 2)
+
+        self.botonDialogoSi = pygame.Rect(0, 0, 160, 46)
+        self.botonDialogoNo = pygame.Rect(0, 0, 160, 46) if textoNo else None
+        if self.botonDialogoNo:
+            self.botonDialogoSi.midbottom = (caja.centerx - 95, caja.bottom - 20)
+            self.botonDialogoNo.midbottom = (caja.centerx + 95, caja.bottom - 20)
+        else:
+            self.botonDialogoSi.midbottom = (caja.centerx, caja.bottom - 20)
+
+        while True:
+            for ev in pygame.event.get():
+                if ev.type == pygame.QUIT:
+                    self.salir = True
+                    pygame.quit()
+                    sys.exit()
+                if ev.type == pygame.KEYDOWN:
+                    if ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        return True
+                    if ev.key == pygame.K_ESCAPE:
+                        return False
+                if ev.type == pygame.MOUSEBUTTONDOWN and getattr(ev, "button", 1) == 1:
+                    if self.botonDialogoSi.collidepoint(ev.pos):
+                        return True
+                    if self.botonDialogoNo and self.botonDialogoNo.collidepoint(ev.pos):
+                        return False
+
+            raton = pygame.mouse.get_pos()
+            self.pantalla.blit(fondo, (0, 0))
+            self.pantalla.blit(oscuro, (0, 0))
+            pygame.draw.rect(self.pantalla, (60, 25, 60), caja, border_radius=12)
+            pygame.draw.rect(self.pantalla, color_otherorange, caja, 3, border_radius=12)
+
+            textoTitulo = fuenteTitulo.render(titulo, True, BLANCO)
+            self.pantalla.blit(textoTitulo, textoTitulo.get_rect(midtop=(caja.centerx, caja.top + 20)))
+            for i, linea in enumerate(lineas):
+                textoLinea = fuenteTexto.render(linea, True, BLANCO)
+                self.pantalla.blit(textoLinea, (caja.left + 20, caja.top + 75 + i * 28))
+
+            botones = [(self.botonDialogoSi, textoSi, color_darkorange, color_dark)]
+            if self.botonDialogoNo:
+                botones.append((self.botonDialogoNo, textoNo, color_overblue, color_darkblue))
+            for rect, texto, colorEncima, colorNormal in botones:
+                pygame.draw.rect(self.pantalla, colorEncima if rect.collidepoint(raton) else colorNormal,
+                                 rect, border_radius=8)
+                textoBoton = fuenteBoton.render(texto, True, BLANCO)
+                self.pantalla.blit(textoBoton, textoBoton.get_rect(center=rect.center))
+
+            pygame.display.update()
+
+    # Divide un texto en líneas que quepan en 'ancho' píxeles con la fuente indicada.
+    @staticmethod
+    def partirTexto(texto, fuente, ancho):
+        lineas = []
+        actual = ""
+        for palabra in texto.split():
+            prueba = f"{actual} {palabra}".strip()
+            if fuente.size(prueba)[0] <= ancho or not actual:
+                actual = prueba
+            else:
+                lineas.append(actual)
+                actual = palabra
+        if actual:
+            lineas.append(actual)
+        return lineas
 
     def inventarioJuego(self):
         # TO DO Pantalla de inventario. De momento se vuelve al menú desde el que se llamó.
@@ -1326,6 +1365,7 @@ class App:
                 pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
                 self.player.x = pos.x
                 self.player.y = pos.y
+                self.player.guardarPosicionPrevia()  # si no, una colisión lo devolvería a (23, 23)
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
             else:
                 self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
