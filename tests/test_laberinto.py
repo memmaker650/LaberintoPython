@@ -1,3 +1,7 @@
+import os
+import subprocess
+import sys
+
 import pygame
 import pytest
 
@@ -52,11 +56,24 @@ def enemigos_normales(app):
 
 
 # ---------- Funciones y clases auxiliares ----------
-def test_load_image_desde_code(monkeypatch):
-    # Laberinto.load_image antepone "../": funciona si se ejecuta desde Code/.
-    monkeypatch.chdir(CODE_DIR)
+def test_load_image():
     assert isinstance(Laberinto.load_image("player.png", "Resources", alpha=True), pygame.Surface)
     assert isinstance(Laberinto.load_image("player.png", "Resources"), pygame.Surface)
+
+
+@pytest.mark.parametrize("carpeta", ["Code", "tests", "."])
+def test_arranca_desde_cualquier_carpeta(carpeta):
+    # Reproduce el error de lanzar el juego desde Code/: importar Laberinto carga todas las imágenes.
+    raiz = os.path.dirname(CODE_DIR)
+    codigo = ("import sys, types; "
+              "sys.modules['plyer'] = types.SimpleNamespace(notification=types.SimpleNamespace(notify=lambda **k: None), orientation=None); "
+              f"sys.path.insert(0, {CODE_DIR!r}); "
+              "import Laberinto, os; print(os.getcwd())")
+    env = dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy")
+    r = subprocess.run([sys.executable, "-c", codigo], cwd=os.path.join(raiz, carpeta),
+                       env=env, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.strip().splitlines()[-1] == raiz
 
 
 def test_load_image_inexistente_sale():
@@ -445,8 +462,8 @@ def test_menu_quit_sale(app):
 
 
 @pytest.mark.parametrize("pos, destino", [
-    ((500, 450), "on_execute"),    # Nuevo Juego
-    ((500, 550), "menuOpciones"),  # Opciones
+    ((500, 450), "on_execute"),    # Nuevo Juego  (botón en y 440-480)
+    ((500, 510), "menuOpciones"),  # Opciones     (botón en y 490-530)
 ])
 def test_menu_botones(monkeypatch, app, pos, destino):
     lanzar(monkeypatch, app, destino)
@@ -454,6 +471,46 @@ def test_menu_botones(monkeypatch, app, pos, destino):
     with pytest.raises(Salida, match=destino):
         app.menu()
     assert app.tocaMenu is False
+
+
+def test_menu_cargar_partida_no_abre_opciones(monkeypatch, app):
+    # Antes, pulsar "Cargar Partida" (y 540-580) abría Opciones.
+    lanzar(monkeypatch, app, "menuOpciones")
+    lanzar(monkeypatch, app, "on_execute")
+    clic(monkeypatch, (500, 560), pygame.event.Event(pygame.QUIT))
+    with pytest.raises(SystemExit):
+        app.menu()
+
+
+def test_menu_clic_usa_posicion_del_evento(monkeypatch, app):
+    # El ratón "está" fuera de los botones, pero el evento de clic ocurre sobre Opciones.
+    lanzar(monkeypatch, app, "menuOpciones")
+    monkeypatch.setattr(pygame.mouse, "get_pos", lambda: (10, 10))
+    pygame.event.clear()
+    pygame.event.post(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=(500, 510), button=1))
+    with pytest.raises(Salida, match="menuOpciones"):
+        app.menu()
+
+
+# Botones de los dos menús: (menú, y relativa a la mitad de la pantalla, color al pasar el ratón).
+BOTONES_MENUS = [
+    ("menu", -60, Laberinto.color_darkorange), ("menu", -10, Laberinto.color_darkorange),
+    ("menu", 40, Laberinto.color_darkorange), ("menu", 190, Laberinto.color_rojobrillante),
+    ("menuOpciones", -60, Laberinto.color_darkorange), ("menuOpciones", -10, Laberinto.color_darkorange),
+    ("menuOpciones", 40, Laberinto.color_darkorange), ("menuOpciones", 190, Laberinto.color_overblue),
+]
+
+
+@pytest.mark.parametrize("nombre_menu, dy, color_hover", BOTONES_MENUS)
+def test_menus_resaltan_el_boton_bajo_el_raton(monkeypatch, app, nombre_menu, dy, color_hover):
+    w, h = app.pantalla.get_size()
+    # Ratón dentro del botón, cerca de su borde superior (donde antes fallaba el resaltado).
+    raton = (w // 2 + 100, h // 2 + dy + 3)
+    monkeypatch.setattr(pygame.mouse, "get_pos", lambda: raton)
+    monkeypatch.setattr(pygame.display, "update", lambda: (_ for _ in ()).throw(Salida("frame")))
+    with pytest.raises(Salida):
+        getattr(app, nombre_menu)()
+    assert app.pantalla.get_at((w // 2 + 2, h // 2 + dy + 2))[:3] == color_hover
 
 
 def test_menu_boton_salir(monkeypatch, app):
@@ -472,9 +529,9 @@ def test_menu_pinta_estados_hover(monkeypatch, app, raton):
 
 
 @pytest.mark.parametrize("pos, destino", [
-    ((500, 460), "seleccionNivel"),  # Seleccionar Nivel
-    ((500, 610), "seleccionNivel"),  # Estadísticas (de momento también abre Selección de Nivel)
-    ((500, 700), "menu"),            # Volver
+    ((500, 445), "seleccionNivel"),  # Seleccionar Nivel (y 440-480)
+    ((500, 495), "seleccionNivel"),  # Estadísticas (y 490-530; de momento abre Selección de Nivel)
+    ((500, 700), "menu"),            # Volver (y 690-730)
 ])
 def test_menuOpciones_botones(monkeypatch, app, pos, destino):
     lanzar(monkeypatch, app, destino)
@@ -486,10 +543,19 @@ def test_menuOpciones_botones(monkeypatch, app, pos, destino):
 def test_menuOpciones_inventario(monkeypatch, app):
     llamadas = []
     monkeypatch.setattr(app, "inventarioJuego", lambda: llamadas.append(1))
-    clic(monkeypatch, (500, 510), pygame.event.Event(pygame.QUIT))
+    clic(monkeypatch, (500, 560), pygame.event.Event(pygame.QUIT))  # Inventario (y 540-580)
     with pytest.raises(SystemExit):
         app.menuOpciones()
     assert llamadas == [1]
+
+
+@pytest.mark.parametrize("pos", [(500, 790), (500, 900)])
+def test_menuOpciones_sin_zonas_fantasma(monkeypatch, app, pos):
+    # Antes había zonas de clic sin botón en +290 y +400 que volvían al menú principal.
+    lanzar(monkeypatch, app, "menu")
+    clic(monkeypatch, pos, pygame.event.Event(pygame.QUIT))
+    with pytest.raises(SystemExit):
+        app.menuOpciones()
 
 
 @pytest.mark.parametrize("raton", [(500, 450), (500, 500), (500, 550), (500, 700), (10, 10)])

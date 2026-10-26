@@ -1,3 +1,17 @@
+import os
+import sys
+
+# Los módulos del juego (mates, player, MazeLab...) están junto a este fichero.
+DIR_CODIGO = os.path.dirname(os.path.abspath(__file__))
+if DIR_CODIGO not in sys.path:
+    sys.path.insert(0, DIR_CODIGO)
+
+# Todas las rutas del juego (Resources, log, DB, Levels, Code/assets) son relativas a la
+# raíz del proyecto. Nos situamos ahí ANTES de importar los módulos que cargan imágenes,
+# para que el juego arranque igual desde la raíz, desde Code/ o desde PyCharm.
+DIR_PROYECTO = os.path.dirname(DIR_CODIGO)
+os.chdir(DIR_PROYECTO)
+
 from typing import Any
 import mates
 import player
@@ -69,7 +83,7 @@ def load_image(nombre, dir_imagen, alpha=False):
     # Encontramos la ruta completa de la imagen
     ruta = os.path.join(dir_imagen, nombre)
     try:
-        image = pygame.image.load("../" + ruta)
+        image = pygame.image.load(ruta)
     except:
         print("Error, no se puede cargar la imagen: " + ruta)
         logging.error("Error, no se puede cargar la imagen: " + ruta)
@@ -378,6 +392,7 @@ class App:
 
                 # Chequeamos click del ratón
                 if ev.type == pygame.MOUSEBUTTONDOWN:
+                    mouse = ev.pos
 
                     # Chequeamos si click en algún botón
                     # Botón 1 - Nuevo Juego
@@ -385,14 +400,14 @@ class App:
                         self.tocaMenu = False
                         self.on_execute()
 
-                    # Botón 4 - Cargar partida
-                    #TO DO Programación botón cargar partida.
-
-                    # Botón 3 - Opciones
-                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2) + 40, 230, 40):
-                        print("Opciones del juego, pulsada.")
+                    # Botón 2 - Opciones (misma zona en la que se pinta el botón)
+                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2) - 10, 230, 40):
+                        logging.info("Opciones del juego, pulsada.")
                         self.tocaMenu = False
                         self.menuOpciones()
+
+                    # Botón 3 - Cargar partida
+                    #TO DO Programación botón cargar partida.
 
                     # Botón 4 - Salir del juego
                     if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 190, 230, 40):
@@ -416,14 +431,14 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 2 - Cargar partida
+                # Botón 2
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 3 - Opciones
-                elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
+                # Botón 3
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)+40 , 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
@@ -498,38 +513,29 @@ class App:
 
                 # Chequeamos click del ratón
                 if ev.type == pygame.MOUSEBUTTONDOWN:
+                    mouse = ev.pos
 
                     # Chequeamos si click en algún botón
                     # Botón 1 - Seleccion Nivel
-                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 50, 230, 40):
+                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 60, 230, 40):
                         logging.info("Pulsado Botón Selección de Nivel.")
                         self.tocaMenu = False
                         self.seleccionNivel()
 
-                    # Botón 4 - Estadísticas Juego
-                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) + 100, 230, 40):
+                    # Botón 2 - Estadísticas Juego (TO DO: de momento abre Selección de Nivel)
+                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 10, 230, 40):
                         logging.info("Pulsado Botón : Estadísticas de Juego del Jugador.")
                         self.tocaMenu = False
                         self.seleccionNivel()
 
                     # Botón 3 - Inventario Juego
-                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2), 230, 40):
+                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2) + 40, 230, 40):
                         logging.info("Pulsado entrar al Inventario del Juego")
                         self.tocaMenu = False
                         self.inventarioJuego()
 
                     # Botón 4 - Volver al menú principal del Juego
                     if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 190, 230, 40):
-                        logging.info("Pulsado Botón Voler al Menú Principal")
-                        self.tocaMenu = False
-                        self.menu()
-
-                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 290, 230, 40):
-                        logging.info("Pulsado Botón Voler al Menú Principal")
-                        self.tocaMenu = False
-                        self.menu()
-                    
-                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 400, 230, 40):
                         logging.info("Pulsado Botón Voler al Menú Principal")
                         self.tocaMenu = False
                         self.menu()
@@ -549,14 +555,14 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 2 - Cargar partida
+                # Botón 2
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 3 - Opciones
-                elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
+                # Botón 3
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)+40 , 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
