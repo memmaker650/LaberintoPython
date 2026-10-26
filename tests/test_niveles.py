@@ -166,6 +166,7 @@ def test_informe_niveles():
     assert "Level_0.json: 27x27" in texto
     assert "Es idéntico a Level_0.json, Level_2.json, Level_3.json, Level_4.json" in texto
     assert "Level_1.json: 25x25, inicio (23, 1)" in texto
+    assert "1 Exit, oscuro (90%)" in texto
 
 
 def test_informe_niveles_ok(tmp_path):
@@ -406,8 +407,16 @@ def test_confirmarCargaNivel_cancelar_y_avisa_de_problemas(monkeypatch, app, tmp
 def test_confirmarCargaNivel_nivel_sin_problemas_no_avisa(monkeypatch, app):
     dialogos = []
     monkeypatch.setattr(app, "dialogoConfirmacion", lambda t, d=(), **k: dialogos.append(d) or False)
+    app.confirmarCargaNivel(3)
+    assert dialogos == [["Fichero Level_3.json: 27x27 casillas"]]
+
+
+def test_confirmarCargaNivel_avisa_de_nivel_oscuro(monkeypatch, app):
+    dialogos = []
+    monkeypatch.setattr(app, "dialogoConfirmacion", lambda t, d=(), **k: dialogos.append(d) or False)
     app.confirmarCargaNivel(2)
-    assert dialogos == [["Fichero Level_2.json: 27x27 casillas"]]
+    assert dialogos == [["Fichero Level_2.json: 27x27 casillas",
+                         "Nivel oscuro: sólo verás lo que ilumine tu linterna."]]
 
 
 def test_confirmarCargaNivel_si_carga_y_empieza(monkeypatch, app):

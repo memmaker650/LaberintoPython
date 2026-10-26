@@ -756,3 +756,22 @@ def test_tecla_intro_alarma_se_mantiene(app):
     teclas((pygame.KEYDOWN, pygame.K_RETURN))
     ejecutar(app)
     assert app.JefeEnemigo.alarma is True
+
+
+@pytest.mark.parametrize("dy, texto", [(-60, "Seleccionar Nivel"), (-10, "Estadísticas"),
+                                       (40, "Inventario Juego"), (190, "Volver")])
+def test_menuOpciones_textos_dentro_del_boton(monkeypatch, app, dy, texto):
+    monkeypatch.setattr(pygame.mouse, "get_pos", lambda: (10, 10))
+    monkeypatch.setattr(pygame.display, "update", lambda: (_ for _ in ()).throw(Salida("frame")))
+    with pytest.raises(Salida):
+        app.menuOpciones()
+    w, h = app.pantalla.get_size()
+    boton = pygame.Rect(w // 2, h // 2 + dy, 230, 40)
+    blancos = [(x, y) for y in range(boton.top, boton.bottom) for x in range(w // 2 - 60, w)
+               if app.pantalla.get_at((x, y))[:3] == (255, 255, 255)]
+    assert blancos, f"no se ha pintado el texto '{texto}'"
+    assert all(boton.collidepoint(p) for p in blancos), f"'{texto}' se sale del botón"
+    # Centrado: margen izquierdo y derecho parecidos.
+    izquierda = min(x for x, _ in blancos) - boton.left
+    derecha = boton.right - max(x for x, _ in blancos)
+    assert abs(izquierda - derecha) <= 4

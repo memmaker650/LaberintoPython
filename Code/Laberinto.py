@@ -22,6 +22,7 @@ import logging
 import statistics
 import MazeLab
 import Sonido
+import Luces
 import random
 import os
 import sys
@@ -137,6 +138,10 @@ class App:
     impactoEnemigo = False
     impactoJefeEnemigo = False
     enemigoImpactado = None
+
+    # Nivel oscuro: linterna del jugador (None si el nivel está iluminado).
+    oscuridad = 0.0
+    linterna = None
     posEnemyImpc = posicion(0, 0)
 
     pintaRectángulos = bool = True
@@ -277,6 +282,15 @@ class App:
         self.flagInit = True
         self.rebuild_map = True
         self.tiempo_inicio = pygame.time.get_ticks()
+
+        # Niveles oscuros: sólo se ve lo que ilumina la linterna (código en Luces.py).
+        self.oscuridad = nivel.oscuridad if nivel is not None else 0.0
+        if self.oscuridad > 0:
+            zonaLaberinto = (0, BIAS, SCREEN_WIDTH, SCREEN_HEIGHT - BIAS)
+            self.linterna = Luces.Linterna(zonaLaberinto, opacidad=self.oscuridad)
+            self.linterna.apuntar(self.player.orientacion, instantaneo=True)
+        else:
+            self.linterna = None
 
         candidatas = self.casillasInicioEnemigos()
 
@@ -591,10 +605,10 @@ class App:
 
                 # superimposing the text onto our button
                 self.pantalla.blit(textTitle, ((width / 2) - 400, (height / 2) - 400))
-                self.pantalla.blit(text1, ((width / 2) + 50, (height / 2) - 50))
-                self.pantalla.blit(text2, ((width / 2) + 50, (height / 2)))
-                self.pantalla.blit(text3, ((width / 2) + 50, (height / 2) + 50))
-                self.pantalla.blit(text4, ((width / 2) + 50, (height / 2) + 200))
+                # Textos centrados en su botón (230x40) para que los largos quepan dentro.
+                for texto, dy in ((text1, -60), (text2, -10), (text3, 40), (text4, 190)):
+                    boton = pygame.Rect(int(width / 2), int(height / 2) + dy, 230, 40)
+                    self.pantalla.blit(texto, texto.get_rect(center=boton.center))
 
                 # updates the frames of the game
                 pygame.display.update()
@@ -676,6 +690,8 @@ class App:
 
         detalle = [f"Fichero {fichero}: {nivel.width}x{nivel.height} casillas"]
         problemas = nivel.analizar()
+        if nivel.oscuridad:
+            detalle.append("Nivel oscuro: sólo verás lo que ilumine tu linterna.")
         if problemas:
             detalle.append(f"Aviso: el nivel tiene {len(problemas)} problema(s). {problemas[0]}")
 
@@ -1439,6 +1455,15 @@ class App:
             if self.JefeEnemigo.flagDisparo == True:
                 # logging.debug('Pintamos Disparo DEL JEFE enemigo.')  # Comentado para mejorar rendimiento
                 self.JefeEnemigo.balas.draw(self.pantalla)
+
+            # Nivel oscuro: la linterna sigue la dirección del jugador y no atraviesa
+            # paredes, enemigos ni puertas.
+            if self.linterna is not None:
+                self.linterna.apuntar(self.player.orientacion)
+                obstaculos = [s.rect for s in self.maze.MazeParedes]
+                obstaculos += [s.rect for s in self.EnemigosGroup]
+                obstaculos += [p.rect for p in self.maze.MazePuertas]
+                self.linterna.dibujar(self.pantalla, self.player.rect.center, obstaculos)
 
         self.iteracion += 1
 

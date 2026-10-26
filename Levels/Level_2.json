@@ -6,6 +6,7 @@
   "tileHeight": 32,
   "playerSpawnX": 25,
   "playerSpawnY": 1,
+  "oscuridad": 0.9,
   "layers": [
     {
       "name": "Background",

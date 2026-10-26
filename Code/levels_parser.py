@@ -24,6 +24,7 @@ class LevelData:
     playerSpawnX: int
     playerSpawnY: int
     layers: List[Layer]
+    oscuridad: float = 0.0  # 0 = nivel iluminado; 0.9 = 90% de oscuridad (sólo se ve con la linterna)
 
     def get_layer(self, name: str) -> Optional[Layer]:
         for layer in self.layers:
@@ -63,6 +64,9 @@ class LevelData:
 
         if not self.layers:
             raise ValueError("Debe existir al menos un layer")
+
+        if not 0 <= self.oscuridad <= 1:
+            raise ValueError(f"oscuridad debe estar entre 0 y 1; es {self.oscuridad}")
 
         for layer in self.layers:
             if not isinstance(layer.name, str) or not layer.name:
@@ -246,6 +250,7 @@ class LevelParser:
         tile_h = int(raw.get("tileHeight", 0))
         spawn_x = int(raw.get("playerSpawnX", 0))
         spawn_y = int(raw.get("playerSpawnY", 0))
+        oscuridad = float(raw.get("oscuridad", 0.0))
 
         layers_raw = raw.get("layers", [])
         layers: List[Layer] = []
@@ -265,6 +270,7 @@ class LevelParser:
             playerSpawnX=spawn_x,
             playerSpawnY=spawn_y,
             layers=layers,
+            oscuridad=oscuridad,
         )
 
 def informe_niveles(levels_dir: str) -> str:
@@ -275,6 +281,8 @@ def informe_niveles(levels_dir: str) -> str:
         nombre = os.path.basename(nivel.path)
         objetos = nivel.objetos()
         resumen = ", ".join(f"{len(v)} {k}" for k, v in sorted(objetos.items()))
+        if nivel.oscuridad:
+            resumen += f", oscuro ({round(nivel.oscuridad * 100)}%)"
         lineas.append(f"{nombre}: {nivel.width}x{nivel.height}, inicio ({nivel.playerSpawnX}, "
                       f"{nivel.playerSpawnY}), {len(nivel.casillas_suelo())} casillas de suelo, {resumen}")
         iguales = [os.path.basename(o.path) for o in niveles[:i] if o.mismo_mapa(nivel)]
