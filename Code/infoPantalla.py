@@ -35,13 +35,13 @@ class panelPuntuacion(pygame.sprite.Sprite):
         self.textoPuntos = self.baseString
 
     def incrementarPuntos(self, subida):
-        puntos += subida
+        self.puntos += subida
 
     def restarPuntos(self, subida):
-        puntos -= subida
+        self.puntos -= subida
 
     def reiniciarPuntos(self, subida):
-        puntos = 0
+        self.puntos = 0
     
     def conversionTexto(self):
         self.textoPuntos = str(self.puntos).zfill(6)
@@ -137,13 +137,13 @@ class infoArmasMunicion(pygame.sprite.Sprite):
         self.municion[self.armaSeleccionada-1] = self.municionArmaSeleccionada
 
     def definirMunicion(self, armaNum, municion):
-        self.Armas[armaNum] = municion
+        self.municion[armaNum] = municion
 
     def incrementarMunicion(self, armaNum, cargador):
-        self.Armas[armaNum] = self.Armas[armaNum]+ cargador
+        self.municion[armaNum] = self.municion[armaNum] + cargador
 
     def gastarMunicion(self, armaNum):
-        self.Armas[armaNum] = self.Armas[armaNum] -1
+        self.municion[armaNum] = self.municion[armaNum] - 1
 
     def conversionTexto(self):
         if self.armaSeleccionada == 1:

@@ -135,10 +135,9 @@ class Disparos(pygame.sprite.Sprite):
             self.municion += valor
 
     def rotarBala(self, angulo):
-        return pygame.transform.rotate(self.imagen, angulo)
+        return pygame.transform.rotate(self.image, angulo)
 
     def update(self):
-        logging.info('Dentro UPDATE BALA.')
         if self.orientacion == 0: # Arriba
             self.rect.y -= 3
         elif self.orientacion == 1: # Derecha
@@ -155,6 +154,8 @@ class Disparos(pygame.sprite.Sprite):
         elif self.rect.x > SCREEN_WIDTH:
             self.kill()
         elif self.rect.y < BIAS:
+            self.kill()
+        elif self.rect.y > SCREEN_HEIGHT:
             self.kill()
 
 
@@ -220,7 +221,7 @@ class Player(pygame.sprite.Sprite):
         if (self.speedV < 6):
             self.speedV = self.speedV + 1
         else:
-            self.speedH = 2
+            self.speedV = 2
 
     def guardarPosicionPrevia(self):
         self.prev_x = self.x
@@ -281,10 +282,10 @@ class Player(pygame.sprite.Sprite):
         # logging.info("Player INFO: Velocidad V %s y VeloH %s", self.speedV, self.speedH)
 
     def rotar(self, angulo):
-        return pygame.transform.rotate(self.imagen, angulo)
+        return pygame.transform.rotate(self.image, angulo)
 
     def escalaGrises(self):
-        return pygame.transform.grayscale(self.imagen)
+        return pygame.transform.grayscale(self.image)
 
     def disparo(self):
         if self.municion > 0:
@@ -332,6 +333,7 @@ class Enemigo(pygame.sprite.Sprite):
     bubble_start_time = pygame.time.get_ticks()
     bubble_duration = 10000  # 10 segundos
     fade_duration = 2000     # últimos 2 segundos para desvanecerse
+    fontBocadillo = None
 
     posicionesRecorridas = []
     tiempoOlvido = 5
@@ -360,7 +362,10 @@ class Enemigo(pygame.sprite.Sprite):
 
     def __init__(self):
         super().__init__()
-        self.orientacion = 'N'
+        self.orientacion = 2  # Abajo
+
+        # Lista propia de cada enemigo (no compartida a nivel de clase).
+        self.posicionesRecorridas = []
 
         # Inicio IA enemigos
         self.kia = KerberosIA.KerberosIA()
@@ -492,7 +497,10 @@ class Enemigo(pygame.sprite.Sprite):
         self.prev_x = self.x
         self.prev_y = self.y
 
-        self.kia.definirPosicion(self.x, self.y)
+        self.kia.definirPosicion(
+            self.x + (self.rect.width // 2),
+            self.y + (self.rect.height // 2)
+        )
 
         # Actualizar el rectángulo de colisión con la posición actual
         self.rect.x = self.x
@@ -506,8 +514,8 @@ class Enemigo(pygame.sprite.Sprite):
         # Sölo usar la IA al pasar el centro de la casilla actual.
         if MazeLab.Maze.estaCentroCasilla(cx, cy):
             # print("Dentro ZENTRO Centro Kasiya - cálculo IA.")
-            self.kia.casilla = MazeLab.Maze.calcularCasilla(self.x, self.y)
-            self.kia.definirPosicion(self.x, self.y)
+            self.kia.casilla = MazeLab.Maze.calcularCasilla(cx, cy)
+            self.kia.definirPosicion(cx, cy)
 
             dir = self.kia.update()
             # print("Dir = ", dir)
@@ -536,7 +544,7 @@ class Enemigo(pygame.sprite.Sprite):
         # Caso extraño    
         else:
             self.moveDown()
-            print("Jefe Enemigo mueve abajo")
+            logging.debug("Jefe Enemigo mueve abajo")
 
     def revertir_movimiento(self):
         # Revertir a la posición previa tras colisión
@@ -545,6 +553,11 @@ class Enemigo(pygame.sprite.Sprite):
             self.y = self.prev_y
 
     def cambiar_direccion(self):
+        if self.isJefeEnemigo:
+            if self.kia is not None:
+                self.kia.colisionParedes = True
+            return
+
         # Cambio simple de dirección: invertir velocidad vertical
         self.speedV = -self.speedV 
 
@@ -569,7 +582,8 @@ class Enemigo(pygame.sprite.Sprite):
         logging.info('Movimiento %s hasta x: %s, y %s', direccion, finalx, finaly)
 
     def detectarColision(self):
-        print("Dentro colision en ENEMIGO. <-- ")
+        # print("Dentro colision en ENEMIGO. <-- ")
+        pass
 
         # self.isColision = True
         # self.kia.colisionParedes = True
@@ -580,28 +594,33 @@ class Enemigo(pygame.sprite.Sprite):
         # 
         # self.isColision = False
         
+    def imagenActual(self):
+        return self.imageJefeEnemigo if self.isJefeEnemigo else self.imageEnemigo
+
     def rotar(self, angulo):
-        return pygame.transform.rotate(self.imagen, angulo)
+        return pygame.transform.rotate(self.imagenActual(), angulo)
 
     def escalaGrises(self):
-        return pygame.transform.grayscale(self.imagen)
+        return pygame.transform.grayscale(self.imagenActual())
 
     # Aquí guardamos la posición donde está el enemigo donde no está el jugador.
     def cargarCasillaRecorrido(self, casilla):
-        existe = any(v == 3 for v, t in self.posicionesRecorridas)
+        existe = any(v == casilla for v, t in self.posicionesRecorridas)
         # Sólo cargamos posiciones que no hayamos recorrido.
         if not existe:
             self.posicionesRecorridas.append((casilla, time.time()))
 
     def borrarRecorridosAntiguos(self):
         ahora = time.time()
-        self.posicionesRecorridas = [(v, t) for (v, t) in self.posicionesRecorridas if ahora - t < self.tiempoOlvido]
+        # Se modifica la lista en sitio para que kia.KasRecorridas siga apuntando a ella.
+        self.posicionesRecorridas[:] = [(v, t) for (v, t) in self.posicionesRecorridas if ahora - t < self.tiempoOlvido]
         
     def bocadilloTexto(self, surface, text, posx, posy, alpha, color=(255, 255, 255), text_color=(0, 0, 0)):
         # Dibuja un bocadillo de texto con transparencia controlada por alpha.
-        print("   Dentro Bocadillo !!")
-        font = pygame.font.SysFont("arial", 20)
-        text_surf = font.render(text, True, text_color)
+        # La fuente se crea una sola vez y se reutiliza.
+        if Enemigo.fontBocadillo is None:
+            Enemigo.fontBocadillo = pygame.font.SysFont("arial", 20)
+        text_surf = Enemigo.fontBocadillo.render(text, True, text_color)
         text_rect = text_surf.get_rect()
 
         padding = 10

@@ -18,11 +18,11 @@ class Sonido:
         return pygame.mixer.Sound(ruta+fichero)
 
     def reproducir_alerta(self):
-        if not self.reproduciendo:
+        if not self.reproducirMusica:
             print("🔊 ALERTA activada")
             self.reproducirMusica = True
 
     def detener_alerta(self):
-        if self.reproduciendo:
+        if self.reproducirMusica:
             print("🔇 ALERTA detenida")
             self.reproducirMusica = False

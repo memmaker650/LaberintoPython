@@ -1,8 +1,10 @@
 **** Notas: Situación como estamos, TO DO things :
 ---------------------------------------------------
-- Colocar 2 puertas que restan en su lugar.
-- IA Mover también de forma lateral.
-- IA de los enemigos para que disparen.
-- Mensaje de FIN ALARMA cuando el contador llegue a 0.
-- Mensaje de CUIDADO cuando reloj igual a 10.
-- 
+- Comprobar chequeo de las 2 puertas, no se puedan atravesar.
+- IA enemigos vayan donde está el jefe que ha detectado al jugador.
+- IA Jefe Enemigo y resto de enemigos vayan donde está el enemigo que ha detectado al jugador.
+- Evitar Jefe Enemigo se pueda meter en las paredes.
+- Al chocar enemigo y jugador ad+ del efecto rojo tiene que perder vida el jugador.
+- Disparos.
+- Aplicar Kerberos IA a todos los enemigos.
+- BFS camino está vacío.

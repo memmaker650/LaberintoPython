@@ -26,6 +26,7 @@ class KerberosIA:
     # Info importante pasada a través del enemigo.
     conexiones = None
     Laberinto = []
+    log_debug = False
 
     def __init__(self, x = 0, y = 0):
         logging.info('Dentro de Inteligencia Artificial, KerberosIA by Jorge Vega')
@@ -44,7 +45,6 @@ class KerberosIA:
 
         # Info importante pasada a través del enemigo.
         self.KasRecorridas = set()
-
 
         self.ultimaCasilla = -1
         self.direccionActual = 1
@@ -65,9 +65,9 @@ class KerberosIA:
         self.estado = state
     
     def cambioEstado(self):
-        if (self.estado == 0 and self.isPlayerDetected == True):
+        if (self.estado == 0 and self.playerDetectado == True):
             self.estado = 1
-        elif (self.estado == 1 and self.isPlayerDetected == True):
+        elif (self.estado == 1 and self.playerDetectado == True):
             self.estado = 2
         elif (self.estado == 2):
             self.gritarAlarma()
@@ -76,18 +76,15 @@ class KerberosIA:
             self.estado = 3
     
     def cambiarSentido(self):
-        # Cambio simple de dirección: invertir velocidad vertical
-        self.speedV = -self.speedV 
-
         # 0 Arriba, 1 Derecha, 2 Abajo y 3 Izquierda
-        if self.orientation == 0:
-            self.orientation = 2
-        elif self.orientation == 2:
-            self.orientation = 0
-        elif self.orientation == 1:
-            self.orientation = 3
-        elif self.orientation == 3:
-            self.orientation = 1
+        if self.orientacion == 0:
+            self.orientacion = 2
+        elif self.orientacion == 2:
+            self.orientacion = 0
+        elif self.orientacion == 1:
+            self.orientacion = 3
+        elif self.orientacion == 3:
+            self.orientacion = 1
 
     def esInterseccion(self):
         opciones = self.conexiones.get(self.casilla, [])
@@ -155,6 +152,46 @@ class KerberosIA:
         elif direccion == 3:
             return casilla - 1
 
+    def _casillas_recorridas(self):
+        casillas = set()
+
+        if not self.KasRecorridas:
+            return casillas
+
+        for elemento in self.KasRecorridas:
+            if isinstance(elemento, tuple) and len(elemento) > 0:
+                casillas.add(elemento[0])
+            else:
+                casillas.add(elemento)
+
+        return casillas
+
+    def elegirDireccionEvitar(self, direccionBloqueada=None):
+        opciones = list(self.conexiones.get(self.casilla, []))
+
+        if not opciones:
+            return self.orientacion
+
+        if direccionBloqueada in opciones and len(opciones) > 1:
+            opciones = [d for d in opciones if d != direccionBloqueada]
+
+        # Evitar dar media vuelta salvo que no quede otra.
+        opuesta = (self.orientacion + 2) % 4
+        opciones_sin_opuesta = [d for d in opciones if d != opuesta]
+        if opciones_sin_opuesta:
+            opciones = opciones_sin_opuesta
+
+        casillas_recorridas = self._casillas_recorridas()
+        candidatas = sorted(
+            opciones,
+            key=lambda d: (
+                self.obtenerCasillaSiguiente(self.casilla, d) in casillas_recorridas,
+                d == self.orientacion
+            )
+        )
+
+        return candidatas[0]
+
     def calcular_camino_BFS(self, casillaInicio, casillaObjetivo):
         cola = deque()
         cola.append((casillaInicio, [casillaInicio]))
@@ -182,9 +219,7 @@ class KerberosIA:
                     casillaActual,
                     direccion
                 )
-
                 if siguiente not in visitados:
-
                     cola.append(
                         (siguiente, camino + [siguiente])
                     )
@@ -207,8 +242,31 @@ class KerberosIA:
             return random.choice(posibles)
 
         return opuesta
+
+    # Método para seguir un camino tras detectar Player
+    #----------------------------------------------------------
+    def seguirCamino(self):
+        logging.debug("Dentro de Seguir Kamino.")
+        if len(self.path) == 0:
+            return
+
+        # Si hemos llegado a una casilla del camino,
+        # eliminar todas las anteriores.
+        while len(self.path) > 0 and self.path[0] == self.casilla:
+            self.path.pop(0)
+
+        # Destino alcanzado
+        if len(self.path) == 0:
+            return
+
+        siguienteCasilla = self.path[0]
+
+        self.orientacion = self.calcularDireccion(
+            self.casilla,
+            siguienteCasilla
+        )
     
-    # Update IA - Kerberos IA
+    # Update IA - Kerberos IA8888888
     #----------------------------------
     def update(self):
         self.casilla = MazeLab.Maze.calcularCasilla(
@@ -216,11 +274,23 @@ class KerberosIA:
             self.posicion.y
         )
 
+        if self.colisionParedes:
+            self.path = []
+            self.orientacion = self.elegirDireccionEvitar(self.orientacion)
+            self.colisionParedes = False
+            return self.orientacion
+
+        # Salto la alarma y buscamos y seguimos el camino.
         if self.playerDetectado:
-            self.path = self.calcular_camino_BFS(
-                self.casilla,
-                self.casillaJugador
-            )
+            if self.log_debug:
+                print(f"Path BFS: {self.path}")
+            if len(self.path) == 0 or (len(self.path) > 0 and self.path[-1] != self.casillaJugador):
+                self.path = self.calcular_camino_BFS(
+                    self.casilla,
+                    self.casillaJugador
+                )
+            if len(self.path) > 0:
+                self.seguirCamino()
         else:
             # SOLO actuar al entrar en nueva casilla
             if self.casilla != self.ultimaCasilla:
@@ -232,24 +302,20 @@ class KerberosIA:
                 )
                 # Callejón
                 if len(opciones) == 1:
-                    print("Callejón")
+                    if self.log_debug:
+                        print("Callejón")
                     self.orientacion = opciones[0]
 
                 # Pasillo
                 elif len(opciones) == 2:
-                    print("Pasillo")
-                    opuesta = (self.orientacion + 2) % 4
-
-                    posibles = [
-                        d for d in opciones
-                        if d != opuesta
-                    ]
-                    if posibles:
-                        self.orientacion = posibles[0]
+                    if self.log_debug:
+                        print("Pasillo")
+                    self.orientacion = self.elegirDireccionEvitar()
 
                 # Intersección
                 elif len(opciones) >= 3:
-                    print("Intersección")
-                    self.orientacion = self.elegirDireccion()
+                    if self.log_debug:
+                        print("Intersección")
+                    self.orientacion = self.elegirDireccionEvitar()
 
         return self.orientacion

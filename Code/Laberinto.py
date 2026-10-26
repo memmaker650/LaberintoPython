@@ -1,3 +1,17 @@
+import os
+import sys
+
+# Los módulos del juego (mates, player, MazeLab...) están junto a este fichero.
+DIR_CODIGO = os.path.dirname(os.path.abspath(__file__))
+if DIR_CODIGO not in sys.path:
+    sys.path.insert(0, DIR_CODIGO)
+
+# Todas las rutas del juego (Resources, log, DB, Levels, Code/assets) son relativas a la
+# raíz del proyecto. Nos situamos ahí ANTES de importar los módulos que cargan imágenes,
+# para que el juego arranque igual desde la raíz, desde Code/ o desde PyCharm.
+DIR_PROYECTO = os.path.dirname(DIR_CODIGO)
+os.chdir(DIR_PROYECTO)
+
 from typing import Any
 import mates
 import player
@@ -69,7 +83,7 @@ def load_image(nombre, dir_imagen, alpha=False):
     # Encontramos la ruta completa de la imagen
     ruta = os.path.join(dir_imagen, nombre)
     try:
-        image = pygame.image.load("../" + ruta)
+        image = pygame.image.load(ruta)
     except:
         print("Error, no se puede cargar la imagen: " + ruta)
         logging.error("Error, no se puede cargar la imagen: " + ruta)
@@ -100,8 +114,8 @@ class posicion:
     y = 0
 
     def __init__(self, valorX, valorY):
-        x = valorX
-        y = valorY
+        self.x = valorX
+        self.y = valorY
             
 class App:
     windowWidth = SCREEN_WIDTH
@@ -121,6 +135,7 @@ class App:
     impactoPlayer = False
     impactoEnemigo = False
     impactoJefeEnemigo = False
+    enemigoImpactado = None
     posEnemyImpc = posicion(0, 0)
 
     pintaRectángulos = bool = True
@@ -128,9 +143,11 @@ class App:
 
     # Flags de Depuración de información.
     flagPrint_info = False
+    flagPrint_ColisionInfo = False
     flagDebugEnemigos = True
     flagPintarBocadilloTexto = False
     bocadillo_timer = 0
+    textoBocadillo = None
     grupo_explosiones = pygame.sprite.Group()
     flagExplosion = False
     explosion_timer = 0
@@ -241,20 +258,35 @@ class App:
         
         # Ubicar al jefe enemigo.
         self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-        self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+        self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(
+            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+        )
         pos = posicion(0, 0)
-        pos = MazeLab.Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
+        pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
         resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
         while not self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla):
             self.JefeEnemigo.inicio(SCREEN_WIDTH, SCREEN_HEIGHT)
-            self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+            self.JefeEnemigo.casilla = MazeLab.Maze.calcularCasilla(
+                self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+                self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+            )
             pos = posicion(0, 0)
-            pos = MazeLab.Maze.calcularPixelPorCasilla(self.JefeEnemigo.casilla)
+            pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
             resultado = self.maze.esAlcanzableCasilla(self.JefeEnemigo.casilla)
 
         # Cargamos Jefe enemigo
-        self.JefeEnemigo.x = pos.x
-        self.JefeEnemigo.y = pos.y
+        self.JefeEnemigo.x = pos.x - (self.JefeEnemigo.rect.width // 2)
+        self.JefeEnemigo.y = pos.y - (self.JefeEnemigo.rect.height // 2)
+        self.JefeEnemigo.rect.x = self.JefeEnemigo.x
+        self.JefeEnemigo.rect.y = self.JefeEnemigo.y
+        self.JefeEnemigo.prev_x = self.JefeEnemigo.x
+        self.JefeEnemigo.prev_y = self.JefeEnemigo.y
+        self.JefeEnemigo.kia.definirPosicion(
+            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+        )
+        self.JefeEnemigo.kia.casilla = self.JefeEnemigo.casilla
         
         pygame.init()
 
@@ -313,13 +345,15 @@ class App:
         
         self.pantalla.blit(text1, (position.x, position.y))
         # Y pintamos también una línea que una estas cruces.
+        # posicionesRecorridas guarda tuplas (casilla, tiempo).
         for elemento in reversed(nemesis.posicionesRecorridas):
-            posi: posicion = self.maze.centroCasilla(elemento)
+            casilla = elemento[0] if isinstance(elemento, tuple) else elemento
+            posi: posicion = self.maze.centroCasilla(casilla)
             if not flagInit:
-                pygame.draw.line(self.pantalla, (255, 255, 0), posi.x, posi.y, 3)
-                pygame.display.flip()
+                pygame.draw.line(self.pantalla, (255, 255, 0), (puntoPrevio.x, puntoPrevio.y), (posi.x, posi.y), 3)
             else:
                 flagInit = False
+            puntoPrevio = posi
 
     def menu(self):
         color = (255, 255, 255)
@@ -346,15 +380,19 @@ class App:
         text3 = smallfont.render('Cargar Partida', True, color)
         text4 = smallfont.render('Salir', True, color)
 
+        mouse = pygame.mouse.get_pos()
+
         while True:
             for ev in pygame.event.get():
 
-                if ev.type == pygame.QUIT | ev.type == pygame.K_ESCAPE:
+                if ev.type == pygame.QUIT or (ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE):
                     self.salir = True
                     pygame.quit()
+                    sys.exit()
 
                 # Chequeamos click del ratón
                 if ev.type == pygame.MOUSEBUTTONDOWN:
+                    mouse = ev.pos
 
                     # Chequeamos si click en algún botón
                     # Botón 1 - Nuevo Juego
@@ -362,20 +400,21 @@ class App:
                         self.tocaMenu = False
                         self.on_execute()
 
-                    # Botón 4 - Cargar partida
-                    #TO DO Programación botón cargar partida.
-
-                    # Botón 3 - Opciones
-                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2) + 40, 230, 40):
-                        print("Opciones del juego, pulsada.")
+                    # Botón 2 - Opciones (misma zona en la que se pinta el botón)
+                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2) - 10, 230, 40):
+                        logging.info("Opciones del juego, pulsada.")
                         self.tocaMenu = False
                         self.menuOpciones()
+
+                    # Botón 3 - Cargar partida
+                    #TO DO Programación botón cargar partida.
 
                     # Botón 4 - Salir del juego
                     if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 190, 230, 40):
                         self.tocaMenu = False
                         self.salir = True
                         pygame.quit()
+                        sys.exit()
 
             if self.salir == False:
                 # fills the screen with a color
@@ -392,14 +431,14 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 2 - Cargar partida
+                # Botón 2
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 3 - Opciones
-                elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
+                # Botón 3
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)+40 , 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
@@ -462,47 +501,41 @@ class App:
         text3 = smallfont.render('Inventario Juego', True, color)
         text4 = smallfont.render('Volver', True, color)
 
+        mouse = pygame.mouse.get_pos()
+
         while True:
             for ev in pygame.event.get():
 
                 if ev.type == pygame.QUIT:
                     self.salir = True
                     pygame.quit()
+                    sys.exit()
 
                 # Chequeamos click del ratón
                 if ev.type == pygame.MOUSEBUTTONDOWN:
+                    mouse = ev.pos
 
                     # Chequeamos si click en algún botón
                     # Botón 1 - Seleccion Nivel
-                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 50, 230, 40):
+                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 60, 230, 40):
                         logging.info("Pulsado Botón Selección de Nivel.")
                         self.tocaMenu = False
                         self.seleccionNivel()
 
-                    # Botón 4 - Estadísticas Juego
-                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) + 100, 230, 40):
+                    # Botón 2 - Estadísticas Juego (TO DO: de momento abre Selección de Nivel)
+                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 10, 230, 40):
                         logging.info("Pulsado Botón : Estadísticas de Juego del Jugador.")
                         self.tocaMenu = False
                         self.seleccionNivel()
 
                     # Botón 3 - Inventario Juego
-                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2), 230, 40):
+                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2) + 40, 230, 40):
                         logging.info("Pulsado entrar al Inventario del Juego")
                         self.tocaMenu = False
                         self.inventarioJuego()
 
                     # Botón 4 - Volver al menú principal del Juego
                     if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 190, 230, 40):
-                        logging.info("Pulsado Botón Voler al Menú Principal")
-                        self.tocaMenu = False
-                        self.menu()
-
-                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 290, 230, 40):
-                        logging.info("Pulsado Botón Voler al Menú Principal")
-                        self.tocaMenu = False
-                        self.menu()
-                    
-                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 400, 230, 40):
                         logging.info("Pulsado Botón Voler al Menú Principal")
                         self.tocaMenu = False
                         self.menu()
@@ -522,14 +555,14 @@ class App:
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 2 - Cargar partida
+                # Botón 2
                 elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_darkblue, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 3 - Opciones
-                elif mates.dentroBoton(mouse, width / 2, (height / 2)+50 , 230, 40):
+                # Botón 3
+                elif mates.dentroBoton(mouse, width / 2, (height / 2)+40 , 230, 40):
                     pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
                     pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
@@ -583,12 +616,15 @@ class App:
         text5 = smallfont.render('Nivel 5: B5', True, color)
         text6 = smallfont.render('Volver', True, color)
 
+        mouse = pygame.mouse.get_pos()
+
         while True:
             for ev in pygame.event.get():
 
                 if ev.type == pygame.QUIT:
                     self.salir = True
                     pygame.quit()
+                    sys.exit()
 
                 # Chequeamos click del ratón
                 if ev.type == pygame.MOUSEBUTTONDOWN:
@@ -707,6 +743,10 @@ class App:
                 # updates the frames of the game
                 pygame.display.update()
 
+    def inventarioJuego(self):
+        # TO DO Pantalla de inventario. De momento se vuelve al menú desde el que se llamó.
+        logging.info("Inventario del juego: pendiente de programar.")
+
     def on_init(self):
         pygame.display.set_caption('Laberinto SquidCastle 2026, Aurora.')
         logging.info("Inicio del juego.")
@@ -754,38 +794,27 @@ class App:
 
         self.floor_surf = pygame.image.load("./Resources/floor.png").convert()
         self.wall_surf = pygame.image.load("./Resources/Wall.png").convert()
+
+        # Imágenes del efecto rojo (se calculan una sola vez).
+        self.imagePlayer_roja = self.player.dibujaDañoPlayer()
+        self.imageEnemigo_roja = self.enemigo.dibujaDaño(False)
+        self.imageJefe_roja = self.JefeEnemigo.dibujaDaño(True)
         # self.wall_surf = pygame.image.load("./Resources/WallBricks.png").convert()
 
     def on_loop(self):
         self.player.update()
 
-        # Jefe Enemigo - OPTIMIZACIÓN: IA solo cada X milisegundos
-        tiempo_actual = pygame.time.get_ticks()
-        tiempo_desde_ultimo_update = tiempo_actual - self.ultimo_update_ia
-
-       # Detectar cambios importantes que requieren actualización inmediata
-        cambio_importante = (
-            self.JefeEnemigo.isColision or  # Colisión detectada
-            self.JefeEnemigo.kia.colisionParedes or  # Chocó con pared
-            self.JefeEnemigo.alarma  # Alarma activada
-        )
-    
-        # Ejecutar IA solo si:
-        # 1. Ha pasado el intervalo de tiempo O
-        # 2. Hay un cambio importante (colisión, alarma, etc.)
-        if tiempo_desde_ultimo_update >= self.ia_update_interval or cambio_importante or self.ia_necesita_update:
-            self.JefeEnemigo.casilla = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
-            self.JefeEnemigo.kia.casilla = self.JefeEnemigo.casilla
-            self.JefeEnemigo.kia.definirPosicion(self.JefeEnemigo.x, self.JefeEnemigo.y)
-            
-            dir = self.JefeEnemigo.kia.update()
-            self.JefeEnemigo.elegirDireccion(dir)
-            
-            self.ultimo_update_ia = tiempo_actual
-            self.ia_necesita_update = False
-        
+        # Jefe Enemigo: la IA (kia.update) y el movimiento se ejecutan en updateJefe() al
+        # pasar por el centro de cada casilla. Aquí sólo se sincroniza la información.
         # Actualizar casilla y recorrido siempre (son operaciones rápidas)
-        self.JefeEnemigo.casilla = self.maze.calcularCasilla(self.JefeEnemigo.x, self.JefeEnemigo.y)
+        self.JefeEnemigo.casilla = self.maze.calcularCasilla(
+            self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+            self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+        )
+        self.JefeEnemigo.kia.casillaJugador = self.maze.calcularCasilla(
+            self.player.x + (self.player.rect.width // 2),
+            self.player.y + (self.player.rect.height // 2)
+        )
         self.JefeEnemigo.cargarCasillaRecorrido(self.JefeEnemigo.casilla)
 
         # Resto de enemigos.
@@ -821,7 +850,10 @@ class App:
             self.player.x -= CASILLA_PIXEL
 
             for x in self.EnemigosGroup:
-                x.rect.x -= CASILLA_PIXEL
+                x.x -= CASILLA_PIXEL
+                x.rect.x = x.x
+                if x.prev_x is not None:
+                    x.prev_x -= CASILLA_PIXEL
 
             # Puertas (bisagra y rect deben moverse juntos)
             for puerta in self.maze.MazePuertas:
@@ -843,8 +875,7 @@ class App:
                 x.rect.x -= CASILLA_PIXEL
             for x in self.maze.MazeLlavePuerta:
                 x.rect.x -= CASILLA_PIXEL
-                logging.info("Desplazar Llave Puertas")
-                print("Desplazar Llave Puertas")
+                logging.debug("Desplazar Llave Puertas")
             for x in self.maze.MazeOro:
                 x.rect.x -= CASILLA_PIXEL
             for x in self.maze.MazePilaHuesos:
@@ -874,8 +905,7 @@ class App:
             if s is not self.JefeEnemigo
         ]
         if colision_btEnemies:
-            logging.info(f'KOLLsiON NTRE Enemigos DETECTADA - num ELem ({len(colision_btEnemies)})')
-            print(f'KOLLsiON NTRE Enemigos DETECTADA - num ELem ({len(colision_btEnemies)})')
+            logging.debug('KOLLsiON NTRE Enemigos DETECTADA - num ELem (%s)', len(colision_btEnemies))
             if self.flagPrint_info:
                 print(f'COLISION NTRE Enemigos DETECTADA - num ELem ({len(colision_btEnemies)})')
  
@@ -887,14 +917,11 @@ class App:
             for cl in colision_btEnemies:
                 logging.info(f'ENEMIGO colisionó con JeFE NeMesis')
 
-        if pygame.sprite.collide_rect(self.player, self.JefeEnemigo):
-            print("¡C O L I SS E U M !")
- 
         # Colisión del jugador con ENEMIGOS
         #----------------------------------------------------------
         colision_playerNemesis = pygame.sprite.spritecollide(self.player, self.EnemigosGroup, False)
         if colision_playerNemesis:
-            print("KOL Ntre player y Enemigo.")
+            logging.debug("KOL Ntre player y Enemigo.")
             # Pintar Enemigo y el player
             self.tiempo_rojo = pygame.time.get_ticks()
             self.efecto_rojo = True
@@ -902,12 +929,29 @@ class App:
 
             # Enemigo es Jefe Enemigo.
             if pygame.sprite.collide_rect(self.player, self.JefeEnemigo):
-                print("¡C O L I SS E U M !")
+                logging.debug("¡C O L I SS E U M !")
                 self.impactoJefeEnemigo = True
+
+                self.bocadillo_timer = 180
+                self.flagPintarBocadilloTexto = True
+                self.textoBocadillo = "Hay un INTRUSO !! Venid"
+
+                Kfinal = self.maze.calcularCasilla(
+                    self.player.x + (self.player.rect.width // 2),
+                    self.player.y + (self.player.rect.height // 2)
+                )
+                for nemesis in self.EnemigosGroup:
+                    Kinicio = self.maze.calcularCasilla(
+                        nemesis.x + (nemesis.rect.width // 2),
+                        nemesis.y + (nemesis.rect.height // 2)
+                    )
+                    nemesis.kia.playerDetectado = True
+                    nemesis.kia.casillaJugador = Kfinal
+                    nemesis.kia.path = nemesis.kia.calcular_camino_BFS(Kinicio, Kfinal)
+
             else:
                 if colision_playerNemesis:
-                    logging.info(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
-                    print(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
+                    logging.debug('COLISION PLAYER con ENEMIGO - num ELem (%s)', len(colision_playerNemesis))
                     if self.flagPrint_info:
                         print(f'COLISION PLAYER con ENEMIGO - num ELem ({len(colision_playerNemesis)})')
 
@@ -915,11 +959,36 @@ class App:
                     self.player.y = self.player.prev_y
 
                     self.impactoEnemigo = True
+                    self.enemigoImpactado = colision_playerNemesis[0]
 
-                    for cl in colision_playerNemesis:
-                        logging.info(f'PLAYER colisionó con ENEMIGO')
-                        self.posEnemyImpc.x = cl.x
-                        self.posEnemyImpc.y = cl.y
+                    self.bocadillo_timer = 180
+                    self.flagPintarBocadilloTexto = True
+                    self.textoBocadillo = "INTRUSO encontrado !! Jefe aquí !!!"
+
+                    logging.info("PLAYER ha activado alerta del Jefe Enemigo")
+
+                    Kinicio = self.maze.calcularCasilla(
+                        self.JefeEnemigo.x + (self.JefeEnemigo.rect.width // 2),
+                        self.JefeEnemigo.y + (self.JefeEnemigo.rect.height // 2)
+                    )
+                    Kfinal = self.maze.calcularCasilla(
+                        self.player.x + (self.player.rect.width // 2),
+                        self.player.y + (self.player.rect.height // 2)
+                    )
+
+                    self.JefeEnemigo.kia.playerDetectado = True
+                    self.JefeEnemigo.kia.path = self.JefeEnemigo.kia.calcular_camino_BFS(
+                        Kinicio,
+                        Kfinal
+                    )
+                    self.ia_necesita_update = True
+
+                    for enemigo_tocado in colision_playerNemesis:
+                        logging.info(
+                            "PLAYER colisionó con ENEMIGO en (%s, %s)",
+                            enemigo_tocado.x,
+                            enemigo_tocado.y
+                        )
 
         # Colisión del jugador con Puerta
         #----------------------------------------
@@ -949,40 +1018,68 @@ class App:
                 logging.info(f'Enemigo en ({nemesis.x}, {nemesis.y}) colisionó con {len(paredes)} paredes')
                 
                 if nemesis.isJefeEnemigo:
-                    # if self.flagPrint_info:
-                    print(f"Colision Jefe Enemigo con PARED --> {self.maze.calcularCasilla(nemesis.x, nemesis.y)} !!!")
+                    if self.flagPrint_info:
+                        print(
+                            f"Colision Jefe Enemigo con PARED --> "
+                            f"{self.maze.calcularCasilla(nemesis.x + (nemesis.rect.width // 2), nemesis.y + (nemesis.rect.height // 2))} !!!"
+                        )
                     nemesis.detectarColision()
-                    self.bocadillo_timer = 180 
-                    self.flagPintarBocadilloTexto = True
+                    # self.bocadillo_timer = 180 
+                    # self.flagPintarBocadilloTexto = True
+                    # self.textoBocadillo = "ChoKado Pared!"
 
                     for pared in paredes:
                         if nemesis.rect.colliderect(pared.rect):
                             if nemesis.rect.x < 0:
-                                print("Colisión por IZQUIERDA")
+                                if self.flagPrint_ColisionInfo:
+                                    print("Colisión por IZQUIERDA")
                             elif nemesis.rect.x > 0:
-                                print("Colisión por DERECHA")
+                                if self.flagPrint_ColisionInfo:
+                                    print("Colisión por DERECHA")
 
                             if nemesis.rect.y > 0:
-                                print("Colisión por ABAJO") 
+                                if self.flagPrint_ColisionInfo:
+                                    print("Colisión por ABAJO") 
                             elif nemesis.rect.y < 0:
-                                print("Colisión por ARRIBA")                              
+                                if self.flagPrint_ColisionInfo:
+                                    print("Colisión por ARRIBA")
+
+                    # Recolocar al jefe en el centro de la casilla segura anterior.
+                    casilla_segura = MazeLab.Maze.calcularCasilla(
+                        nemesis.prev_x + (nemesis.rect.width // 2),
+                        nemesis.prev_y + (nemesis.rect.height // 2)
+                    )
+                    centro = MazeLab.Maze.centroCasilla(casilla_segura)
+                    nemesis.x = centro.x - (nemesis.rect.width // 2)
+                    nemesis.y = centro.y - (nemesis.rect.height // 2)
+                    nemesis.rect.x = nemesis.x
+                    nemesis.rect.y = nemesis.y
+                    nemesis.casilla = casilla_segura
+                    nemesis.kia.casilla = casilla_segura
+                    nemesis.kia.definirPosicion(
+                        nemesis.x + (nemesis.rect.width // 2),
+                        nemesis.y + (nemesis.rect.height // 2)
+                    )
+                    nemesis.kia.colisionParedes = True
+                    self.ia_necesita_update = True
 
                 # Revertir y cambiar dirección solo del enemigo que colisiona
-                if hasattr(nemesis, 'revertir_movimiento'):
-                    print("    Dentro Reventir MOV")
+                if hasattr(nemesis, 'revertir_movimiento') and not nemesis.isJefeEnemigo:
+                    #print("    Dentro Reventir MOV")
                     nemesis.revertir_movimiento()
+                    
 
                 if hasattr(nemesis, 'cambiar_direccion'):
-                    print("Dentro Cambiar DIR")
+                    #print("Dentro Cambiar DIR")
                     nemesis.cambiar_direccion()
 
         # Colisión de ENemigos con Puerta
-        colision_playerPuerta = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazePuertas, False, False)
-        if colision_playerPuerta:
-            logging.info(f'COLISION Enemigo con Puerta DETECTADA - num ELem ({len(colision_playerPuerta)})')
+        colision_enemigosPuerta = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazePuertas, False, False)
+        if colision_enemigosPuerta:
+            logging.debug('COLISION Enemigo con Puerta DETECTADA - num ELem (%s)', len(colision_enemigosPuerta))
             # Opcional: procesar cada enemigo que colisionó
-            for enemigo, puertas in colision_enemigos.items():
-                print(f'Enemigo en ({enemigo.x}, {enemigo.y}) colisionó con {len(puertas)} paredes')
+            for enemigo, puertas in colision_enemigosPuerta.items():
+                logging.debug('Enemigo en (%s, %s) colisionó con %s puertas', enemigo.x, enemigo.y, len(puertas))
 
                 # Revertir y cambiar dirección solo del enemigo que colisiona
                 if hasattr(enemigo, 'revertir_movimiento'):
@@ -1077,13 +1174,13 @@ class App:
                 print('HuesO o BONE: ', len(colision_PlayerConHueso))
             self.HeadPuntuacion.puntos += 10
             self.HeadHuesos.NumeroHuesos += 1
-            self.rebuildMap()
 
-            # Opcional: procesar cada enemigo que colisionó
+            # Marcar los huesos como cogidos ANTES de repintar, para que no se vuelvan a crear.
             for cpcE in colision_PlayerConHueso:
                 logging.info(f'Hueso Sólo tocado')
                 self.casillaObjetosTocados.add(self.maze.calcularCasilla(cpcE.rect.x, cpcE.rect.y))
                 cpcE.kill()
+            self.rebuildMap()
 
         # Colisión de Player con Oro.
         colision_PlayerConOro = pygame.sprite.spritecollide(self.player, self.maze.MazeOro, True)
@@ -1173,7 +1270,9 @@ class App:
            self.wall_surf,
            self.casillaObjetosTocados
        )
-        
+    
+    # on RENDER
+    #--------------------
     def on_render(self):
         if self.pause == False:
            # SOLO si cambió el mapa
@@ -1204,14 +1303,18 @@ class App:
                 self.grupo_humo.draw(self.pantalla)
 
                 if self.humo_timer <= 0:
-                    self.flagExplosion = False
+                    self.flagHumo = False
 
             if self.iteracion == 35:
                self.iteracion = 0
 
-            if self.flagPintarBocadilloTexto and self.bocadillo_timer == 0:
+            # Parte bocadillo de Texto.
+            if self.flagPintarBocadilloTexto and self.bocadillo_timer != 0:
                 self.bocadillo_timer -= 1
-                self.JefeEnemigo.bocadilloTexto(self.pantalla, "ChoKado Pared!", self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, 255)
+                if self.impactoEnemigo:
+                    self.JefeEnemigo.bocadilloTexto(self.pantalla, self.textoBocadillo, self.enemigoImpactado.rect.centerx, self.enemigoImpactado.rect.top, 255)
+                elif self.impactoJefeEnemigo:
+                    self.JefeEnemigo.bocadilloTexto(self.pantalla, self.textoBocadillo, self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, 255)
 
             # Aquí busco lugar suelo para Jugador
             # Llamada a la IA
@@ -1236,17 +1339,17 @@ class App:
             # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
             # logging.debug("Pintamos los enemigos.")  # Comentado para mejorar rendimiento
             for i in range(0, self.numEnemigos):
-                self.enemigo = self.enemigosArray[i]
-                if(self.enemigo.isJefeEnemigo):
+                enemy = self.enemigosArray[i]
+                if(enemy.isJefeEnemigo):
                     if self.flagPrint_info:
                         print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
                     self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-                else:   
+                else:
                     if self.flagPrint_info:
-                        print('---Posición DRAW ENEMIGO: ',i, self.enemigo.x, self.enemigo.y)
-                    self.pantalla.blit(self._enemigo, (self.enemigo.x, self.enemigo.y))
+                        print('---Posición DRAW ENEMIGO: ',i, enemy.x, enemy.y)
+                    self.pantalla.blit(self._enemigo, (enemy.x, enemy.y))
                     if self.pintaRectángulos == True:
-                        pygame.draw.rect(self.pantalla, (255, 0, 0), self.enemigo.rect, 2)
+                        pygame.draw.rect(self.pantalla, (255, 0, 0), enemy.rect, 2)
 
             # Jefe Enemigo + VISIÓN
             # logging.debug('Pintamos el JEFE enemigo.') 
@@ -1277,7 +1380,7 @@ class App:
                     else:
                         alphaBTexto = 255
  
-                    self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", (int(self.JefeEnemigo.x), int(self.JefeEnemigo.y) - 10), alpha=alphaBTexto)
+                    self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, alphaBTexto)
                 else:
                     self.JefeEnemigo.alarma = False
                     self.JefeEnemigo.restarRelojBocadilloTexto()
@@ -1391,7 +1494,7 @@ class App:
         if self.alerta_activa:
             # Si han pasado más de 3 segundos, la desactivamos
             if self.now - self.alerta_inicio_ms > self.alerta_duracion_ms:
-                alerta_activa = False
+                self.alerta_activa = False
             else:
                 # --- Dibujar la alerta por encima de todo ---
                 # Crear texto
@@ -1409,29 +1512,23 @@ class App:
                 self.pantalla.blit(overlay, (0, y - 10))
                 self.pantalla.blit(texto_surface, (x_texto, y))
 
+        # Aplicar efecto rojo y vibración cuando jugador y Enemigo/s
         if self.efecto_rojo:
             ahora = pygame.time.get_ticks()
-            if self.impactoPlayer:
-                self.imagePlayer_roja = self.player.dibujaDañoPlayer()
-            if self.impactoEnemigo:
-                self.imageEnemigo_roja = self.enemigo.dibujaDaño(False)
-            if self.impactoJefeEnemigo:
-                self.imageJefe_roja = self.JefeEnemigo.dibujaDaño(True)
-
 
             if ahora - self.tiempo_rojo < 2000:
                 if (ahora // 100) % 2:
                     if self.impactoPlayer:
                         self.pantalla.blit(self.imagePlayer_roja, (self.player.x, self.player.y))
                     if self.impactoEnemigo:
-                        self.pantalla.blit(self.imageEnemigo_roja, (self.posEnemyImpc.x, self.posEnemyImpc.y))
+                        self.pantalla.blit(self.imageEnemigo_roja, (self.enemigoImpactado.x, self.enemigoImpactado.y))
                     if self.impactoJefeEnemigo:
                         self.pantalla.blit(self.imageJefe_roja, (self.JefeEnemigo.x, self.JefeEnemigo.y))
                 else:
                     if self.impactoPlayer:
                         self.pantalla.blit(self.player.image, (self.player.x, self.player.y))
                     if self.impactoEnemigo:
-                        self.pantalla.blit(self.enemigo.imageEnemigo, (self.posEnemyImpc.x, self.posEnemyImpc.y))
+                        self.pantalla.blit(self.enemigoImpactado.imageEnemigo, (self.enemigoImpactado.x, self.enemigoImpactado.y))
                     if self.impactoJefeEnemigo:
                         self.pantalla.blit(self.enemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
             else:
@@ -1485,8 +1582,8 @@ class App:
                     if event.key == pygame.K_RETURN:
                         logging.info('¡¡¡ INTRO !!!')
                         self.JefeEnemigo.alarma = True
+                        self.JefeEnemigo.restarRelojBocadilloTexto()
                         for x in self.EnemigosGroup:
-                            x.flagDisparo == True
                             x.disparo()
                     if event.key == pygame.K_c:
                         if self.flagPrint_info:
@@ -1535,13 +1632,10 @@ class App:
                            self.Sound.musica.set_volume(0.7)
                            self.Sound.reproducirMusica = True
                         else:
-                            self.reproducirMusica = False
+                            self.Sound.reproducirMusica = False
                             self.canalmusicaFondo.stop()
                     if event.key == pygame.K_p:
-                        if self.Pause == False:
-                            self.pause = True
-                        else:
-                            self.pause = False
+                        self.pause = not self.pause
                         logging.info('PAUSA PULSADA.')
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_RIGHT:
@@ -1596,7 +1690,7 @@ class App:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename="./log/squidcastle.log", level=logging.DEBUG,
+    logging.basicConfig(filename="./log/squidcastle.log", level=logging.WARNING,
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
     logging.warning("Inicio LaberintoPy!!!")
 
@@ -1624,7 +1718,7 @@ if __name__ == "__main__":
     try:
         with open('./Levels/Level_2.json', 'r') as file:
             data = json.load(file)
-        logging.info("JSON File data =", data)
+        logging.info("JSON File data = %s", data)
     
     except FileNotFoundError:
         logging.error("Error: The file 'Level2.json' was not found.")
@@ -1635,7 +1729,7 @@ if __name__ == "__main__":
     try:
         parser = LevelParser("./Levels")
         level_data = parser.load_by_name("Level_2.json")
-        logging.info("Level loaded:", os.path.basename(level_data.path), level_data.width, level_data.height)
+        logging.info("Level loaded: %s %s %s", os.path.basename(level_data.path), level_data.width, level_data.height)
         print("Level loaded: ", os.path.basename(level_data.path), level_data.width, level_data.height)
         level_data.debug_layers()
     except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
