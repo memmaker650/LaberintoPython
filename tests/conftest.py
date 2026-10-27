@@ -75,6 +75,15 @@ def eventos_sin_bloqueo(monkeypatch):
     monkeypatch.setattr(pygame.event, "get", obtener)
 
 
+@pytest.fixture(autouse=True)
+def bd_de_prueba(monkeypatch, tmp_path):
+    # Ningún test escribe en la base de datos real (DB/tutorial.db).
+    import Laberinto
+    ruta = str(tmp_path / "prueba.db")
+    monkeypatch.setattr(Laberinto, "RUTA_BD", ruta)
+    return ruta
+
+
 @pytest.fixture
 def maze():
     return MazeLab.Maze()

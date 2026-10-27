@@ -297,6 +297,8 @@ class Player(pygame.sprite.Sprite):
             if self.canalDisparo.get_busy():
                 self.canalDisparo.stop()
             self.canalDisparo.play(self.sonidoDisparo)
+            return True
+        return False  # sin munición: no sale ninguna bala
 
     def dibujaDañoPlayer(self) -> pygame.Surface:
         imagen_roja = self.image.copy()
@@ -665,6 +667,17 @@ class Enemigo(pygame.sprite.Sprite):
             if self.canalDisparo.get_busy():
                 self.canalDisparo.stop()
             self.canalDisparo.play(self.sonidoDisparoEnemigo)
+
+    # Una bala del jugador alcanza al enemigo. Devuelve True si muere (y lo quita de sus grupos).
+    def recibirDisparo(self, dano):
+        if not self.alive():
+            return False
+        self.vida -= dano
+        if self.vida <= 0:
+            self.vida = 0
+            self.kill()
+            return True
+        return False
 
     def dibujaDaño(self, Jefe) -> pygame.Surface:
         if Jefe:

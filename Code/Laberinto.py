@@ -12,6 +12,7 @@ if DIR_CODIGO not in sys.path:
 DIR_PROYECTO = os.path.dirname(DIR_CODIGO)
 os.chdir(DIR_PROYECTO)
 DIR_NIVELES = os.path.join(DIR_PROYECTO, "Levels")
+RUTA_BD = os.path.join(DIR_PROYECTO, "DB", "tutorial.db")
 
 from typing import Any
 import mates
@@ -23,6 +24,7 @@ import statistics
 import MazeLab
 import Sonido
 import Luces
+import estadisticas
 import random
 import os
 import sys
@@ -49,6 +51,16 @@ NUM_CASILLAS = 27
 IMG_DIR = "Resources"
 SONIDO_DIR = "Resources/Sonidos"
 FPS = 60 # desired framerate in frames per second.
+
+# Combate
+DANO_ENEMIGO = 10            # vida que quita tocar a un enemigo
+DANO_JEFE = 20               # vida que quita tocar al jefe
+DANO_BALA_ENEMIGA = 10       # vida que quita una bala enemiga
+DANO_BALA_JUGADOR = 50       # vida que quita al enemigo una bala del jugador (enemigos: 100, jefe: VIDA_JEFE)
+VIDA_JEFE = 200
+TIEMPO_INVULNERABLE_MS = 1000  # tras una herida, el jugador no recibe otra durante este tiempo
+PUNTOS_ENEMIGO = 50
+PUNTOS_JEFE = 200
 
 # Especificación de la paleta de colores
 BLANCO = (255, 255, 255)
@@ -138,6 +150,11 @@ class App:
     impactoEnemigo = False
     impactoJefeEnemigo = False
     enemigoImpactado = None
+
+    # Estadísticas del nivel en curso y resultado ("muerto" o "completado") cuando acaba.
+    estadisticas = None
+    resultadoPartida = None
+    ultimaHerida_ms = -10 ** 9
 
     # Nivel oscuro: linterna del jugador (None si el nivel está iluminado).
     oscuridad = 0.0
@@ -282,6 +299,9 @@ class App:
         self.flagInit = True
         self.rebuild_map = True
         self.tiempo_inicio = pygame.time.get_ticks()
+        self.estadisticas = estadisticas.Estadisticas(inicio_ms=self.tiempo_inicio)
+        self.resultadoPartida = None
+        self.ultimaHerida_ms = -10 ** 9
 
         # Niveles oscuros: sólo se ve lo que ilumina la linterna (código en Luces.py).
         self.oscuridad = nivel.oscuridad if nivel is not None else 0.0
@@ -309,6 +329,7 @@ class App:
         # Ubicar al jefe enemigo en el centro de su casilla.
         self.JefeEnemigo = player.Enemigo()
         self.JefeEnemigo.isJefeEnemigo = True
+        self.JefeEnemigo.vida = VIDA_JEFE
         self.JefeEnemigo.casilla = candidatas.pop(0)
         pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
         self.JefeEnemigo.x = pos.x - (self.JefeEnemigo.rect.width // 2)
@@ -802,6 +823,94 @@ class App:
         # TO DO Pantalla de inventario. De momento se vuelve al menú desde el que se llamó.
         logging.info("Inventario del juego: pendiente de programar.")
 
+    # Resta vida al jugador y la apunta en las estadísticas. Tras una herida hay un tiempo de
+    # invulnerabilidad para que un mismo choque no quite vida en todos los frames.
+    # Devuelve True si el jugador ha recibido la herida.
+    def herirJugador(self, dano):
+        ahora = pygame.time.get_ticks()
+        if ahora - self.ultimaHerida_ms < TIEMPO_INVULNERABLE_MS:
+            return False
+        self.ultimaHerida_ms = ahora
+        self.HeadBarraDeVida.vida = max(0, self.HeadBarraDeVida.vida - dano)
+        self.estadisticas.registrarHerida(dano)
+        logging.info("Jugador herido (-%s). Vida: %s", dano, self.HeadBarraDeVida.vida)
+        if self.HeadBarraDeVida.vida <= 0:
+            self.resultadoPartida = "muerto"
+        return True
+
+    # Fin del nivel: cierra las estadísticas, las guarda en la BD sólo si se ha completado el
+    # nivel, muestra la pantalla final y vuelve al menú con una partida nueva.
+    def terminarPartida(self, completado):
+        self.estadisticas.finalizar(pygame.time.get_ticks(), nivel=self.HeadNivel.NumeroNivel,
+                                    puntos=self.HeadPuntuacion.puntos)
+        if completado:
+            try:
+                self.estadisticas.guardar(RUTA_BD)
+                pie = "Estadísticas guardadas en la base de datos."
+            except sqlite3.Error as error:
+                logging.error("No se han podido guardar las estadísticas: %s", error)
+                pie = "No se han podido guardar las estadísticas."
+            self.pantallaFinal("¡NIVEL COMPLETADO!", VERDE, self.estadisticas.lineas(), pie)
+        else:
+            self.pantallaFinal("GAME OVER", ROJO, self.estadisticas.lineas(),
+                               "Las estadísticas sólo se guardan si terminas el nivel.")
+        self.reiniciarPartida()
+        self.tocaMenu = False
+        self.menu()
+
+    # Pantalla de fin de nivel: título y, debajo, las estadísticas. Se cierra con INTRO, ESC o un clic.
+    def pantallaFinal(self, titulo, colorTitulo, lineas, pie=""):
+        ancho = self.pantalla.get_width()
+        fuenteTitulo = pygame.font.SysFont('Impact', 110)
+        fuenteSubtitulo = pygame.font.SysFont('Corbel', 30)
+        fuenteDatos = pygame.font.SysFont('Corbel', 34)
+        fuentePie = pygame.font.SysFont('Corbel', 26)
+        subtitulo = f"Nivel {self.estadisticas.nivel} - {self.estadisticas.jugador} - Puntos: {self.estadisticas.puntos}"
+
+        pygame.event.clear()  # que una tecla pulsada durante el juego no cierre la pantalla
+        while True:
+            for ev in pygame.event.get():
+                if ev.type == pygame.QUIT:
+                    self.salir = True
+                    pygame.quit()
+                    sys.exit()
+                if ev.type == pygame.KEYDOWN and ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_ESCAPE):
+                    return
+                if ev.type == pygame.MOUSEBUTTONDOWN:
+                    return
+
+            self.pantalla.fill((25, 10, 25))
+            texto = fuenteTitulo.render(titulo, True, colorTitulo)
+            self.pantalla.blit(texto, texto.get_rect(center=(ancho // 2, 190)))
+            texto = fuenteSubtitulo.render(subtitulo, True, GRIS)
+            self.pantalla.blit(texto, texto.get_rect(center=(ancho // 2, 290)))
+            for i, linea in enumerate(lineas):
+                texto = fuenteDatos.render(linea, True, BLANCO)
+                self.pantalla.blit(texto, texto.get_rect(center=(ancho // 2, 380 + i * 52)))
+            if pie:
+                texto = fuentePie.render(pie, True, AMARILLO)
+                self.pantalla.blit(texto, texto.get_rect(center=(ancho // 2, 780)))
+            texto = fuentePie.render("Pulsa INTRO o haz clic para continuar", True, GRIS)
+            self.pantalla.blit(texto, texto.get_rect(center=(ancho // 2, 840)))
+            pygame.display.update()
+
+    # Deja la App lista para una partida nueva con el laberinto por defecto.
+    def reiniciarPartida(self):
+        player.Player.balas.empty()
+        player.Enemigo.balas.empty()
+        self.player = player.Player()
+        self.PlayerGroup = pygame.sprite.Group()
+        self.HeadBarraDeVida = infoPantalla.barraDeVida()
+        self.HeadPuntuacion = infoPantalla.panelPuntuacion()
+        self.HeadHuesos = infoPantalla.infoHuesos()
+        self.HeadNivel = infoPantalla.infoNivel()
+        self.efecto_rojo = False
+        self.impactoPlayer = self.impactoEnemigo = self.impactoJefeEnemigo = False
+        self.flagPintarBocadilloTexto = False
+        self.alerta_activa = False
+        self.movimiento = False
+        self.prepararNivel()
+
     def on_init(self):
         pygame.display.set_caption('Laberinto SquidCastle 2026, Aurora.')
         logging.info("Inicio del juego.")
@@ -814,6 +923,9 @@ class App:
 
         logging.info("Empezamos un juego nuevo.")
         self._running = True
+        # El reloj y el tiempo de las estadísticas empiezan al empezar a jugar, no en los menús.
+        self.tiempo_inicio = pygame.time.get_ticks()
+        self.estadisticas.inicio_ms = self.tiempo_inicio
         self.player.pintarJugador()
         self._jugador = self.player.image
         self.rect = self._jugador.get_rect()  # rectángulo Sprite Player
@@ -828,6 +940,8 @@ class App:
         i = 0
         for i in range(0, self.numEnemigos):
             enemy = self.enemigosArray[i]
+            if enemy.vida <= 0:
+                continue  # enemigo muerto en esta partida
             self.EnemigosGroup.add(enemy)
             self.rect = enemy.imageEnemigo.get_rect()  # rectángulo Sprite Player
             # Asignar grupo de paredes al enemigo para que pueda consultarlo
@@ -838,7 +952,8 @@ class App:
         logging.info('Plot Enemigo')
 
         logging.info('Pintar Jefe Enemigo')
-        self.EnemigosGroup.add(self.JefeEnemigo)
+        if self.JefeEnemigo.vida > 0:
+            self.EnemigosGroup.add(self.JefeEnemigo)
         self.rect = self.JefeEnemigo.imageJefeEnemigo.get_rect()  # rectángulo Sprite Jefe Enemigo
 
         # Asignar grupo de paredes al Jefe Enemigo
@@ -958,7 +1073,7 @@ class App:
         colision_btEnemies = [
             s for s in pygame.sprite.spritecollide(self.JefeEnemigo, self.EnemigosGroup, False)
             if s is not self.JefeEnemigo
-        ]
+        ] if self.JefeEnemigo.alive() else []
         if colision_btEnemies:
             logging.debug('KOLLsiON NTRE Enemigos DETECTADA - num ELem (%s)', len(colision_btEnemies))
             if self.flagPrint_info:
@@ -982,8 +1097,11 @@ class App:
             self.efecto_rojo = True
             self.impactoPlayer = True
 
-            # Enemigo es Jefe Enemigo.
-            if pygame.sprite.collide_rect(self.player, self.JefeEnemigo):
+            # El contacto hiere al jugador (el jefe hace más daño).
+            self.herirJugador(DANO_JEFE if self.JefeEnemigo in colision_playerNemesis else DANO_ENEMIGO)
+
+            # Enemigo es Jefe Enemigo (sólo si sigue vivo: está en EnemigosGroup).
+            if self.JefeEnemigo in colision_playerNemesis:
                 logging.debug("¡C O L I SS E U M !")
                 self.impactoJefeEnemigo = True
 
@@ -1229,6 +1347,7 @@ class App:
                 print('HuesO o BONE: ', len(colision_PlayerConHueso))
             self.HeadPuntuacion.puntos += 10
             self.HeadHuesos.NumeroHuesos += 1
+            self.estadisticas.registrarHuesos(1)
 
             # Marcar los huesos como cogidos ANTES de repintar, para que no se vuelvan a crear.
             for cpcE in colision_PlayerConHueso:
@@ -1244,10 +1363,14 @@ class App:
             if self.flagPrint_info:
                 print('Oro cogida')
             self.HeadPuntuacion.puntos += 100
+            casillasOro = set()
             for cpcE in colision_PlayerConOro:
                 logging.info(f'Oro tocado')
-                self.casillaObjetosTocados.add(self.maze.calcularCasilla(cpcE.rect.x, cpcE.rect.y))
+                casillasOro.add(self.maze.calcularCasilla(cpcE.rect.x, cpcE.rect.y))
                 cpcE.kill()
+            self.casillaObjetosTocados |= casillasOro
+            # Una moneda por casilla (el mapa puede tener sprites repetidos en la misma).
+            self.estadisticas.registrarOro(len(casillasOro))
             self.rebuildMap()
 
             # self.maze.flagHuesos = False
@@ -1265,6 +1388,7 @@ class App:
             self.maze.flagPilaHuesos = False
             self.HeadPuntuacion.puntos += 50
             self.HeadHuesos.NumeroHuesos += 10
+            self.estadisticas.registrarHuesos(10)
             self.rebuildMap()
 
             # Opcional: procesar cada enemigo que colisionó
@@ -1295,6 +1419,9 @@ class App:
             # Opcional: procesar cada enemigo que colisionó
             for cpcE in colision_PlayerConBandera:
                 logging.info('Bandera tocada')
+            # Llegar a la salida termina el nivel (salvo que el jugador acabe de morir).
+            if self.resultadoPartida is None:
+                self.resultadoPartida = "completado"
 
         # Colisión de Balas Enemigos con Paredes
         for EnemyAmmo in self.EnemigosGroup:
@@ -1306,6 +1433,20 @@ class App:
                     logging.info(f'BalaEnemigo en ({muni.x}, {muni.y}) colisionó con {len(paredes)} paredes')
                     muni.kill()
         
+        # Balas enemigas que alcanzan al jugador.
+        if pygame.sprite.spritecollide(self.player, player.Enemigo.balas, True):
+            self.herirJugador(DANO_BALA_ENEMIGA)
+
+        # Balas del jugador que alcanzan a un enemigo (antes de chocar con la pared de detrás).
+        impactos = pygame.sprite.groupcollide(self.player.balas, self.EnemigosGroup, True, False)
+        for bala, enemigosTocados in impactos.items():
+            enemigo = enemigosTocados[0]
+            muerto = enemigo.recibirDisparo(DANO_BALA_JUGADOR)
+            self.estadisticas.registrarImpacto(muerto)
+            if muerto:
+                logging.info("Enemigo muerto en (%s, %s)", enemigo.x, enemigo.y)
+                self.HeadPuntuacion.puntos += PUNTOS_JEFE if enemigo.isJefeEnemigo else PUNTOS_ENEMIGO
+
         # Colisión de Balas Player con Paredes
         colision_PlayerBalasConParedes = pygame.sprite.groupcollide(self.player.balas, self.maze.MazeParedes, False, False)
         if colision_PlayerBalasConParedes:
@@ -1394,8 +1535,9 @@ class App:
 
             # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
             # logging.debug("Pintamos los enemigos.")  # Comentado para mejorar rendimiento
-            for i in range(0, self.numEnemigos):
-                enemy = self.enemigosArray[i]
+            for i, enemy in enumerate(self.enemigosArray):
+                if not enemy.alive():
+                    continue  # muerto
                 if(enemy.isJefeEnemigo):
                     if self.flagPrint_info:
                         print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
@@ -1407,13 +1549,15 @@ class App:
                     if self.pintaRectángulos == True:
                         pygame.draw.rect(self.pantalla, (255, 0, 0), enemy.rect, 2)
 
-            # Jefe Enemigo + VISIÓN
+            # Jefe Enemigo + VISIÓN (si sigue vivo)
             # logging.debug('Pintamos el JEFE enemigo.') 
-            self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-            if self.pintaRectángulos == True:
+            jefeVivo = self.JefeEnemigo.alive()
+            if jefeVivo:
+                self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+            if jefeVivo and self.pintaRectángulos == True:
                 pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
             # VISION
-            if (self.visionEnemigos == True):
+            if jefeVivo and self.visionEnemigos == True:
                 self.JefeEnemigo.visionRotar()
                 self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
                 centro = (self.JefeEnemigo.x+10, self.JefeEnemigo.y+10)
@@ -1643,7 +1787,8 @@ class App:
                     if event.key == pygame.K_SPACE:
                         logging.info('¡¡¡ BARRA ESPACIADORA !!!')
                         logging.info('¡Disparo jugador!')
-                        self.player.disparo()
+                        if self.player.disparo():
+                            self.estadisticas.registrarDisparo()
                     if event.key == pygame.K_RETURN:
                         logging.info('¡¡¡ INTRO !!!')
                         self.JefeEnemigo.alarma = True
@@ -1747,6 +1892,10 @@ class App:
 
             self.on_loop()
             self.on_render()
+
+            # Muerte del jugador o salida alcanzada: pantalla final con las estadísticas.
+            if self.resultadoPartida is not None:
+                self.terminarPartida(self.resultadoPartida == "completado")
             self.clock.tick(FPS)  # <--- Aquí, después de renderizar
 
         self.on_cleanup()
