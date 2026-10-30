@@ -28,6 +28,7 @@ def app(monkeypatch):
     monkeypatch.setattr(App, "HeadPuntuacion", infoPantalla.panelPuntuacion())
     monkeypatch.setattr(App, "HeadHuesos", infoPantalla.infoHuesos())
     monkeypatch.setattr(App, "HeadBarraDeVida", infoPantalla.barraDeVida())
+    monkeypatch.setattr(App, "HeadNivel", infoPantalla.infoNivel())
     monkeypatch.setattr(App, "flagInit", True)
     monkeypatch.setattr(MazeLab.Maze, "pintaKasillaNumSuelo", MazeLab.Maze.pintaKasillaNumSuelo)
     # pygame.quit() dejaría sin pantalla al resto de tests.

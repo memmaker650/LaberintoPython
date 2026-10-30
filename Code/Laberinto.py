@@ -25,6 +25,7 @@ import MazeLab
 import Sonido
 import Luces
 import estadisticas
+from partida import PartidaGuardada
 import random
 import os
 import sys
@@ -59,6 +60,18 @@ DANO_BALA_ENEMIGA = 10       # vida que quita una bala enemiga
 DANO_BALA_JUGADOR = 50       # vida que quita al enemigo una bala del jugador (enemigos: 100, jefe: VIDA_JEFE)
 VIDA_JEFE = 200
 TIEMPO_INVULNERABLE_MS = 1000  # tras una herida, el jugador no recibe otra durante este tiempo
+
+# Eventos de ventana/sistema que indican que el usuario cambia de aplicación: escritorio
+# (pierde el foco o se minimiza) y móvil (la app pasa a segundo plano en iOS/Android).
+EVENTOS_SEGUNDO_PLANO = tuple(getattr(pygame, nombre) for nombre in
+                              ("WINDOWFOCUSLOST", "WINDOWMINIMIZED",
+                               "APP_WILLENTERBACKGROUND", "APP_DIDENTERBACKGROUND")
+                              if hasattr(pygame, nombre))
+
+# Objetos únicos del laberinto que desaparecen al cogerlos (se guardan en la partida).
+FLAGS_OBJETOS = ["flagLlave", "flagLlavePuerta", "flagChampi", "flagGranada", "flagPilaHuesos", "flagBotiquin"]
+# Objetos que lleva el jugador.
+OBJETOS_JUGADOR = ["llavePuerta", "llaveFinNivel", "champi", "pistola", "granada", "laser"]
 PUNTOS_ENEMIGO = 50
 PUNTOS_JEFE = 200
 
@@ -155,6 +168,15 @@ class App:
     estadisticas = None
     resultadoPartida = None
     ultimaHerida_ms = -10 ** 9
+
+    # Partida guardada: fichero del nivel en juego (None = laberinto por defecto) y tiempo ya
+    # jugado al continuar una partida (el reloj sigue desde ahí).
+    ficheroNivel = None
+    tiempoJugado_ms = 0
+
+    # Zonas del laberinto (habitaciones, pasillos y cruces) para la patrulla de los enemigos.
+    zonas = None
+    tiposZona = None
 
     # Nivel oscuro: linterna del jugador (None si el nivel está iluminado).
     oscuridad = 0.0
@@ -301,6 +323,8 @@ class App:
         self.tiempo_inicio = pygame.time.get_ticks()
         self.estadisticas = estadisticas.Estadisticas(inicio_ms=self.tiempo_inicio)
         self.resultadoPartida = None
+        self.ficheroNivel = os.path.basename(nivel.path) if nivel is not None else None
+        self.tiempoJugado_ms = 0
         self.ultimaHerida_ms = -10 ** 9
 
         # Niveles oscuros: sólo se ve lo que ilumina la linterna (código en Luces.py).
@@ -312,17 +336,29 @@ class App:
         else:
             self.linterna = None
 
+        # Habitaciones y pasillos: cada enemigo normal patrulla sólo la zona en la que empieza.
+        self.zonas, self.tiposZona = MazeLab.Maze.calcularZonas(
+            self.maze.MazeLaberinto,
+            MazeLab.NUM_CASILLAS_H,
+            MazeLab.NUM_CASILLAS_VERTI
+        )
+
         candidatas = self.casillasInicioEnemigos()
 
-        # Llenar el vector de enemigos
+        # Llenar el vector de enemigos (en el centro de su casilla, para que la patrulla
+        # pase exactamente por los centros de las casillas).
         for i in range(0, self.numEnemigos):
             self.enemigo = player.Enemigo()
             self.enemigo.casilla = candidatas.pop(0)
-            pos = MazeLab.Maze.calcularPixelPorCasilla(self.enemigo.casilla)
-            self.enemigo.x = pos.x
-            self.enemigo.y = pos.y
+            pos = MazeLab.Maze.centroCasilla(self.enemigo.casilla)
+            self.enemigo.x = pos.x - (self.enemigo.rect.width // 2)
+            self.enemigo.y = pos.y - (self.enemigo.rect.height // 2)
             self.enemigo.prev_x = self.enemigo.x
             self.enemigo.prev_y = self.enemigo.y
+            self.enemigo.rect.topleft = (self.enemigo.x, self.enemigo.y)
+            self.enemigo.conexiones = self.conexiones
+            self.enemigo.pasarConexionesIA()
+            self.enemigo.kia.asignarZona(self.zonas, self.tiposZona, self.enemigo.casilla)
             self.enemigosArray.append(self.enemigo)
             self.EnemigosGroup.add(self.enemigo)
 
@@ -347,8 +383,16 @@ class App:
         ancho = MazeLab.NUM_CASILLAS_H
         inicio = self.maze.casillaInicioJugador()
 
+        tamanoZona = {}
+        for zona in self.zonas.values():
+            tamanoZona[zona] = tamanoZona.get(zona, 0) + 1
+
         def valida(c):
             if self.maze.MazeLaberinto[c] != 1 or not MazeLab.Maze.elementoVisibleCasilla(c):
+                return False
+            # Ni en cruces ni en zonas de una sola casilla: ahí no podrían patrullar.
+            zona = self.zonas.get(c)
+            if self.tiposZona.get(zona) == "cruce" or tamanoZona.get(zona, 0) < 2:
                 return False
             if inicio is None:
                 return True
@@ -400,30 +444,38 @@ class App:
                 flagInit = False
             puntoPrevio = posi
 
+    # Botones del menú principal: (y relativa a la mitad de la pantalla, texto, acción, color al pasar el ratón).
+    BOTONES_MENU = [
+        (-110, 'Continuar partida', 'continuar', color_darkorange),
+        (-60, 'Nuevo Juego', 'nuevo', color_darkorange),
+        (-10, 'Opciones', 'opciones', color_darkorange),
+        (40, 'Cargar Partida', None, color_darkorange),  # TO DO Programación botón cargar partida.
+        (190, 'Salir', 'salir', color_rojobrillante),
+    ]
+    COLOR_BOTON_DESACTIVADO = (70, 70, 70)
+    COLOR_TEXTO_DESACTIVADO = (130, 130, 130)
+
     def menu(self):
         color = (255, 255, 255)
 
         if self.flagPrint_info:
             print("Dentro del Menú!!")
         
-        # stores the width of the
-        # screen into a variable
         width = self.pantalla.get_width()
-
-        # stores the height of the
-        # screen into a variable
         height = self.pantalla.get_height()
 
         # defining a font
         smallfont = pygame.font.SysFont('Corbel', 35)
         Titlefont = pygame.font.SysFont('Impact', 150)
 
-        # rendering a text written in Corbel font.
+        # "Continuar partida" sólo se puede pulsar si hay una partida guardada.
+        hayPartida = self.hayPartidaGuardada()
+
         textTitle = Titlefont.render('Octopussy', True, color_otherorange)
-        text1 = smallfont.render('Nuevo Juego', True, color)
-        text2 = smallfont.render('Opciones', True, color)
-        text3 = smallfont.render('Cargar Partida', True, color)
-        text4 = smallfont.render('Salir', True, color)
+        textos = {}
+        for dy, texto, accion, _ in self.BOTONES_MENU:
+            desactivado = accion == 'continuar' and not hayPartida
+            textos[accion] = smallfont.render(texto, True, self.COLOR_TEXTO_DESACTIVADO if desactivado else color)
 
         mouse = pygame.mouse.get_pos()
 
@@ -435,77 +487,44 @@ class App:
                     pygame.quit()
                     sys.exit()
 
-                # Chequeamos click del ratón
+                # Chequeamos click del ratón (zona = rectángulo pintado del botón)
                 if ev.type == pygame.MOUSEBUTTONDOWN:
                     mouse = ev.pos
-
-                    # Chequeamos si click en algún botón
-                    # Botón 1 - Nuevo Juego
-                    if mates.dentroBoton(mouse, int(width / 2), int((height / 2)) - 60, 230, 40):
-                        self.tocaMenu = False
-                        self.on_execute()
-
-                    # Botón 2 - Opciones (misma zona en la que se pinta el botón)
-                    if mates.dentroBoton(mouse, int(width / 2), int(height / 2) - 10, 230, 40):
-                        logging.info("Opciones del juego, pulsada.")
-                        self.tocaMenu = False
-                        self.menuOpciones()
-
-                    # Botón 3 - Cargar partida
-                    #TO DO Programación botón cargar partida.
-
-                    # Botón 4 - Salir del juego
-                    if mates.dentroBoton(mouse,  int(width / 2), int((height / 2)) + 190, 230, 40):
-                        self.tocaMenu = False
-                        self.salir = True
-                        pygame.quit()
-                        sys.exit()
+                    for dy, texto, accion, _ in self.BOTONES_MENU:
+                        if not mates.dentroBoton(mouse, int(width / 2), int(height / 2) + dy, 230, 40):
+                            continue
+                        logging.info("Menú principal: pulsado '%s'", texto)
+                        if accion == 'continuar':
+                            self.continuarPartida()  # sin partida guardada avisa y sigue en el menú
+                        elif accion == 'nuevo':
+                            self.tocaMenu = False
+                            self.on_execute()
+                        elif accion == 'opciones':
+                            self.tocaMenu = False
+                            self.menuOpciones()
+                        elif accion == 'salir':
+                            self.tocaMenu = False
+                            self.salir = True
+                            pygame.quit()
+                            sys.exit()
 
             if self.salir == False:
-                # fills the screen with a color
                 self.pantalla.fill((60, 25, 60))
-
-                # stores the (x,y) coordinates into
-                # the variable as a tuple
                 mouse = pygame.mouse.get_pos()
 
-                # Compruebo si el ratón está dentro de botón.
-                # width / 2 <= mouse[0] <= width / 2 + 140 and height / 2 <= mouse[1] <= height / 2 + 40:
-                if mates.dentroBoton(mouse, width / 2, (height / 2) - 60, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [width / 2, (height / 2) - 60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 2
-                elif mates.dentroBoton(mouse, width / 2, (height / 2)-10, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 3
-                elif mates.dentroBoton(mouse, width / 2, (height / 2)+40 , 230, 40):
-                    pygame.draw.rect(self.pantalla, color_darkorange, [int(width / 2), int(height / 2) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
-                # Botón 4 - Salir del juego
-                elif mates.dentroBoton(mouse, width / 2, (height / 2) +190, 230, 40):
-                    pygame.draw.rect(self.pantalla, color_rojobrillante, [int(width / 2), int((height / 2)) + 190, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                else:
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -60, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) -10, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +40, 230, 40])
-                    pygame.draw.rect(self.pantalla, color_dark, [int(width / 2), int((height / 2)) +190, 230, 40])
+                for dy, texto, accion, colorEncima in self.BOTONES_MENU:
+                    boton = pygame.Rect(int(width / 2), int(height / 2) + dy, 230, 40)
+                    if accion == 'continuar' and not hayPartida:
+                        colorBoton = self.COLOR_BOTON_DESACTIVADO
+                    elif mates.dentroBoton(mouse, boton.x, boton.y, 230, 40):
+                        colorBoton = colorEncima
+                    else:
+                        colorBoton = color_dark
+                    pygame.draw.rect(self.pantalla, colorBoton, boton)
+                    # Texto centrado en el botón para que los largos quepan.
+                    self.pantalla.blit(textos[accion], textos[accion].get_rect(center=boton.center))
 
-                # superimposing the text onto our button
                 self.pantalla.blit(textTitle, ((width / 2) - 400, (height / 2) - 400))
-                self.pantalla.blit(text1, ((width / 2) + 50, (height / 2) - 50))
-                self.pantalla.blit(text2, ((width / 2) + 50, (height / 2)))
-                self.pantalla.blit(text3, ((width / 2) + 50, (height / 2) + 50))
-                self.pantalla.blit(text4, ((width / 2) + 50, (height / 2) + 200))
 
                 # updates the frames of the game
                 pygame.display.update()
@@ -823,6 +842,143 @@ class App:
         # TO DO Pantalla de inventario. De momento se vuelve al menú desde el que se llamó.
         logging.info("Inventario del juego: pendiente de programar.")
 
+    # ---------- Partida guardada ----------
+    def jugadorActual(self):
+        return self.estadisticas.jugador
+
+    # Todo lo necesario para continuar la partida más tarde (serializable a JSON).
+    def estadoPartida(self):
+        def enemigo(e):
+            return {"x": e.x, "y": e.y, "vida": e.vida if e.alive() else 0, "orientacion": e.orientacion}
+
+        return {
+            "version": 1,
+            "fichero": self.ficheroNivel,
+            "nivel": self.HeadNivel.NumeroNivel,
+            "tiempo_ms": pygame.time.get_ticks() - self.tiempo_inicio,
+            "vida": self.HeadBarraDeVida.vida,
+            "puntos": self.HeadPuntuacion.puntos,
+            "huesos": self.HeadHuesos.NumeroHuesos,
+            "jugador": {
+                "x": self.player.x, "y": self.player.y, "orientacion": self.player.orientacion,
+                "municion": self.player.municion,
+                "objetos": {nombre: bool(getattr(self.player, nombre)) for nombre in OBJETOS_JUGADOR},
+            },
+            "objetosTocados": sorted(self.casillaObjetosTocados),
+            "flagsObjetos": {nombre: bool(getattr(self.maze, nombre)) for nombre in FLAGS_OBJETOS},
+            "camara": self.maze.posicionCamara,
+            "enemigos": [enemigo(e) for e in self.enemigosArray],
+            "jefe": enemigo(self.JefeEnemigo),
+            "estadisticas": self.estadisticas.estado(),
+        }
+
+    # Guarda la partida en curso en la BD. Sólo mientras se juega (no tras morir o acabar el nivel).
+    # Devuelve True si se ha guardado.
+    def guardarPartida(self, motivo):
+        if self.resultadoPartida is not None or self.estadisticas is None:
+            return False
+        try:
+            PartidaGuardada.guardar(RUTA_BD, self.jugadorActual(), self.estadoPartida(), motivo)
+            return True
+        except sqlite3.Error as error:
+            logging.error("No se ha podido guardar la partida: %s", error)
+            return False
+
+    def hayPartidaGuardada(self):
+        try:
+            return PartidaGuardada.existe(RUTA_BD, self.jugadorActual())
+        except sqlite3.Error as error:
+            logging.error("No se ha podido leer la partida guardada: %s", error)
+            return False
+
+    def borrarPartidaGuardada(self):
+        try:
+            PartidaGuardada.borrar(RUTA_BD, self.jugadorActual())
+        except sqlite3.Error as error:
+            logging.error("No se ha podido borrar la partida guardada: %s", error)
+
+    # Reconstruye la partida a partir de un estado guardado con estadoPartida().
+    # Lanza FileNotFoundError/ValueError si el nivel guardado ya no se puede cargar.
+    def restaurarPartida(self, estado):
+        nivel = None
+        if estado.get("fichero"):
+            nivel = LevelParser(DIR_NIVELES).load_by_name(estado["fichero"])
+        self.prepararNivel(nivel)
+        self.HeadNivel.definirNumeroNivel(estado["nivel"])
+
+        # Cámara (laberinto por defecto): desplazar las paredes igual que al moverse.
+        desplazamiento = estado.get("camara", self.maze.posicionCamara) - self.maze.posicionCamara
+        if desplazamiento > 0:
+            self.maze.posicionCamara += desplazamiento
+            self.maze.movimientoCamara = self.maze.posicionCamara - 13
+            for pared in self.maze.MazeParedes:
+                pared.rect.x -= desplazamiento * CASILLA_PIXEL
+
+        datos = estado["jugador"]
+        self.player.x, self.player.y = datos["x"], datos["y"]
+        self.player.guardarPosicionPrevia()
+        self.player.rect.topleft = (self.player.x, self.player.y)
+        self.player.orientacion = datos["orientacion"]
+        self.player.municion = datos["municion"]
+        for nombre, valor in datos["objetos"].items():
+            setattr(self.player, nombre, valor)
+        self.flagInit = False  # no volver a colocar al jugador en la casilla de inicio
+
+        self.HeadBarraDeVida.vida = estado["vida"]
+        self.HeadPuntuacion.puntos = estado["puntos"]
+        self.HeadHuesos.NumeroHuesos = estado["huesos"]
+        self.casillaObjetosTocados = set(estado["objetosTocados"])
+        for nombre, valor in estado["flagsObjetos"].items():
+            setattr(self.maze, nombre, valor)
+
+        def colocar(e, datos):
+            e.x, e.y = datos["x"], datos["y"]
+            e.prev_x, e.prev_y = e.x, e.y
+            e.rect.topleft = (e.x, e.y)
+            e.orientacion = datos["orientacion"]
+            e.vida = datos["vida"]
+            e.casilla = MazeLab.Maze.calcularCasilla(e.x + e.rect.width // 2, e.y + e.rect.height // 2)
+            e.kia.casilla = e.casilla
+            e.kia.orientacion = e.orientacion
+            e.kia.definirPosicion(e.x + e.rect.width // 2, e.y + e.rect.height // 2)
+            if e.vida <= 0:
+                e.kill()
+
+        for e, datos in zip(self.enemigosArray, estado["enemigos"]):
+            colocar(e, datos)
+            e.kia.asignarZona(self.zonas, self.tiposZona, e.casilla)
+        colocar(self.JefeEnemigo, estado["jefe"])
+
+        self.estadisticas.restaurar(estado["estadisticas"])
+        self.tiempoJugado_ms = estado["tiempo_ms"]
+        if self.linterna is not None:
+            self.linterna.apuntar(self.player.orientacion, instantaneo=True)
+        logging.info("Partida restaurada: nivel %s", estado["nivel"])
+
+    # Botón "Continuar partida": recupera la partida guardada y sigue jugando.
+    # Devuelve False si no hay partida o no se puede recuperar.
+    def continuarPartida(self):
+        try:
+            estado = PartidaGuardada.cargar(RUTA_BD, self.jugadorActual())
+        except sqlite3.Error as error:
+            logging.error("No se ha podido leer la partida guardada: %s", error)
+            estado = None
+        if estado is None:
+            self.dialogoConfirmacion("No hay ninguna partida guardada",
+                                     ["La partida se guarda al salir de un nivel o al cambiar de aplicación."],
+                                     textoSi="Aceptar", textoNo=None)
+            return False
+        try:
+            self.restaurarPartida(estado)
+        except (FileNotFoundError, KeyError, ValueError, json.JSONDecodeError) as error:
+            logging.error("No se puede continuar la partida guardada: %s", error)
+            self.dialogoConfirmacion("No se puede continuar la partida", [str(error)],
+                                     textoSi="Aceptar", textoNo=None)
+            return False
+        self.tocaMenu = False
+        self.on_execute()
+        return True
+
     # Resta vida al jugador y la apunta en las estadísticas. Tras una herida hay un tiempo de
     # invulnerabilidad para que un mismo choque no quite vida en todos los frames.
     # Devuelve True si el jugador ha recibido la herida.
@@ -843,6 +999,7 @@ class App:
     def terminarPartida(self, completado):
         self.estadisticas.finalizar(pygame.time.get_ticks(), nivel=self.HeadNivel.NumeroNivel,
                                     puntos=self.HeadPuntuacion.puntos)
+        self.borrarPartidaGuardada()  # el nivel ha terminado: ya no hay nada que continuar
         if completado:
             try:
                 self.estadisticas.guardar(RUTA_BD)
@@ -924,8 +1081,10 @@ class App:
         logging.info("Empezamos un juego nuevo.")
         self._running = True
         # El reloj y el tiempo de las estadísticas empiezan al empezar a jugar, no en los menús.
-        self.tiempo_inicio = pygame.time.get_ticks()
+        # Si se continúa una partida guardada, siguen desde el tiempo que ya se había jugado.
+        self.tiempo_inicio = pygame.time.get_ticks() - self.tiempoJugado_ms
         self.estadisticas.inicio_ms = self.tiempo_inicio
+        self.tiempoJugado_ms = 0
         self.player.pintarJugador()
         self._jugador = self.player.image
         self.rect = self._jugador.get_rect()  # rectángulo Sprite Player
@@ -1763,10 +1922,15 @@ class App:
         while (self._running):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self.guardarPartida("cerrar")
                     self._running = False # pygame window closed by user
                     self.salir = True
+                elif event.type in EVENTOS_SEGUNDO_PLANO:
+                    # El usuario cambia de aplicación: se guarda por si no vuelve.
+                    self.guardarPartida("segundo plano")
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
+                        self.guardarPartida("salir")
                         self._running = False  # user pressed ESC
                     if event.key == pygame.K_RIGHT:
                         self.movimiento = True

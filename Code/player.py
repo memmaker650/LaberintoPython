@@ -482,13 +482,28 @@ class Enemigo(pygame.sprite.Sprite):
             self.rect.x = self.x
             self.rect.y = self.y
 
-            self.moveDown()
+            self.patrullar()
 
             # Actualizar rect tras mover
             self.rect.x = self.x
             self.rect.y = self.y
 
             self.borrarRecorridosAntiguos()
+
+    # Enemigo normal: patrulla su zona (habitación o pasillo). La IA decide la dirección al pasar
+    # por el centro de cada casilla; entre medias sigue recto. Sin zonas asignadas sigue en su dirección.
+    def patrullar(self):
+        cx = self.x + self.rect.width // 2
+        cy = self.y + self.rect.height // 2
+        if self.kia.zonas is not None and MazeLab.Maze.estaCentroCasilla(cx, cy):
+            self.kia.casilla = MazeLab.Maze.calcularCasilla(cx, cy)
+            self.kia.orientacion = self.orientacion
+            direccion = self.kia.direccionPatrulla()
+            if direccion is None:
+                return  # no tiene adónde ir dentro de su zona
+            self.orientacion = direccion
+        if self.orientacion in (0, 1, 2, 3):
+            self.elegirDireccion(self.orientacion)
 
     # MÉTODO UPDATE JEFE JEFE BOSS.
     #---------------------------------
@@ -560,9 +575,7 @@ class Enemigo(pygame.sprite.Sprite):
                 self.kia.colisionParedes = True
             return
 
-        # Cambio simple de dirección: invertir velocidad vertical
-        self.speedV = -self.speedV 
-
+        # Media vuelta (sin tocar la velocidad: el sentido lo da la orientación).
         # Arriba
         if self.orientacion == 0:
             self.orientacion = 2

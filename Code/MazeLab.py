@@ -533,6 +533,57 @@ class Maze:
 
         return conexiones
     
+    # Divide el suelo en zonas para la patrulla de los enemigos:
+    #  - "habitacion": zona amplia. Casillas de suelo que forman parte de algún bloque de suelo de 2x2.
+    #  - "pasillo": tramo estrecho (una casilla de ancho) entre paredes. Va de un extremo a otro:
+    #    la entrada a una habitación, un cruce o un callejón sin salida.
+    #  - "cruce": casilla de pasillo donde se juntan 3 o más pasillos (separa unos tramos de otros).
+    # Cada grupo conectado de casillas del mismo tipo es una zona.
+    # Devuelve (zonas, tipos): {casilla: id de zona} y {id de zona: tipo}.
+    @staticmethod
+    def calcularZonas(laberinto, ancho, alto):
+        def esSuelo(x, y):
+            return 0 <= x < ancho and 0 <= y < alto and laberinto[y * ancho + x] == 1
+
+        suelo = [c for c in range(ancho * alto) if laberinto[c] == 1]
+
+        amplias = set()
+        for c in suelo:
+            x, y = c % ancho, c // ancho
+            # ¿Algún bloque 2x2 que contenga a la casilla es todo suelo?
+            for x0, y0 in ((x, y), (x - 1, y), (x, y - 1), (x - 1, y - 1)):
+                if esSuelo(x0, y0) and esSuelo(x0 + 1, y0) and esSuelo(x0, y0 + 1) and esSuelo(x0 + 1, y0 + 1):
+                    amplias.add(c)
+                    break
+
+        def vecinas(c):
+            x, y = c % ancho, c // ancho
+            return [vy * ancho + vx for vx, vy in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)) if esSuelo(vx, vy)]
+
+        def tipo(c):
+            if c in amplias:
+                return "habitacion"
+            enPasillo = sum(1 for v in vecinas(c) if v not in amplias)
+            return "cruce" if enPasillo >= 3 else "pasillo"
+
+        tipoCasilla = {c: tipo(c) for c in suelo}
+
+        zonas = {}
+        tipos = {}
+        for c in suelo:
+            if c in zonas:
+                continue
+            identificador = len(tipos)
+            tipos[identificador] = tipoCasilla[c]
+            zonas[c] = identificador
+            pendientes = [c]
+            while pendientes:
+                for vecina in vecinas(pendientes.pop()):
+                    if vecina not in zonas and tipoCasilla[vecina] == tipoCasilla[c]:
+                        zonas[vecina] = identificador
+                        pendientes.append(vecina)
+        return zonas, tipos
+
     def nuevaCasillaTrasCamaraMovida(self, casilla: int) -> int:
         # La pantalla original 
         columna = casilla % self.N

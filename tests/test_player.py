@@ -334,7 +334,7 @@ def test_enemigo_cambiar_direccion(enemigo, antes, despues):
     enemigo.cambiar_direccion()
     assert enemigo.orientacion == despues
     assert enemigo.kia.orientacion == despues
-    assert enemigo.speedV == -1
+    assert enemigo.speedV == 1  # la media vuelta no invierte la velocidad (antes iba "hacia abajo" hacia arriba)
 
 
 def test_jefe_cambiar_direccion_avisa_a_la_ia(jefe):

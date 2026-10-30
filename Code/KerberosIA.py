@@ -13,6 +13,9 @@ from collections import deque
 
 DEBUG_IA = False # Flag para controlar los print
 
+# Patrulla de los enemigos normales dentro de su zona (habitación o pasillo).
+PROB_SEGUIR_RECTO = 0.75  # en una habitación, probabilidad de seguir recto si se puede
+
 class posicion:
     def __init__(self, valorX = 0, valorY = 0):
         self.x = valorX
@@ -54,6 +57,11 @@ class KerberosIA:
         self.casillaJugador = 0
         self.posicion = posicion(x, y)
         self.casilla = 0
+
+        # Zonas del laberinto (MazeLab.Maze.calcularZonas) y zona en la que patrulla este enemigo.
+        self.zonas = None
+        self.tiposZona = None
+        self.zona = None
 
     def definirPosicion(self, x, y ):
         self.posicion.cargar(x, y)
@@ -242,6 +250,46 @@ class KerberosIA:
             return random.choice(posibles)
 
         return opuesta
+
+    # Patrulla dentro de la zona del enemigo (se llama al pasar por el centro de una casilla).
+    #  - Pasillo: lo recorre de un extremo a otro; al llegar al final da media vuelta.
+    #  - Habitación: se mueve por ella sin salir, normalmente recto y a veces girando.
+    # Nunca elige una casilla de otra zona. Devuelve la dirección (0-3) o None si no puede moverse.
+    def asignarZona(self, zonas, tiposZona, casilla):
+        self.zonas = zonas
+        self.tiposZona = tiposZona
+        self.casilla = casilla
+        self.zona = zonas.get(casilla)
+
+    def tipoZona(self):
+        if self.tiposZona is None or self.zona is None:
+            return None
+        return self.tiposZona.get(self.zona)
+
+    def direccionPatrulla(self):
+        if self.zonas is None or self.zona is None:
+            return None
+        opciones = [d for d in self.conexiones.get(self.casilla, [])
+                    if self.zonas.get(self.obtenerCasillaSiguiente(self.casilla, d)) == self.zona]
+        if not opciones:
+            return None  # zona de una sola casilla: se queda quieto
+
+        opuesta = (self.orientacion + 2) % 4
+        sinVolver = [d for d in opciones if d != opuesta]
+
+        if self.tipoZona() == "pasillo":
+            if self.orientacion in sinVolver:
+                return self.orientacion          # sigue por el pasillo
+            if sinVolver:
+                return sinVolver[0]              # curva del pasillo
+            return opuesta                       # final del pasillo: media vuelta
+
+        # Habitación (o cualquier otra zona)
+        if not sinVolver:
+            return opuesta                       # rincón sin salida
+        if self.orientacion in sinVolver and random.random() < PROB_SEGUIR_RECTO:
+            return self.orientacion
+        return random.choice(sinVolver)
 
     # Método para seguir un camino tras detectar Player
     #----------------------------------------------------------

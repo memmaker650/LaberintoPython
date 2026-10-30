@@ -51,6 +51,18 @@ class Estadisticas:
         self.tiempoSegundos = 0.0
         self.terminado = False
 
+    # ---------- Partida guardada ----------
+    CONTADORES = ["enemigosMuertos", "balasDisparadas", "impactos", "huesos", "monedasOro",
+                  "heridas", "vidaPerdida"]
+
+    # Contadores de la partida en curso, para guardarla y poder continuarla.
+    def estado(self):
+        return {campo: getattr(self, campo) for campo in self.CONTADORES}
+
+    def restaurar(self, estado):
+        for campo in self.CONTADORES:
+            setattr(self, campo, int(estado.get(campo, 0)))
+
     # ---------- Registro durante la partida ----------
     def registrarDisparo(self):
         self.balasDisparadas += 1
