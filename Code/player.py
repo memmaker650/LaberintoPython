@@ -1,6 +1,7 @@
 from plyer import orientation
 import mates
 import KerberosIA
+import Luces
 
 import logging
 import statistics
@@ -371,6 +372,8 @@ class Enemigo(pygame.sprite.Sprite):
 
         # Inicio IA enemigos
         self.kia = KerberosIA.KerberosIA()
+        # Cono de visión (se corta en las paredes). El del jefe lo configura el juego.
+        self.conoVision = KerberosIA.VisionEnemigo()
         self.kia.KasRecorridas = self.posicionesRecorridas
 
         self.vida = 100
@@ -460,6 +463,13 @@ class Enemigo(pygame.sprite.Sprite):
     def vision(self, pos):
         logging.info("Pintamos cono de visión")
         
+    # Hacia dónde mira el cono de visión: los enemigos normales, hacia donde caminan;
+    # el jefe barre a su alrededor girando (visionRotar).
+    def anguloVision(self):
+        if self.isJefeEnemigo:
+            return self.angle
+        return Luces.ANGULO_ORIENTACION.get(self.orientacion, 90)
+
     def visionRotar(self):
         # logging.info("visión Rotar")
         self.angle = (self.angle + self.velocidadVisionRotacion) % 360

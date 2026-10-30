@@ -19,6 +19,48 @@ ANGULO_ORIENTACION = {0: 270, 1: 0, 2: 90, 3: 180}
 DEGRADADO_HAZ = [(1.0, 130), (0.75, 60), (0.5, 0)]
 
 
+# ---------------------------------------------------------------------------------------
+# Rayos: los usan la linterna del jugador y la visión de los enemigos (KerberosIA).
+# ---------------------------------------------------------------------------------------
+
+# Punto donde termina un rayo que sale de 'origen' con 'angulo' (grados, eje Y hacia abajo):
+# al alcance máximo o al chocar con el primer obstáculo (lista de pygame.Rect).
+# 'penetracion' son los píxeles que el rayo entra en el obstáculo (para que su borde se vea).
+def lanzarRayo(origen, angulo, alcance, obstaculos, penetracion=0):
+    ox, oy = origen
+    dx = math.cos(math.radians(angulo))
+    dy = math.sin(math.radians(angulo))
+    fin = (ox + dx * alcance, oy + dy * alcance)
+
+    distancia = alcance
+    for rect in obstaculos:
+        tramo = rect.clipline(origen, fin)
+        if tramo:
+            # El extremo del tramo más cercano al origen es por donde entra el rayo.
+            (x1, y1), (x2, y2) = tramo
+            distancia = min(distancia, math.hypot(x1 - ox, y1 - oy), math.hypot(x2 - ox, y2 - oy))
+
+    if distancia < alcance:
+        distancia = min(distancia + penetracion, alcance)
+    return (ox + dx * distancia, oy + dy * distancia)
+
+
+# Obstáculos que pueden cortar un rayo de longitud 'alcance' desde 'origen'. Los que contienen
+# el propio origen se descartan (si no, taparían todos los rayos).
+def obstaculosCercanos(origen, alcance, obstaculos):
+    alrededor = pygame.Rect(0, 0, 2 * alcance, 2 * alcance)
+    alrededor.center = (round(origen[0]), round(origen[1]))
+    return [r for r in obstaculos if alrededor.colliderect(r) and not r.collidepoint(origen)]
+
+
+# Abanico de 'num_rayos' rayos centrado en 'angulo' con 'apertura' grados. Devuelve los puntos finales.
+def abanicoRayos(origen, angulo, apertura, num_rayos, alcance, obstaculos, penetracion=0):
+    cercanos = obstaculosCercanos(origen, alcance, obstaculos)
+    inicio = angulo - apertura / 2
+    paso = apertura / (num_rayos - 1)
+    return [lanzarRayo(origen, inicio + i * paso, alcance, cercanos, penetracion) for i in range(num_rayos)]
+
+
 class Linterna:
     def __init__(self, zona, opacidad=0.9, alcance=230, apertura=60, num_rayos=48,
                  penetracion=10, radio_jugador=16, velocidad_giro=15):
@@ -50,30 +92,13 @@ class Linterna:
 
     # Punto donde termina un rayo: al alcance máximo o al chocar con el primer obstáculo.
     def lanzarRayo(self, origen, angulo, obstaculos):
-        ox, oy = origen
-        dx = math.cos(math.radians(angulo))
-        dy = math.sin(math.radians(angulo))
-        fin = (ox + dx * self.alcance, oy + dy * self.alcance)
-
-        distancia = self.alcance
-        for rect in obstaculos:
-            tramo = rect.clipline(origen, fin)
-            if tramo:
-                # El extremo del tramo más cercano al origen es por donde entra el rayo.
-                (x1, y1), (x2, y2) = tramo
-                distancia = min(distancia, math.hypot(x1 - ox, y1 - oy), math.hypot(x2 - ox, y2 - oy))
-
-        if distancia < self.alcance:
-            distancia = min(distancia + self.penetracion, self.alcance)
-        return (ox + dx * distancia, oy + dy * distancia)
+        return lanzarRayo(origen, angulo, self.alcance, obstaculos, self.penetracion)
 
     # Calcula el abanico de rayos del haz desde 'origen'. Devuelve los puntos finales.
     def calcularHaz(self, origen, obstaculos):
         # Sólo cuentan los obstáculos al alcance de la linterna. Los que contienen al propio
         # jugador (p. ej. un enemigo que le está tocando) se ignoran para no apagar todo el haz.
-        alrededor = pygame.Rect(0, 0, 2 * self.alcance, 2 * self.alcance)
-        alrededor.center = (round(origen[0]), round(origen[1]))
-        cercanos = [r for r in obstaculos if alrededor.colliderect(r) and not r.collidepoint(origen)]
+        cercanos = obstaculosCercanos(origen, self.alcance, obstaculos)
 
         inicio = self.angulo - self.apertura / 2
         paso = self.apertura / (self.num_rayos - 1)

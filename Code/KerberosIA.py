@@ -10,11 +10,63 @@ import sys
 import pygame
 from pygame.locals import *
 from collections import deque
+import math
+import Luces
 
 DEBUG_IA = False # Flag para controlar los print
 
 # Patrulla de los enemigos normales dentro de su zona (habitación o pasillo).
 PROB_SEGUIR_RECTO = 0.75  # en una habitación, probabilidad de seguir recto si se puede
+
+# Estados de los enemigos.
+ESTADO_PATRULLA = 0     # recorre su zona
+ESTADO_PERSECUCION = 1  # sigue al jugador (el jefe, por el camino BFS)
+ESTADO_ALARMA = 2       # ha visto al jugador y da la alarma
+ESTADO_EQUIPO = 3       # trabajo en equipo (pendiente)
+NOMBRES_ESTADO = {ESTADO_PATRULLA: "patrulla", ESTADO_PERSECUCION: "persecución",
+                  ESTADO_ALARMA: "alarma", ESTADO_EQUIPO: "equipo"}
+
+DURACION_ALARMA_MS = 4000  # sin volver a ver al jugador, la alarma dura esto y vuelve a patrullar
+
+
+# Cono de visión de un enemigo. Se calcula con rayos que se cortan en las paredes (y puertas),
+# así que el enemigo no ve a través de ellas.
+class VisionEnemigo:
+    def __init__(self, alcance=4 * 32, apertura=60, num_rayos=15):
+        self.alcance = alcance      # píxeles
+        self.apertura = apertura    # grados
+        self.num_rayos = num_rayos
+        self.origen = (0, 0)
+        self.angulo = 0.0
+        self.puntos = []            # extremos de los rayos (el polígono del cono es origen + puntos)
+
+    # Recalcula el cono desde 'origen' mirando hacia 'angulo' (grados, eje Y hacia abajo).
+    def actualizar(self, origen, angulo, paredes):
+        self.origen = origen
+        self.angulo = angulo % 360
+        self.puntos = Luces.abanicoRayos(origen, self.angulo, self.apertura, self.num_rayos,
+                                         self.alcance, paredes)
+        return self.puntos
+
+    def poligono(self):
+        return [self.origen] + self.puntos if self.puntos else []
+
+    # ¿Ve el punto? Tiene que estar al alcance, dentro del ángulo del cono y sin paredes en medio.
+    def ve(self, punto, paredes):
+        ox, oy = self.origen
+        px, py = punto
+        distancia = math.hypot(px - ox, py - oy)
+        if distancia > self.alcance:
+            return False
+        if distancia > 0:
+            direccion = math.degrees(math.atan2(py - oy, px - ox))
+            diferencia = (direccion - self.angulo + 180) % 360 - 180
+            if abs(diferencia) > self.apertura / 2:
+                return False
+        for rect in Luces.obstaculosCercanos(self.origen, self.alcance, paredes):
+            if rect.clipline(self.origen, punto):
+                return False
+        return True
 
 class posicion:
     def __init__(self, valorX = 0, valorY = 0):
@@ -57,6 +109,9 @@ class KerberosIA:
         self.casillaJugador = 0
         self.posicion = posicion(x, y)
         self.casilla = 0
+
+        # Momento (ms) en que vio al jugador por última vez (para la duración de la alarma).
+        self.ultimaVezVisto = None
 
         # Zonas del laberinto (MazeLab.Maze.calcularZonas) y zona en la que patrulla este enemigo.
         self.zonas = None
@@ -102,6 +157,24 @@ class KerberosIA:
     def gritarAlarma(self):
         self.alarma = True
         # Pintar el gruñido de alarma
+
+    # El enemigo ve al jugador: pasa a estado de alarma. Devuelve True si la alarma acaba de saltar
+    # (no estaba ya en alarma), para avisar al resto sólo una vez.
+    def verJugador(self, ahora_ms):
+        self.ultimaVezVisto = ahora_ms
+        nueva = self.estado != ESTADO_ALARMA
+        self.estado = ESTADO_ALARMA
+        self.gritarAlarma()
+        return nueva
+
+    # Sin ver al jugador: pasado DURACION_ALARMA_MS desde la última vez, vuelve a patrullar.
+    def actualizarAlarma(self, ahora_ms):
+        if self.estado == ESTADO_ALARMA and ahora_ms - self.ultimaVezVisto >= DURACION_ALARMA_MS:
+            self.estado = ESTADO_PATRULLA
+            self.alarma = False
+
+    def nombreEstado(self):
+        return NOMBRES_ESTADO.get(self.estado, str(self.estado))
 
     def reiniciarArraySiguientesCasillas(self):
         self.casillasLibres.clear()

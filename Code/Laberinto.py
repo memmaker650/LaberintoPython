@@ -24,6 +24,7 @@ import statistics
 import MazeLab
 import Sonido
 import Luces
+import KerberosIA
 import estadisticas
 from partida import PartidaGuardada
 import random
@@ -74,6 +75,13 @@ FLAGS_OBJETOS = ["flagLlave", "flagLlavePuerta", "flagChampi", "flagGranada", "f
 OBJETOS_JUGADOR = ["llavePuerta", "llaveFinNivel", "champi", "pistola", "granada", "laser"]
 PUNTOS_ENEMIGO = 50
 PUNTOS_JEFE = 200
+
+# Visión de los enemigos
+ALCANCE_VISION_ENEMIGO = 4 * CASILLA_PIXEL
+ALCANCE_VISION_JEFE = 5 * CASILLA_PIXEL
+COLOR_CONO_VISION = (199, 180, 70, 80)    # amarillo translúcido: patrulla
+COLOR_CONO_ALARMA = (255, 40, 40, 110)    # rojo translúcido: ha visto al jugador
+DURACION_BOCADILLO_ALARMA_MS = 3000
 
 # Especificación de la paleta de colores
 BLANCO = (255, 255, 255)
@@ -255,6 +263,8 @@ class App:
         self.wall_surf = None
 
         self.Sound = Sonido.Sonido()
+        self.sonidoAlarma = pygame.mixer.Sound("./Resources/Sonidos/alarm1.mp3")
+        self.superficieConos = None
 
         self.visionEnemigos = True
         self.tiempo_inicio = pygame.time.get_ticks()
@@ -359,6 +369,9 @@ class App:
             self.enemigo.conexiones = self.conexiones
             self.enemigo.pasarConexionesIA()
             self.enemigo.kia.asignarZona(self.zonas, self.tiposZona, self.enemigo.casilla)
+            self.enemigo.conoVision = KerberosIA.VisionEnemigo(alcance=ALCANCE_VISION_ENEMIGO, apertura=60)
+            self.enemigo.bubble_duration = DURACION_BOCADILLO_ALARMA_MS
+            self.enemigo.fade_duration = 1000
             self.enemigosArray.append(self.enemigo)
             self.EnemigosGroup.add(self.enemigo)
 
@@ -366,6 +379,7 @@ class App:
         self.JefeEnemigo = player.Enemigo()
         self.JefeEnemigo.isJefeEnemigo = True
         self.JefeEnemigo.vida = VIDA_JEFE
+        self.JefeEnemigo.conoVision = KerberosIA.VisionEnemigo(alcance=ALCANCE_VISION_JEFE, apertura=50)
         self.JefeEnemigo.casilla = candidatas.pop(0)
         pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
         self.JefeEnemigo.x = pos.x - (self.JefeEnemigo.rect.width // 2)
@@ -1614,6 +1628,50 @@ class App:
             for muni, paredes in colision_PlayerBalasConParedes.items():
                 logging.info(f'Bala Player en ({muni.x}, {muni.y}) colisionó con {len(paredes)} paredes')
                 muni.kill()
+
+        # Visión de los enemigos: si alguno ve al jugador, salta la alarma.
+        self.vigilar()
+
+    # Cada enemigo mira con su cono de visión (cortado por paredes y puertas). Si ve al jugador
+    # pasa a estado de alarma; si deja de verlo, al cabo de un rato vuelve a patrullar.
+    def vigilar(self):
+        paredes = [s.rect for s in self.maze.MazeParedes] + [p.rect for p in self.maze.MazePuertas]
+        jugador = self.player.rect.center
+        ahora = pygame.time.get_ticks()
+        for enemigo in self.EnemigosGroup:
+            enemigo.conoVision.actualizar(enemigo.rect.center, enemigo.anguloVision(), paredes)
+            if enemigo.conoVision.ve(jugador, paredes):
+                if enemigo.kia.verJugador(ahora):
+                    self.darAlarma(enemigo)
+            else:
+                enemigo.kia.actualizarAlarma(ahora)
+
+    # Un enemigo acaba de ver al jugador: bocadillo "¡ALARMA!", sonido de alarma y el jefe va a por él.
+    def darAlarma(self, enemigo):
+        logging.info("¡Alarma! Un enemigo ha visto al jugador desde (%s, %s)", enemigo.x, enemigo.y)
+        enemigo.alarma = True
+        enemigo.restarRelojBocadilloTexto()
+        self.sonidoAlarma.play(maxtime=1500)
+
+        jefe = self.JefeEnemigo
+        if jefe.alive():
+            inicio = self.maze.calcularCasilla(*jefe.rect.center)
+            destino = self.maze.calcularCasilla(*self.player.rect.center)
+            jefe.kia.playerDetectado = True
+            jefe.kia.casillaJugador = destino
+            jefe.kia.path = jefe.kia.calcular_camino_BFS(inicio, destino)
+
+    # Conos de visión de los enemigos vivos, translúcidos (rojos si están en alarma).
+    def pintarConosVision(self):
+        if self.superficieConos is None or self.superficieConos.get_size() != self.pantalla.get_size():
+            self.superficieConos = pygame.Surface(self.pantalla.get_size(), pygame.SRCALPHA)
+        self.superficieConos.fill((0, 0, 0, 0))
+        for enemigo in self.EnemigosGroup:
+            poligono = enemigo.conoVision.poligono()
+            if len(poligono) >= 3:
+                color = COLOR_CONO_ALARMA if enemigo.kia.estado == KerberosIA.ESTADO_ALARMA else COLOR_CONO_VISION
+                pygame.draw.polygon(self.superficieConos, color, poligono)
+        self.pantalla.blit(self.superficieConos, (0, 0))
     
     # Repinto el Laberinto
     def rebuildMap(self):
@@ -1625,6 +1683,11 @@ class App:
            self.wall_surf,
            self.casillaObjetosTocados
        )
+
+       # En macOS la pantalla tiene canal alfa y el mapa lo hereda con valores 0. Las capas
+       # translúcidas (conos de visión, linterna) pintadas encima sustituían esos píxeles por
+       # su propio color (p. ej. los números de casilla salían negros). Se deja todo opaco.
+       self.map_surface.fill((0, 0, 0, 255), special_flags=pygame.BLEND_RGBA_MAX)
     
     # on RENDER
     #--------------------
@@ -1715,34 +1778,28 @@ class App:
                 self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
             if jefeVivo and self.pintaRectángulos == True:
                 pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
-            # VISION
-            if jefeVivo and self.visionEnemigos == True:
-                self.JefeEnemigo.visionRotar()
-                self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
-                centro = (self.JefeEnemigo.x+10, self.JefeEnemigo.y+10)
-                radio = 20
-                x = centro[0] + radio * math.cos(math.radians(self.JefeEnemigo.angle))
-                y = centro[1] + radio * math.sin(math.radians(self.JefeEnemigo.angle))
-                rot_angle = -self.JefeEnemigo.angle + 90
-                rotated = pygame.transform.rotate(self.JefeEnemigo.visionImage, rot_angle)
-                rect = rotated.get_rect(center=(x, y))
-                self.pantalla.blit(rotated, rect)
- 
-            if(self.JefeEnemigo.alarma):
+            # VISIÓN: conos de todos los enemigos (se calculan en vigilar(), dentro de on_loop).
+            if self.visionEnemigos == True:
+                self.pintarConosVision()
+
+            # Bocadillo "¡ ALARMA !" de cada enemigo que ha dado la alarma (o del jefe con INTRO).
+            for enemigo in self.EnemigosGroup:
+                if not enemigo.alarma:
+                    continue
                 # --- Control del tiempo del bocadillo ---
                 current_time = pygame.time.get_ticks()
-                elapsed = current_time - self.JefeEnemigo.bubble_start_time
-                if elapsed < self.JefeEnemigo.bubble_duration:
+                elapsed = current_time - enemigo.bubble_start_time
+                if elapsed < enemigo.bubble_duration:
                     # Calculamos opacidad
-                    if elapsed > self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration:
-                        alphaBTexto = int(255 * (1 - (elapsed - (self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration)) / self.JefeEnemigo.fade_duration))
+                    if elapsed > enemigo.bubble_duration - enemigo.fade_duration:
+                        alphaBTexto = int(255 * (1 - (elapsed - (enemigo.bubble_duration - enemigo.fade_duration)) / enemigo.fade_duration))
                     else:
                         alphaBTexto = 255
- 
-                    self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, alphaBTexto)
+
+                    enemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", enemigo.rect.centerx, enemigo.rect.top, alphaBTexto)
                 else:
-                    self.JefeEnemigo.alarma = False
-                    self.JefeEnemigo.restarRelojBocadilloTexto()
+                    enemigo.alarma = False
+                    enemigo.restarRelojBocadilloTexto()
         
             # Maze Extra --> Recuadros
             if self.pintaRectángulos == True:

@@ -290,6 +290,7 @@ class Maze:
         self.posicionPuerta = []
 
         xfont = pygame.font.SysFont('Corbel', 14)
+        numerosCasilla = []
 
         textWallDebug = pygame.sprite.Group()
         # rendering a text written in Corbel font.
@@ -308,12 +309,11 @@ class Maze:
                 else:
                     display_surf.blit(w_surf, ((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                     
-                # Pintar el número de casilla en el suelo.
+                # Número de casilla en el suelo: se apunta y se pinta al final, encima de todo
+                # (si no, lo tapaban el suelo de la casilla siguiente y los objetos).
                 # -------------------------------------------------
                 if self.pintaKasillaNumSuelo:
-                    # print("Dentro Pintar NumKasilla.")
-                    textWallMark = xfont.render(str(i), True, (255, 0, 0))
-                    display_surf.blit(textWallMark, rectSuelo.rect.center)
+                    numerosCasilla.append((str(i), rectSuelo.rect.center))
 
                 casiya = bx + (by * self.M)
                 # if not len(casillasObjetos) == 0:
@@ -449,6 +449,9 @@ class Maze:
             if bx > self.M - 1:
                 bx = 0
                 by = by + 1
+
+        for texto, posicionTexto in numerosCasilla:
+            display_surf.blit(xfont.render(texto, True, (255, 0, 0)), posicionTexto)
 
     def pintarDetallesCasillaEnemigo(self, display_surface):
         # Cruz Posición

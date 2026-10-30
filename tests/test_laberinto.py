@@ -776,3 +776,25 @@ def test_menuOpciones_textos_dentro_del_boton(monkeypatch, app, dy, texto):
     izquierda = min(x for x, _ in blancos) - boton.left
     derecha = boton.right - max(x for x, _ in blancos)
     assert abs(izquierda - derecha) <= 4
+
+
+# ---------- Pantallas con canal alfa (macOS) ----------
+def test_mapa_opaco_aunque_la_pantalla_tenga_alfa(juego):
+    # En macOS la pantalla (y el mapa, que se crea con convert()) tiene canal alfa. Si el mapa queda
+    # con alfa 0, las capas translúcidas pintadas encima (conos de visión, linterna) sustituyen sus
+    # píxeles: los números de casilla se veían negros.
+    tamano = juego.map_surface.get_size()
+    juego.map_surface = pygame.Surface(tamano, 0, 32, (0xFF0000, 0xFF00, 0xFF, 0xFF000000))
+    juego.map_surface.fill((0, 0, 0, 0))
+    MazeLab.Maze.pintaKasillaNumSuelo = True
+    juego.rebuildMap()
+    assert all(juego.map_surface.get_at((x, y)).a == 255 for x in range(0, 864, 37) for y in range(0, 1000, 41))
+
+    # Una capa transparente encima no cambia los números (siguen rojos).
+    pantalla = juego.map_surface.copy()
+    capa = pygame.Surface(tamano, pygame.SRCALPHA)
+    capa.fill((0, 0, 0, 0))
+    rojos = lambda s: sum(1 for x in range(0, 864, 2) for y in range(136, 1000, 2) if s.get_at((x, y))[:3] == (255, 0, 0))
+    antes = rojos(pantalla)
+    pantalla.blit(capa, (0, 0))
+    assert antes > 500 and rojos(pantalla) == antes

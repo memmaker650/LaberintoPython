@@ -359,3 +359,32 @@ def test_puerta_draw(superficie):
     p.draw(superficie)
     assert superficie.get_at((100, 200))[:3] == (128, 128, 128)  # bisagra
     assert superficie.get_at(p.rect.center)[:3] != (0, 0, 0)
+
+
+def test_numeros_de_casilla_encima_de_los_objetos(maze, superficie):
+    # Los números se pintan al final: ni los objetos de la casilla ni el suelo de la siguiente los tapan.
+    suelo = pygame.Surface((32, 32))
+    suelo.fill((90, 90, 90))
+    Maze.pintaKasillaNumSuelo = True
+    maze.draw(superficie, suelo, suelo)
+    hueso = _visibles(maze, 2)[0]
+    centro = Maze.centroCasilla(hueso)
+    zona = pygame.Rect(centro.x, centro.y, 24, 14)  # donde empieza el número
+    rojos = [p for p in ((x, y) for x in range(zona.left, zona.right) for y in range(zona.top, zona.bottom))
+             if superficie.get_at(p)[:3] == (255, 0, 0)]
+    assert rojos
+
+
+def test_sin_numeros_de_casilla(maze, superficie):
+    suelo = pygame.Surface((32, 32))
+    suelo.fill((90, 90, 90))
+    Maze.pintaKasillaNumSuelo = False
+    try:
+        maze.draw(superficie, suelo, suelo)
+    finally:
+        Maze.pintaKasillaNumSuelo = True
+    # Casilla 42: suelo sin objetos. Sin números no hay nada rojo en ella.
+    esquina = Maze.calcularPixelPorCasilla(42)
+    assert maze.mazeDataExtra[42] == 1
+    assert not any(superficie.get_at((esquina.x + dx, esquina.y + dy))[:3] == (255, 0, 0)
+                   for dx in range(32) for dy in range(32))
