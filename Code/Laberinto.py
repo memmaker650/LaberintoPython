@@ -2068,6 +2068,7 @@ class App:
 
 
 if __name__ == "__main__":
+    os.makedirs("./log", exist_ok=True)  # la carpeta log/ no está en git: se crea al arrancar
     logging.basicConfig(filename="./log/squidcastle.log", level=logging.WARNING,
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
     logging.warning("Inicio LaberintoPy!!!")
