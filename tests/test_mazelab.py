@@ -92,7 +92,7 @@ def test_esAlcanzable_suelo_y_pared(maze):
     assert maze.esAlcanzable(5, BIAS + 5) is False             # casilla 0: pared
 
 
-@pytest.mark.parametrize("x, y", [(-1, 300), (900, 300), (100, -5), (100, 1001)])
+@pytest.mark.parametrize("x, y", [(-1, 300), (MazeLab.ANCHO_MUNDO, 300), (100, -5), (100, 1001)])
 def test_esAlcanzable_fuera_de_pantalla(maze, x, y):
     assert maze.esAlcanzable(x, y) is False
 
@@ -100,6 +100,11 @@ def test_esAlcanzable_fuera_de_pantalla(maze, x, y):
 def test_esAlcanzable_zona_cabecera(maze):
     # (40, 10) está en la cabecera (HUD), nunca debería ser alcanzable.
     assert maze.esAlcanzable(40, 10) is False
+
+
+def test_esAlcanzable_zona_derecha_del_mundo(maze):
+    # Coordenadas del mundo: la zona derecha (x > 864) también existe.
+    assert maze.esAlcanzable(33 * 32 + 5, BIAS + 20 * 32 + 5) is True
 
 
 def test_esAlcanzableCasilla(maze):
@@ -146,33 +151,38 @@ def test_precalcular_conexiones_laberinto_real_simetricas(maze, conexiones):
 
 
 # ---------- Cámara ----------
-def test_moverCamara_derecha(maze):
-    y = BIAS + 20 * 32 + 5  # fila 20: suelo hasta la columna 39
-    maze.moverCamara(26 * 32 + 5, y)
-    assert maze.posicionCamara == 14
-    assert maze.movimientoCamara == 1
-    assert maze.flagCamara is False and maze.flagCamaraCambio is True
+# camaraX = x del mundo que se ve en el borde izquierdo de la pantalla (864 px = 27 casillas).
+ANCHO = MazeLab.ANCHO_MUNDO
+DERECHA = 864 - MazeLab.MARGEN_CAMARA - CASILLA_PIXEL   # a partir de aquí la cámara se mueve
 
 
-def test_moverCamara_derecha_sobre_pared_no_mueve(maze):
-    maze.moverCamara(26 * 32 + 5, BIAS + 5)  # fila 0: pared
-    assert maze.posicionCamara == 13
-    assert maze.flagCamaraCambio is False
+def test_camara_quieta_lejos_de_los_bordes(maze):
+    assert maze.camaraX == 0
+    assert maze.moverCamara(400) == 0
+    assert maze.moverCamara(DERECHA) == 0
 
 
-def test_moverCamara_izquierda(maze):
-    maze.posicionCamara = 15
-    maze.movimientoCamara = 2
-    maze.moverCamara(10, BIAS + 40)
-    assert maze.posicionCamara == 14
-    assert maze.movimientoCamara == 1
-    assert maze.flagCamaraCambio is True
+def test_camara_sigue_al_jugador_a_la_derecha(maze):
+    assert maze.moverCamara(DERECHA + 10) == 10
+    assert maze.moverCamara(DERECHA + 100) == 100
 
 
-def test_moverCamara_sin_flag_no_mueve(maze):
-    maze.flagCamara = False
-    maze.moverCamara(26 * 32 + 5, BIAS + 20 * 32 + 5)
-    assert maze.posicionCamara == 13
+def test_camara_no_se_sale_del_laberinto(maze):
+    assert maze.moverCamara(ANCHO - 20) == ANCHO - 864           # 1280 - 864 = 416
+    assert maze.moverCamara(-50) == 0
+
+
+def test_camara_vuelve_a_la_izquierda(maze):
+    maze.moverCamara(DERECHA + 300)
+    assert maze.camaraX == 300
+    assert maze.moverCamara(300 + MazeLab.MARGEN_CAMARA + 10) == 300   # todavía en pantalla
+    assert maze.moverCamara(300 + MazeLab.MARGEN_CAMARA - 40) == 260
+    assert maze.moverCamara(0) == 0
+
+
+def test_camara_fija(maze):
+    maze.camaraFija = True
+    assert maze.moverCamara(ANCHO - 20) == 0
 
 
 def test_nuevaCasillaTrasCamaraMovida(maze):
@@ -187,7 +197,8 @@ def test_nuevaPosicionXYTrasCamaraMovida(maze):
 
 # ---------- Dibujo ----------
 def _visibles(maze, valor):
-    return [i for i, v in enumerate(maze.mazeDataExtra) if v == valor and i % NUM_CASILLAS_H <= 27]
+    # Con la cámara, draw() pinta y crea los objetos de TODO el laberinto (también la zona derecha).
+    return [i for i, v in enumerate(maze.mazeDataExtra) if v == valor]
 
 
 def test_draw_pinta_suelo_y_paredes(maze, superficie):
@@ -242,13 +253,21 @@ def test_draw_respeta_flags(maze, superficie):
     assert len(maze.MazeLlave) == 0
 
 
-def test_draw_con_camara_desplazada(maze, superficie):
-    suelo = pygame.Surface((32, 32))
-    maze.posicionCamara = 15
-    maze.draw(superficie, suelo, suelo)
-    assert maze.movimientoCamara == 2
-    # La puerta de la casilla 395 (columna 35) sigue fuera de la vista.
-    assert 395 not in {c for c, _ in maze.posicionPuerta}
+def test_draw_pinta_la_zona_derecha_en_coordenadas_del_mundo(maze):
+    # La zona derecha (columnas 27-39) se pinta a partir de x = 864 en la superficie del mundo.
+    mundo = pygame.Surface((MazeLab.ANCHO_MUNDO, 1000))
+    suelo = pygame.Surface((32, 32)); suelo.fill((10, 200, 10))
+    pared = pygame.Surface((32, 32)); pared.fill((200, 10, 10))
+    Maze.pintaKasillaNumSuelo = False
+    try:
+        maze.draw(mundo, suelo, pared)
+    finally:
+        Maze.pintaKasillaNumSuelo = True
+    c = 20 * NUM_CASILLAS_H + 33                       # fila 20, columna 33: suelo
+    assert maze.maze[c] == 1
+    assert mundo.get_at((33 * 32 + 5, BIAS + 20 * 32 + 5))[:3] == (10, 200, 10)
+    assert mundo.get_at((39 * 32 + 5, BIAS + 5))[:3] == (200, 10, 10)
+    assert 395 in {c for c, _ in maze.posicionPuerta}  # la puerta de la columna 35 también existe
 
 
 def test_addText(maze):

@@ -501,8 +501,8 @@ def test_menu_nivel_dialogo_cancelar_completo(monkeypatch, app):
 def test_nivel_que_cabe_en_pantalla_fija_la_camara():
     m = MazeLab.Maze(nivel_real(2))
     assert m.camaraFija is True
-    m.moverCamara(26 * 32 + 5, MazeLab.BIAS + 32 + 5)
-    assert m.posicionCamara == 13 and m.flagCamaraCambio is False
+    assert m.moverCamara(26 * 32 + 5, MazeLab.BIAS + 32 + 5) == 0
+    assert m.camaraX == 0
 
 
 def test_laberinto_por_defecto_mantiene_la_camara_movil():

@@ -95,10 +95,11 @@ def test_ve_con_angulo_que_da_la_vuelta():
 
 # ================= Estados de la IA =================
 def test_estados_definidos():
-    assert (KerberosIA.ESTADO_PATRULLA, KerberosIA.ESTADO_PERSECUCION, KerberosIA.ESTADO_ALARMA,
-            KerberosIA.ESTADO_EQUIPO) == (0, 1, 2, 3)
+    assert (KerberosIA.ESTADO_NORMAL, KerberosIA.ESTADO_PERSECUCION, KerberosIA.ESTADO_ALARMA,
+            KerberosIA.ESTADO_EQUIPO, KerberosIA.ESTADO_ALERTA) == (0, 1, 2, 3, 4)
+    assert KerberosIA.ESTADO_PATRULLA == KerberosIA.ESTADO_NORMAL   # nombre antiguo
     ia = KerberosIA.KerberosIA()
-    assert ia.estado == KerberosIA.ESTADO_PATRULLA and ia.nombreEstado() == "patrulla"
+    assert ia.estado == KerberosIA.ESTADO_NORMAL and ia.nombreEstado() == "normal"
 
 
 def test_ver_jugador_da_la_alarma_una_vez():
@@ -115,9 +116,14 @@ def test_alarma_se_apaga_tras_no_verlo():
     ia.verJugador(1000)
     ia.actualizarAlarma(1000 + KerberosIA.DURACION_ALARMA_MS - 1)
     assert ia.estado == KerberosIA.ESTADO_ALARMA
-    ia.actualizarAlarma(1000 + KerberosIA.DURACION_ALARMA_MS)
-    assert ia.estado == KerberosIA.ESTADO_PATRULLA and ia.alarma is False
-    assert ia.verJugador(9000) is True        # si lo vuelve a ver, avisa otra vez
+    fin_alarma = 1000 + KerberosIA.DURACION_ALARMA_MS
+    ia.actualizarAlarma(fin_alarma)
+    assert ia.estado == KerberosIA.ESTADO_ALERTA and ia.alarma is False   # sigue alerta un rato
+    ia.actualizarEstado(fin_alarma + KerberosIA.DURACION_ALERTA_MS - 1)
+    assert ia.estado == KerberosIA.ESTADO_ALERTA
+    ia.actualizarEstado(fin_alarma + KerberosIA.DURACION_ALERTA_MS)
+    assert ia.estado == KerberosIA.ESTADO_NORMAL
+    assert ia.verJugador(99_000) is True       # si lo vuelve a ver, avisa otra vez
 
 
 def test_actualizarAlarma_en_patrulla_no_hace_nada():
@@ -205,7 +211,7 @@ def test_enemigo_ve_al_jugador_y_da_la_alarma(monkeypatch, juego):
     colocar(jefe, MazeLab.Maze.calcularCasilla(*vigilante.rect.center))
     jefe.angle = (vigilante.anguloVision() + 180) % 360
     juego.vigilar()
-    assert jefe.kia.estado == KerberosIA.ESTADO_PATRULLA
+    assert jefe.kia.estado == KerberosIA.ESTADO_ALERTA   # no lo ve, pero oye el grito de al lado
     assert vigilante.kia.estado == KerberosIA.ESTADO_ALARMA
     assert vigilante.alarma is True
     assert sonidos == [{"maxtime": 1500}]
@@ -247,7 +253,7 @@ def test_puerta_corta_la_vision(juego):
     assert vigilante.kia.estado == KerberosIA.ESTADO_PATRULLA
 
 
-def test_alarma_vuelve_a_patrulla(monkeypatch, juego):
+def test_alarma_pasa_a_alerta_y_vuelve_a_normal(monkeypatch, juego):
     vigilante = preparar(juego, "...", 3)
     juego.vigilar()
     assert vigilante.kia.estado == KerberosIA.ESTADO_ALARMA
@@ -256,7 +262,10 @@ def test_alarma_vuelve_a_patrulla(monkeypatch, juego):
     assert vigilante.kia.estado == KerberosIA.ESTADO_ALARMA
     vigilante.kia.ultimaVezVisto -= KerberosIA.DURACION_ALARMA_MS
     juego.vigilar()
-    assert vigilante.kia.estado == KerberosIA.ESTADO_PATRULLA
+    assert vigilante.kia.estado == KerberosIA.ESTADO_ALERTA
+    vigilante.kia.ultimoRuido -= KerberosIA.DURACION_ALERTA_MS
+    juego.vigilar()
+    assert vigilante.kia.estado == KerberosIA.ESTADO_NORMAL
 
 
 def test_jefe_tambien_vigila(monkeypatch, juego):

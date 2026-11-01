@@ -320,22 +320,56 @@ def test_bala_enemigo_contra_pared(juego):
     assert not jefe.balas.has(bala)
 
 
-def test_scroll_camara_desplaza_todo(juego):
-    mover_jugador(juego, 40, BIAS + 40)
-    e = enemigos_normales(juego)[0]
-    x_enemigo = e.x
-    pared = next(iter(juego.maze.MazeParedes))
-    x_pared = pared.rect.x
-    puerta = next(iter(juego.maze.MazePuertas))
-    x_puerta = puerta.x
-    juego.maze.movimientoCamara = 1
-    juego.maze.flagCamaraCambio = True
+def test_camara_no_mueve_nada_del_mundo(juego):
+    # Al desplazarse la cámara, paredes, jugador y enemigos se quedan en sus coordenadas del laberinto.
+    paredes = sorted(tuple(p.rect) for p in juego.maze.MazeParedes)
+    enemigos = [(e.x, e.y) for e in enemigos_normales(juego)]
+    for e in enemigos_normales(juego):
+        e.update = lambda: None
+    fila20 = MazeLab.Maze.calcularPixelPorCasilla(20 * MazeLab.NUM_CASILLAS_H + 30)
+    mover_jugador(juego, fila20.x + 5, fila20.y + 5)    # columna 30: zona derecha
     juego.on_loop()
-    assert juego.player.x == 40 - CASILLA_PIXEL
-    assert e.x == x_enemigo - CASILLA_PIXEL == e.rect.x
-    assert pared.rect.x == x_pared - CASILLA_PIXEL
-    assert puerta.x == x_puerta - CASILLA_PIXEL
-    assert juego.maze.flagCamaraCambio is False
+    assert juego.maze.camaraX > 0
+    assert (juego.player.x, juego.player.y) == (fila20.x + 5, fila20.y + 5)
+    assert sorted(tuple(p.rect) for p in juego.maze.MazeParedes) == paredes
+    assert [(e.x, e.y) for e in enemigos_normales(juego)] == enemigos
+
+
+def test_jugador_entra_en_la_zona_derecha(juego):
+    # Antes una "pared invisible" no le dejaba pasar: el mapa pintado y las paredes no coincidían.
+    for e in list(juego.EnemigosGroup):
+        e.kill()
+    inicio = MazeLab.Maze.calcularPixelPorCasilla(20 * MazeLab.NUM_CASILLAS_H + 22)
+    mover_jugador(juego, inicio.x + 5, inicio.y + 5)
+    for _ in range(600):
+        juego.player.moveRight()
+        juego.on_loop()
+    casilla = MazeLab.Maze.calcularCasilla(*juego.player.rect.center)
+    assert juego.maze.MazeLaberinto[casilla + 1] == 0   # la columna 39 es la pared del borde
+    assert casilla % MazeLab.NUM_CASILLAS_H == 38       # llega a la última columna de suelo
+    assert juego.maze.camaraX == MazeLab.ANCHO_MUNDO - 864
+
+
+def test_render_pinta_lo_que_ve_la_camara(juego):
+    juego.on_render()
+    juego.maze.camaraX = 200
+    juego.on_render()
+    # Lo que hay en la pantalla en x es lo que hay en el mundo en x + camaraX.
+    for x, y in ((10, 300), (500, 600), (850, 900)):
+        assert juego.pantalla.get_at((x, y)) == juego.mundo.get_at((x + 200, y))
+
+
+def test_mapa_del_tamano_del_mundo(juego):
+    assert juego.map_surface.get_width() == juego.mundo.get_width() == MazeLab.ANCHO_MUNDO
+
+
+def test_mundo_sin_canal_alfa_para_no_dejar_la_pantalla_transparente(juego):
+    # En macOS, con canal alfa, los conos de visión lo ponían a 0 y el HUD salía en cuadros.
+    assert juego.mundo.get_masks()[3] == 0
+    juego.visionEnemigos = True
+    juego.on_loop()
+    juego.on_render()
+    assert juego.mundo.get_at((300, 500)).a == 255
 
 
 # ---------- on_render ----------

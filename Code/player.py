@@ -152,7 +152,7 @@ class Disparos(pygame.sprite.Sprite):
             self.kill()
         elif self.rect.y < 0:
             self.kill()
-        elif self.rect.x > SCREEN_WIDTH:
+        elif self.rect.x > MazeLab.ANCHO_MUNDO:  # el mundo es más ancho que la pantalla (cámara)
             self.kill()
         elif self.rect.y < BIAS:
             self.kill()
@@ -337,6 +337,7 @@ class Enemigo(pygame.sprite.Sprite):
     bubble_duration = 10000  # 10 segundos
     fade_duration = 2000     # últimos 2 segundos para desvanecerse
     fontBocadillo = None
+    avisoAlerta_ms = None  # momento en que se puso en alerta (para el bocadillo "¿ ? ?")
 
     posicionesRecorridas = []
     tiempoOlvido = 5

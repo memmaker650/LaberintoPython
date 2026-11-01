@@ -18,15 +18,43 @@ DEBUG_IA = False # Flag para controlar los print
 # Patrulla de los enemigos normales dentro de su zona (habitación o pasillo).
 PROB_SEGUIR_RECTO = 0.75  # en una habitación, probabilidad de seguir recto si se puede
 
-# Estados de los enemigos.
-ESTADO_PATRULLA = 0     # recorre su zona
+# Estados de los enemigos (y del jefe).
+#   normal --(oye un disparo o un grito)--> alerta
+#   normal / alerta --(ve o toca al jugador)--> alarma (grita y avisa)
+#   alarma --(4 s sin verlo)--> alerta --(8 s sin oír nada)--> normal
+ESTADO_NORMAL = 0       # hace su ronda (patrulla su zona)
 ESTADO_PERSECUCION = 1  # sigue al jugador (el jefe, por el camino BFS)
-ESTADO_ALARMA = 2       # ha visto al jugador y da la alarma
+ESTADO_ALARMA = 2       # ha visto o tocado al jugador y da la alarma
 ESTADO_EQUIPO = 3       # trabajo en equipo (pendiente)
-NOMBRES_ESTADO = {ESTADO_PATRULLA: "patrulla", ESTADO_PERSECUCION: "persecución",
-                  ESTADO_ALARMA: "alarma", ESTADO_EQUIPO: "equipo"}
+ESTADO_ALERTA = 4       # ha oído un ruido (disparo, bala contra una pared o el grito de otro enemigo)
+ESTADO_PATRULLA = ESTADO_NORMAL  # nombre antiguo del estado normal
+NOMBRES_ESTADO = {ESTADO_NORMAL: "normal", ESTADO_PERSECUCION: "persecución",
+                  ESTADO_ALARMA: "alarma", ESTADO_EQUIPO: "equipo", ESTADO_ALERTA: "alerta"}
 
-DURACION_ALARMA_MS = 4000  # sin volver a ver al jugador, la alarma dura esto y vuelve a patrullar
+DURACION_ALARMA_MS = 4000   # sin volver a ver al jugador, la alarma dura esto y pasa a alerta
+DURACION_ALERTA_MS = 8000   # sin oír nada más, la alerta dura esto y vuelve a normal
+RADIO_RUIDO_CASILLAS = 6    # distancia máxima (en casillas) a la que se oye un ruido
+
+
+# Casillas a las que llega un grito dado en 'origen': el sonido avanza por el suelo del laberinto
+# (siguiendo 'conexiones') hasta 'maximo' casillas de recorrido y no atraviesa las casillas
+# 'bloqueadas' (puertas cerradas). Devuelve {casilla: distancia en casillas}.
+def propagarSonido(origen, conexiones, bloqueadas=(), maximo=RADIO_RUIDO_CASILLAS):
+    ancho = MazeLab.NUM_CASILLAS_H
+    paso = {0: -ancho, 1: 1, 2: ancho, 3: -1}
+    distancias = {origen: 0}
+    cola = deque([origen])
+    while cola:
+        actual = cola.popleft()
+        if distancias[actual] == maximo:
+            continue
+        for direccion in conexiones.get(actual, []):
+            vecina = actual + paso[direccion]
+            if vecina in distancias or vecina in bloqueadas:
+                continue
+            distancias[vecina] = distancias[actual] + 1
+            cola.append(vecina)
+    return distancias
 
 
 # Cono de visión de un enemigo. Se calcula con rayos que se cortan en las paredes (y puertas),
@@ -112,6 +140,9 @@ class KerberosIA:
 
         # Momento (ms) en que vio al jugador por última vez (para la duración de la alarma).
         self.ultimaVezVisto = None
+        # Último ruido oído: momento (ms) y punto de la pantalla de donde venía.
+        self.ultimoRuido = None
+        self.puntoRuido = None
 
         # Zonas del laberinto (MazeLab.Maze.calcularZonas) y zona en la que patrulla este enemigo.
         self.zonas = None
@@ -167,11 +198,28 @@ class KerberosIA:
         self.gritarAlarma()
         return nueva
 
-    # Sin ver al jugador: pasado DURACION_ALARMA_MS desde la última vez, vuelve a patrullar.
-    def actualizarAlarma(self, ahora_ms):
+    # Oye un ruido (disparo, bala contra una pared o el grito de otro enemigo) que viene de 'punto'.
+    # Pasa a alerta salvo que ya esté en alarma. Devuelve True si acaba de ponerse en alerta.
+    def oirRuido(self, ahora_ms, punto):
+        if self.estado == ESTADO_ALARMA:
+            return False
+        nueva = self.estado != ESTADO_ALERTA
+        self.estado = ESTADO_ALERTA
+        self.ultimoRuido = ahora_ms
+        self.puntoRuido = punto
+        return nueva
+
+    # Sin ver al jugador: la alarma pasa a alerta y, sin oír nada más, la alerta vuelve a normal.
+    def actualizarEstado(self, ahora_ms):
         if self.estado == ESTADO_ALARMA and ahora_ms - self.ultimaVezVisto >= DURACION_ALARMA_MS:
-            self.estado = ESTADO_PATRULLA
+            self.estado = ESTADO_ALERTA
             self.alarma = False
+            self.ultimoRuido = ahora_ms  # la alerta empieza a contar ahora
+        elif self.estado == ESTADO_ALERTA and ahora_ms - self.ultimoRuido >= DURACION_ALERTA_MS:
+            self.estado = ESTADO_NORMAL
+            self.puntoRuido = None
+
+    actualizarAlarma = actualizarEstado  # nombre anterior
 
     def nombreEstado(self):
         return NOMBRES_ESTADO.get(self.estado, str(self.estado))

@@ -4,6 +4,7 @@ import pygame
 import pytest
 
 import KerberosIA
+import MazeLab
 import player
 from player import BIAS, SCREEN_HEIGHT, SCREEN_WIDTH
 from MazeLab import NUM_CASILLAS_H as H
@@ -81,7 +82,7 @@ def test_disparo_update_mueve(orient, dx, dy):
 
 @pytest.mark.parametrize("x, y, orient", [
     (1, 500, 3),                    # sale por la izquierda
-    (SCREEN_WIDTH, 500, 1),         # sale por la derecha
+    (MazeLab.ANCHO_MUNDO, 500, 1),  # sale por la derecha del laberinto (no de la pantalla)
     (400, BIAS, 0),                 # entra en la cabecera
     (400, SCREEN_HEIGHT, 2),        # sale por abajo
 ])

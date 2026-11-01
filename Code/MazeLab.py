@@ -25,6 +25,8 @@ CASILLA_PIXEL = 32
 NUM_CASILLAS_H = 40
 NUM_CASILLAS_VERTI = 27
 NUM_CASILLAS_CAMARA = 27
+ANCHO_MUNDO = NUM_CASILLAS_H * CASILLA_PIXEL   # ancho del laberinto completo en píxeles (40 casillas)
+MARGEN_CAMARA = 4 * CASILLA_PIXEL              # la cámara se mueve si el jugador se acerca tanto al borde
 IMG_DIR = "Resources"
 EXPLOSION_DIR = "assets/explosions/images/explosion/"
 SONIDO_DIR = "Resources/Sonidos"
@@ -58,10 +60,8 @@ class Maze:
     M = NUM_CASILLAS_H
     N = NUM_CASILLAS_VERTI
 
-    posicionCamara = int = 13
-    movimientoCamara = int = 0
-    flagCamara = bool = True
-    flagCamaraCambio = bool = False
+    # Cámara horizontal: x del mundo que se ve en el borde izquierdo de la pantalla.
+    camaraX = 0
     camaraFija = False  # True si todo el suelo cabe en pantalla: la cámara no se desplaza.
 
     posicionInitJugador = int = 0
@@ -295,155 +295,154 @@ class Maze:
         textWallDebug = pygame.sprite.Group()
         # rendering a text written in Corbel font.
 
-        self.movimientoCamara = self.posicionCamara - 13
-
+        # Se pinta TODO el laberinto en coordenadas del mundo (columna bx -> x = bx * 32).
+        # La cámara (camaraX) sólo decide qué parte se ve en pantalla.
         for i in range(0, self.M * self.N):
-            if (self.movimientoCamara == 0 and bx <= 27) or (self.movimientoCamara > 0 and bx >= self.movimientoCamara and bx <= 26 + self.movimientoCamara): 
-                rectSuelo = pygame.sprite.Sprite()
-                rectSuelo.image = pygame.Surface([(bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS])
-                rectSuelo.rect = pygame.Rect((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, 32, 32)
+            rectSuelo = pygame.sprite.Sprite()
+            rectSuelo.image = pygame.Surface([bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS])
+            rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, 32, 32)
 
-                if self.maze[bx + (by * self.M)] == 1:
-                    display_surf.blit(image_surf, ((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS))
-                    self.rect = image_surf.get_rect()
-                else:
-                    display_surf.blit(w_surf, ((bx-self.movimientoCamara) * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    
-                # Número de casilla en el suelo: se apunta y se pinta al final, encima de todo
-                # (si no, lo tapaban el suelo de la casilla siguiente y los objetos).
-                # -------------------------------------------------
-                if self.pintaKasillaNumSuelo:
-                    numerosCasilla.append((str(i), rectSuelo.rect.center))
-
-                casiya = bx + (by * self.M)
-                # if not len(casillasObjetos) == 0:
-                    # print("CASIYA: ", casiya)
-                    # print("SET: ", *casillasObjetos)
+            if self.maze[bx + (by * self.M)] == 1:
+                display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS))
+                self.rect = image_surf.get_rect()
+            else:
+                display_surf.blit(w_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
                 
-                # Hueso
-                if self.mazeDataExtra[bx + (by * self.M)] == 2 and self.flagHuesos and not (casiya in casillasObjetos):
-                    display_surf.blit(self.imageHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    huesos = pygame.sprite.Sprite()
-                    huesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL +BIAS, 32, 32)
-                    self.MazeHueso.add(huesos) 
+            # Número de casilla en el suelo: se apunta y se pinta al final, encima de todo
+            # (si no, lo tapaban el suelo de la casilla siguiente y los objetos).
+            # -------------------------------------------------
+            if self.pintaKasillaNumSuelo:
+                numerosCasilla.append((str(i), rectSuelo.rect.center))
 
-                # Pila de Huesos
-                if self.mazeDataExtra[bx + (by * self.M)] == 3 and self.flagPilaHuesos:
-                    display_surf.blit(self.imagePilaHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    Pilahuesos = pygame.sprite.Sprite()
-                    Pilahuesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazePilaHuesos.add(Pilahuesos) 
+            casiya = bx + (by * self.M)
+            # if not len(casillasObjetos) == 0:
+                # print("CASIYA: ", casiya)
+                # print("SET: ", *casillasObjetos)
+            
+            # Hueso
+            if self.mazeDataExtra[bx + (by * self.M)] == 2 and self.flagHuesos and not (casiya in casillasObjetos):
+                display_surf.blit(self.imageHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                huesos = pygame.sprite.Sprite()
+                huesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL +BIAS, 32, 32)
+                self.MazeHueso.add(huesos) 
 
-                # Bandera Fin Nivel
-                if self.mazeDataExtra[bx + (by * self.M)] == 4:
-                    display_surf.blit(self.imageFinNivel, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    Bandera = pygame.sprite.Sprite()
-                    Bandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazeBandera.add(Bandera)
-                    # self.MazeBandera.image = self.imageFinNivel
-                    # self.MazeBandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    # self.MazeBandera.mask = pygame.mask.from_surface(self.imageFinNivel)
+            # Pila de Huesos
+            if self.mazeDataExtra[bx + (by * self.M)] == 3 and self.flagPilaHuesos:
+                display_surf.blit(self.imagePilaHuesos, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Pilahuesos = pygame.sprite.Sprite()
+                Pilahuesos.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazePilaHuesos.add(Pilahuesos) 
 
-                # Accesorios del nivel.
-                #------------------------
-                # Llave dorada
-                if self.mazeDataExtra[bx + (by * self.M)] == 6 and self.flagLlave:
-                    imagen_escalada = pygame.transform.scale(self.imageLlave, (20, 20))
-                    display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    key = pygame.sprite.Sprite()
-                    key.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazeLlave.add(key)
+            # Bandera Fin Nivel
+            if self.mazeDataExtra[bx + (by * self.M)] == 4:
+                display_surf.blit(self.imageFinNivel, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Bandera = pygame.sprite.Sprite()
+                Bandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeBandera.add(Bandera)
+                # self.MazeBandera.image = self.imageFinNivel
+                # self.MazeBandera.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                # self.MazeBandera.mask = pygame.mask.from_surface(self.imageFinNivel)
 
-                # Llave Puerta
-                if self.mazeDataExtra[bx + (by * self.M)] == 7 and self.flagLlavePuerta:
-                    imagen_escalada = pygame.transform.scale(self.imageLlavePuerta, (9, 21))
-                    display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    Doorkey = pygame.sprite.Sprite()
-                    Doorkey.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazeLlavePuerta.add(Doorkey)
+            # Accesorios del nivel.
+            #------------------------
+            # Llave dorada
+            if self.mazeDataExtra[bx + (by * self.M)] == 6 and self.flagLlave:
+                imagen_escalada = pygame.transform.scale(self.imageLlave, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                key = pygame.sprite.Sprite()
+                key.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeLlave.add(key)
 
-                # Champiñón
-                if self.mazeDataExtra[bx + (by * self.M)] == 8 and self.flagChampi:
-                    imagen_escalada = pygame.transform.scale(self.imageChampi, (20, 20))
-                    display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    Champi = pygame.sprite.Sprite()
-                    Champi.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazeChampi.add(Champi)
+            # Llave Puerta
+            if self.mazeDataExtra[bx + (by * self.M)] == 7 and self.flagLlavePuerta:
+                imagen_escalada = pygame.transform.scale(self.imageLlavePuerta, (9, 21))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Doorkey = pygame.sprite.Sprite()
+                Doorkey.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeLlavePuerta.add(Doorkey)
 
-                # Estrella Roja poderosa
-                if self.mazeDataExtra[bx + (by * self.M)] == 9 and self.flagRedStar:
-                    imagen_escalada = pygame.transform.scale(self.imageRedStar, (20, 20))
-                    display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    redStar = pygame.sprite.Sprite()
-                    redStar.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazeRedStar.add(redStar)
+            # Champiñón
+            if self.mazeDataExtra[bx + (by * self.M)] == 8 and self.flagChampi:
+                imagen_escalada = pygame.transform.scale(self.imageChampi, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Champi = pygame.sprite.Sprite()
+                Champi.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeChampi.add(Champi)
 
-                # Tunel
-                if self.mazeDataExtra[bx + (by * self.M)] == 10:
-                    rect_surf = pygame.Surface((32, 32))
-                    rect_surf.set_alpha(128)  # Transparencia 50%
-                    rect_surf.fill((200, 200, 200))  # Gris claro
-                    display_surf.blit(rect_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    imagen_escalada = pygame.transform.scale(self.imageTunnel, (35, 35))
-                    display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL-2, by * CASILLA_PIXEL+BIAS-2))
-                    Tunnel = pygame.sprite.Sprite()
-                    Tunnel.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazeTunnel.add(Tunnel)
+            # Estrella Roja poderosa
+            if self.mazeDataExtra[bx + (by * self.M)] == 9 and self.flagRedStar:
+                imagen_escalada = pygame.transform.scale(self.imageRedStar, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                redStar = pygame.sprite.Sprite()
+                redStar.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeRedStar.add(redStar)
 
-                # Monedas de Oro
-                if self.mazeDataExtra[bx + (by * self.M)] == 11 and self.flagOro and not (casiya in casillasObjetos): 
-                    imagen_escalada = pygame.transform.scale(self.imageOro, (20, 20))
-                    display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    Oro = pygame.sprite.Sprite()
-                    Oro.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazeOro.add(Oro)
+            # Tunel
+            if self.mazeDataExtra[bx + (by * self.M)] == 10:
+                rect_surf = pygame.Surface((32, 32))
+                rect_surf.set_alpha(128)  # Transparencia 50%
+                rect_surf.fill((200, 200, 200))  # Gris claro
+                display_surf.blit(rect_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                imagen_escalada = pygame.transform.scale(self.imageTunnel, (35, 35))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL-2, by * CASILLA_PIXEL+BIAS-2))
+                Tunnel = pygame.sprite.Sprite()
+                Tunnel.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeTunnel.add(Tunnel)
 
-                # Granada
-                if self.mazeDataExtra[bx + (by * self.M)] == 13 and self.flagGranada:
-                    rect_surf = pygame.Surface((15, 15))
-                    rect_surf.set_alpha(128)  # Transparencia 50%
-                    rect_surf.fill((200, 200, 200))  # Gris claro
-                    display_surf.blit(rect_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    imagen_escalada = pygame.transform.scale(self.imageGranada, (15, 15))
-                    display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    granada = pygame.sprite.Sprite()
-                    granada.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazeGranada.add(granada)
+            # Monedas de Oro
+            if self.mazeDataExtra[bx + (by * self.M)] == 11 and self.flagOro and not (casiya in casillasObjetos): 
+                imagen_escalada = pygame.transform.scale(self.imageOro, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Oro = pygame.sprite.Sprite()
+                Oro.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeOro.add(Oro)
 
-                if self.mazeDataExtra[bx + (by * self.M)] == 44:
-                    self.posicionInitJugador = bx + (by * self.M)  # Casilla
+            # Granada
+            if self.mazeDataExtra[bx + (by * self.M)] == 13 and self.flagGranada:
+                rect_surf = pygame.Surface((15, 15))
+                rect_surf.set_alpha(128)  # Transparencia 50%
+                rect_surf.fill((200, 200, 200))  # Gris claro
+                display_surf.blit(rect_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                imagen_escalada = pygame.transform.scale(self.imageGranada, (15, 15))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                granada = pygame.sprite.Sprite()
+                granada.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeGranada.add(granada)
 
-                # Botiquín
-                if self.mazeDataExtra[bx + (by * self.M)] == 15 and self.flagBotiquin:
-                    imagen_escalada = pygame.transform.scale(self.imageBotiquin, (20, 20))
-                    display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
-                    Botiquin = pygame.sprite.Sprite()
-                    Botiquin.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
-                    self.MazeBotiquin.add(Botiquin)
+            if self.mazeDataExtra[bx + (by * self.M)] == 44:
+                self.posicionInitJugador = bx + (by * self.M)  # Casilla
 
-                # Puerta/s
-                #------------------------
-                if self.mazeDataExtra[bx + (by * self.M)] == 33:
-                    kasylla = bx + (by * self.M)
+            # Botiquín
+            if self.mazeDataExtra[bx + (by * self.M)] == 15 and self.flagBotiquin:
+                imagen_escalada = pygame.transform.scale(self.imageBotiquin, (20, 20))
+                display_surf.blit(imagen_escalada, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS))
+                Botiquin = pygame.sprite.Sprite()
+                Botiquin.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
+                self.MazeBotiquin.add(Botiquin)
 
-                    pivot_x = (bx - self.movimientoCamara) * CASILLA_PIXEL
-                    pivot_y = by * CASILLA_PIXEL + BIAS
+            # Puerta/s
+            #------------------------
+            if self.mazeDataExtra[bx + (by * self.M)] == 33:
+                kasylla = bx + (by * self.M)
 
-                    # Determinar orientación
-                    if not self.esAlcanzableCasilla(kasylla - 1) and \
-                       not self.esAlcanzableCasilla(kasylla + 1):
+                pivot_x = bx * CASILLA_PIXEL
+                pivot_y = by * CASILLA_PIXEL + BIAS
 
-                        orientacion = 4
-                        self.posicionPuerta.append((kasylla, 4))
-                    else:
-                        orientacion = 1
-                        self.posicionPuerta.append((kasylla, 1))
+                # Determinar orientación
+                if not self.esAlcanzableCasilla(kasylla - 1) and \
+                   not self.esAlcanzableCasilla(kasylla + 1):
 
-                    puerta = Puerta(pivot_x, pivot_y, orientacion, kasylla)
-                    if kasylla in estadoPuertas:
-                        puerta.abierta, puerta.angle = estadoPuertas[kasylla]
-                        puerta.rotar()
-                    self.MazePuertas.add(puerta)
+                    orientacion = 4
+                    self.posicionPuerta.append((kasylla, 4))
+                else:
+                    orientacion = 1
+                    self.posicionPuerta.append((kasylla, 1))
+
+                puerta = Puerta(pivot_x, pivot_y, orientacion, kasylla)
+                if kasylla in estadoPuertas:
+                    puerta.abierta, puerta.angle = estadoPuertas[kasylla]
+                    puerta.rotar()
+                self.MazePuertas.add(puerta)
 
             bx = bx + 1
             if bx > self.M - 1:
@@ -470,28 +469,19 @@ class Maze:
             Naranja = (244, 127, 38)
             pygame.draw.rect(display_surface, Naranja, (self.PosicionPintarCasilla.x, self.PosicionPintarCasilla.y, CASILLA_PIXEL, CASILLA_PIXEL), 1)
 
-    def moverCamara(self, posicionX, posicionY):
+    # La cámara sigue al jugador (posicionX = x del jugador en el mundo): se desplaza cuando se
+    # acerca a MARGEN_CAMARA del borde de la pantalla, sin salirse del laberinto. Devuelve camaraX.
+    def moverCamara(self, posicionX, posicionY=None):
         if self.camaraFija:
-            return
-
-        # Debo calcular cuando el player está en la columna 27 y en una casilla de suelo.
-        # print("Mov Cámara", self.movimientoCamara)
-        UbicacionX = int(posicionX / CASILLA_PIXEL) 
-
-        if UbicacionX >= 26 and self.flagCamara and self.posicionCamara >= 13:
-            if(self.esAlcanzable(posicionX, posicionY)):
-                self.posicionCamara += 1
-                self.movimientoCamara += 1
-                self.flagCamara = False
-                self.flagCamaraCambio = True
-                # print("Condición CUMPLIDA cámara")
-        
-        if UbicacionX <= 1 and self.flagCamara and self.posicionCamara > 13:
-            self.posicionCamara -= 1
-            self.movimientoCamara -= 1
-            self.flagCamara = False
-            self.flagCamaraCambio = True
-            # print("Condición IZQ cámara")
+            self.camaraX = 0
+            return self.camaraX
+        enPantalla = posicionX - self.camaraX
+        if enPantalla > SCREEN_WIDTH - MARGEN_CAMARA - CASILLA_PIXEL:
+            self.camaraX = posicionX - (SCREEN_WIDTH - MARGEN_CAMARA - CASILLA_PIXEL)
+        elif enPantalla < MARGEN_CAMARA:
+            self.camaraX = posicionX - MARGEN_CAMARA
+        self.camaraX = int(max(0, min(self.camaraX, ANCHO_MUNDO - SCREEN_WIDTH)))
+        return self.camaraX
 
     # Calcular las conexiones de las casillas de SUELO solamente.
     @staticmethod
@@ -670,9 +660,9 @@ class Maze:
 
         eqCasilla = Maze.calcularCasilla(x, y)
 
-        if x > SCREEN_WIDTH or y > SCREEN_HEIGHT or x < 0 or y < 0:
+        if x >= ANCHO_MUNDO or y > SCREEN_HEIGHT or x < 0 or y < 0:
             logging.info("esAlcanzble : X= %s and Y= %s", x, y)
-            if x > SCREEN_WIDTH or x < 0 :
+            if x >= ANCHO_MUNDO or x < 0 :
                 logging.info("esAlcanzble : X fuera de rango. %s", x)
                 return False
             elif y > SCREEN_HEIGHT or y < 0:
