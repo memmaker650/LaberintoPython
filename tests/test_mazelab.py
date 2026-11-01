@@ -344,33 +344,58 @@ def test_puerta_init():
     assert p.image_original.get_size() == (15, 32)
     assert p.angle == 0 and p.abierta is False
     assert p.pivot == (100, 200)
-    # Cerrada: el centro queda a 'radio' píxeles de la bisagra en el eje X.
+    # Vertical (1) cerrada: la hoja baja desde la bisagra, 'radio' píxeles en el eje Y.
+    assert p.rect.center == (100, 216)
+    assert p.image.get_size() == (15, 32)
+
+
+def test_puerta_horizontal_init():
+    p = MazeLab.Puerta(100, 200, 4)
+    # Horizontal (4) cerrada: la hoja sale hacia la derecha de la bisagra.
     assert p.rect.center == (116, 200)
+    assert p.image.get_size() == (32, 15)
 
 
-def test_puerta_abrir_y_cerrar():
-    p = MazeLab.Puerta(100, 200, 1)
+@pytest.mark.parametrize("orientacion, abierta", [(1, (116, 200)), (4, (100, 216))])
+def test_puerta_abrir_y_cerrar(orientacion, abierta):
+    p = MazeLab.Puerta(100, 200, orientacion)
+    cerrada = p.rect.center
     p.abierta = True
     for _ in range(60):
         p.update()
     assert p.angle == 90
-    assert p.rect.center == (100, 216)
+    assert p.rect.center == abierta
     p.abierta = False
     p.update()
     assert p.angle == 88
     for _ in range(60):
         p.update()
     assert p.angle == 0
+    assert p.rect.center == cerrada
 
 
 def test_puerta_rotar_tamano():
-    p = MazeLab.Puerta(100, 200, 1)
+    p = MazeLab.Puerta(100, 200, 4)
     p.angle = 90
     p.rotar()
     assert p.image.get_size() == (15, 32)
     p.angle = 0
     p.rotar()
     assert p.image.get_size() == (32, 15)
+
+
+def test_puertas_centradas_en_su_casilla(maze, superficie):
+    # Cerradas, la bisagra está en mitad del lado de la pared y la hoja cruza la casilla por el centro.
+    maze.draw(superficie, pygame.Surface((32, 32)), pygame.Surface((32, 32)))
+    assert maze.MazePuertas
+    for puerta in maze.MazePuertas:
+        columna, fila = puerta.casilla % NUM_CASILLAS_H, puerta.casilla // NUM_CASILLAS_H
+        casilla = pygame.Rect(columna * CASILLA_PIXEL, fila * CASILLA_PIXEL + BIAS, CASILLA_PIXEL, CASILLA_PIXEL)
+        assert puerta.rect.center == casilla.center
+        if puerta.orientacion == 1:
+            assert puerta.pivot == casilla.midtop
+        else:
+            assert puerta.pivot == casilla.midleft
 
 
 def test_puerta_draw(superficie):

@@ -425,18 +425,21 @@ class Maze:
             if self.mazeDataExtra[bx + (by * self.M)] == 33:
                 kasylla = bx + (by * self.M)
 
-                pivot_x = bx * CASILLA_PIXEL
-                pivot_y = by * CASILLA_PIXEL + BIAS
-
-                # Determinar orientación
+                # Determinar orientación. La bisagra va en el centro del lado de la casilla que
+                # toca la pared y, cerrada, la hoja cruza la casilla por la mitad.
                 if not self.esAlcanzableCasilla(kasylla - 1) and \
                    not self.esAlcanzableCasilla(kasylla + 1):
 
+                    # Pasillo vertical: bisagra a media altura del lado izquierdo, hoja horizontal.
                     orientacion = 4
-                    self.posicionPuerta.append((kasylla, 4))
+                    pivot_x = bx * CASILLA_PIXEL
+                    pivot_y = by * CASILLA_PIXEL + CASILLA_PIXEL // 2 + BIAS
                 else:
+                    # Pasillo horizontal: bisagra en mitad del lado de arriba, hoja vertical.
                     orientacion = 1
-                    self.posicionPuerta.append((kasylla, 1))
+                    pivot_x = bx * CASILLA_PIXEL + CASILLA_PIXEL // 2
+                    pivot_y = by * CASILLA_PIXEL + BIAS
+                self.posicionPuerta.append((kasylla, orientacion))
 
                 puerta = Puerta(pivot_x, pivot_y, orientacion, kasylla)
                 if kasylla in estadoPuertas:
@@ -958,16 +961,25 @@ class Puerta(pygame.sprite.Sprite):
 
         self.rotar()
     
+    # Hacia dónde apunta la hoja desde la bisagra (0 = derecha, 90 = abajo). 'angle' es lo que
+    # está abierta (0 cerrada, 90 abierta): la horizontal (4) baja al abrirse y la vertical (1)
+    # gira hasta quedar pegada a la pared de arriba.
+    def direccionHoja(self):
+        if self.orientacion == 1:
+            return 90 - self.angle
+        return self.angle
+
     def rotar(self):
         # Ángulo en radianes
-        rad = math.radians(self.angle)
+        direccion = self.direccionHoja()
+        rad = math.radians(direccion)
 
         # Posición desplazada desde la bisagra
         x = self.x + self.radio * math.cos(rad)
         y = self.y + self.radio * math.sin(rad)
 
         # Rotación visual
-        rot_angle = -self.angle + 90
+        rot_angle = 90 - direccion
 
         self.image = pygame.transform.rotate(
             self.image_original,

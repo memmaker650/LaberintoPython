@@ -1306,7 +1306,7 @@ class App:
 
         # Colisión del jugador con Puerta
         #----------------------------------------
-        colision_playerPuerta = pygame.sprite.spritecollide(self.player, self.maze.MazePuertas, False)
+        colision_playerPuerta = self.puertasQueBloquean(self.player)
         if colision_playerPuerta:
             logging.info(f'COLISION PLAYER & DOOOOOR - num ELem ({len(colision_playerPuerta)})')
             if self.flagPrint_info:
@@ -1388,7 +1388,11 @@ class App:
                     nemesis.cambiar_direccion()
 
         # Colisión de ENemigos con Puerta
-        colision_enemigosPuerta = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazePuertas, False, False)
+        colision_enemigosPuerta = {}
+        for enemigo in self.EnemigosGroup:
+            puertas = self.puertasQueBloquean(enemigo)
+            if puertas:
+                colision_enemigosPuerta[enemigo] = puertas
         if colision_enemigosPuerta:
             logging.debug('COLISION Enemigo con Puerta DETECTADA - num ELem (%s)', len(colision_enemigosPuerta))
             # Opcional: procesar cada enemigo que colisionó
@@ -1677,6 +1681,15 @@ class App:
                 pygame.draw.polygon(self.superficieConos, color, poligono)
         self.pantalla.blit(self.superficieConos, (0, 0))
     
+    # Puertas con las que choca 'sprite'. Las abiertas dejan pasar, y una cerrada tampoco bloquea
+    # a quien ya estaba debajo cuando se cerró, para que pueda salir de ella.
+    def puertasQueBloquean(self, sprite):
+        previo = sprite.rect.copy()
+        previo.topleft = (getattr(sprite, "prev_x", sprite.rect.x), getattr(sprite, "prev_y", sprite.rect.y))
+        return [puerta for puerta in self.maze.MazePuertas
+                if not puerta.abierta and puerta.rect.colliderect(sprite.rect)
+                and not puerta.rect.colliderect(previo)]
+
     # Repinto el Laberinto
     def rebuildMap(self):
        self.map_surface.fill((0,0,0))

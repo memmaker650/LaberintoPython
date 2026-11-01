@@ -228,10 +228,58 @@ def test_colision_enemigo_puerta_revierte(juego):
 
 def test_colision_jugador_puerta_revierte(juego):
     puerta = next(iter(juego.maze.MazePuertas))
-    mover_jugador(juego, puerta.rect.centerx - 11, puerta.rect.centery - 30)
+    # Antes del paso no tocaba la puerta: choca y vuelve atrás.
+    mover_jugador(juego, puerta.rect.centerx - 11, puerta.rect.top - 30)
     juego.player.y = puerta.rect.centery - 11
     juego.on_loop()
-    assert juego.player.y == puerta.rect.centery - 30
+    assert juego.player.y == puerta.rect.top - 30
+
+
+def _cruzar_puerta(juego, abierta):
+    # Recorre el pasillo horizontal de la puerta de la casilla 395 hacia la derecha.
+    juego.enemigosArray = []
+    juego.EnemigosGroup.empty()
+    juego.JefeEnemigo.kill()
+    puerta = next(p for p in juego.maze.MazePuertas if p.casilla == 395)
+    puerta.abierta, puerta.angle = abierta, 90 if abierta else 0
+    puerta.rotar()
+    mover_jugador(juego, 33 * CASILLA_PIXEL, 9 * CASILLA_PIXEL + MazeLab.BIAS)
+    for _ in range(40):
+        juego.player.moveRight()
+        juego.on_loop()
+    return juego.player.x // CASILLA_PIXEL
+
+
+def test_puerta_abierta_deja_pasar(juego):
+    assert _cruzar_puerta(juego, True) > 35
+
+
+def test_puerta_cerrada_no_deja_pasar(juego):
+    assert _cruzar_puerta(juego, False) <= 35
+
+
+def test_se_puede_salir_de_una_puerta_que_se_cierra_encima(juego):
+    puerta = next(p for p in juego.maze.MazePuertas if p.casilla == 395)
+    mover_jugador(juego, 35 * CASILLA_PIXEL, 9 * CASILLA_PIXEL + MazeLab.BIAS)
+    juego.player.rect.topleft = (juego.player.x, juego.player.y)
+    puerta.abierta, puerta.angle = False, 0
+    puerta.rotar()
+    assert puerta.rect.colliderect(juego.player.rect)
+    assert juego.puertasQueBloquean(juego.player) == []
+    juego.player.moveLeft()
+    juego.on_loop()
+    assert juego.player.x < 35 * CASILLA_PIXEL
+
+
+def test_enemigo_atraviesa_puerta_abierta(juego):
+    puerta = next(iter(juego.maze.MazePuertas))
+    puerta.abierta = True
+    e = enemigos_normales(juego)[0]
+    e.rect.center = puerta.rect.center
+    e.prev_x, e.prev_y = e.rect.x - CASILLA_PIXEL, e.rect.y   # venía de fuera de la puerta
+    assert juego.puertasQueBloquean(e) == []
+    puerta.abierta = False
+    assert juego.puertasQueBloquean(e) == [puerta]
 
 
 def coger(app, grupo):
