@@ -228,10 +228,120 @@ def test_colision_enemigo_puerta_revierte(juego):
 
 def test_colision_jugador_puerta_revierte(juego):
     puerta = next(iter(juego.maze.MazePuertas))
-    mover_jugador(juego, puerta.rect.centerx - 11, puerta.rect.centery - 30)
+    # Antes del paso no tocaba la puerta: choca y vuelve atrás.
+    mover_jugador(juego, puerta.rect.centerx - 11, puerta.rect.top - 30)
     juego.player.y = puerta.rect.centery - 11
     juego.on_loop()
-    assert juego.player.y == puerta.rect.centery - 30
+    assert juego.player.y == puerta.rect.top - 30
+
+
+def _cruzar_puerta(juego, abierta):
+    # Recorre el pasillo horizontal de la puerta de la casilla 395 hacia la derecha.
+    juego.enemigosArray = []
+    juego.EnemigosGroup.empty()
+    juego.JefeEnemigo.kill()
+    puerta = next(p for p in juego.maze.MazePuertas if p.casilla == 395)
+    puerta.abierta, puerta.angle = abierta, 90 if abierta else 0
+    puerta.rotar()
+    mover_jugador(juego, 33 * CASILLA_PIXEL, 9 * CASILLA_PIXEL + MazeLab.BIAS)
+    for _ in range(40):
+        juego.player.moveRight()
+        juego.on_loop()
+    return juego.player.x // CASILLA_PIXEL
+
+
+def test_puerta_abierta_deja_pasar(juego):
+    assert _cruzar_puerta(juego, True) > 35
+
+
+def test_puerta_cerrada_no_deja_pasar(juego):
+    assert _cruzar_puerta(juego, False) <= 35
+
+
+def test_se_puede_salir_de_una_puerta_que_se_cierra_encima(juego):
+    puerta = next(p for p in juego.maze.MazePuertas if p.casilla == 395)
+    mover_jugador(juego, 35 * CASILLA_PIXEL, 9 * CASILLA_PIXEL + MazeLab.BIAS)
+    juego.player.rect.topleft = (juego.player.x, juego.player.y)
+    puerta.abierta, puerta.angle = False, 0
+    puerta.rotar()
+    assert puerta.rect.colliderect(juego.player.rect)
+    assert juego.puertasQueBloquean(juego.player) == []
+    juego.player.moveLeft()
+    juego.on_loop()
+    assert juego.player.x < 35 * CASILLA_PIXEL
+
+
+def _enemigo_hacia_puerta(juego, jefe):
+    # Coloca a un enemigo en el pasillo de la puerta 395 (cerrada) yendo hacia ella.
+    puerta = _puerta(juego, 395)
+    e = juego.JefeEnemigo if jefe else enemigos_normales(juego)[0]
+    for otro in list(juego.EnemigosGroup):
+        if otro is not e:
+            otro.kill()
+    e.x, e.y = 33 * CASILLA_PIXEL + 5, 9 * CASILLA_PIXEL + MazeLab.BIAS + 5
+    e.prev_x, e.prev_y = e.x, e.y
+    e.rect.topleft = (e.x, e.y)
+    e.orientacion = 1
+    if not jefe:
+        e.kia.zonas = None          # que siga recto, sin patrullar su zona
+    mover_jugador(juego, 2000, 2000)
+    return e, puerta
+
+
+@pytest.mark.parametrize("jefe", [False, True])
+def test_enemigo_no_atraviesa_puerta_cerrada(juego, jefe):
+    e, puerta = _enemigo_hacia_puerta(juego, jefe)
+    for _ in range(200):
+        juego.on_loop()
+        assert e.x + e.rect.width <= puerta.rect.right   # nunca pasa al otro lado de la hoja
+
+
+def test_enemigo_da_media_vuelta_en_puerta_cerrada(juego):
+    e, puerta = _enemigo_hacia_puerta(juego, False)
+    for _ in range(200):
+        juego.on_loop()
+        if e.orientacion == 3:
+            break
+    assert e.orientacion == 3
+
+
+@pytest.mark.parametrize("abierta", [True, False])
+def test_jefe_y_la_puerta_en_el_paso_siguiente(juego, abierta):
+    # El jefe está pegado a la hoja (fuera del centro de casilla, así que sigue recto a la derecha).
+    e, puerta = _enemigo_hacia_puerta(juego, True)
+    puerta.abierta = abierta
+    puerta.angle = 90 if abierta else 0
+    puerta.rotar()
+    hoja = _puerta(juego, 395).rect if not abierta else pygame.Rect(35 * CASILLA_PIXEL + 8, 0, 15, 0)
+    e.x = hoja.left - e.rect.width
+    e.prev_x = e.x
+    e.rect.topleft = (e.x, e.y)
+    x0 = e.x
+    juego.on_loop()
+    if abierta:
+        assert e.x > x0
+    else:
+        assert e.x == x0 and e.orientacion == 3
+
+
+def test_ia_trata_las_puertas_cerradas_como_pared(juego):
+    juego.on_loop()
+    assert all(e.kia.casillasBloqueadas == {395, 456, 967} for e in juego.EnemigosGroup)
+    _puerta(juego, 395).abierta = True
+    juego.on_loop()
+    assert all(e.kia.casillasBloqueadas == {456, 967} for e in juego.EnemigosGroup)
+
+
+def test_enemigo_atraviesa_puerta_abierta(juego):
+    puerta = next(iter(juego.maze.MazePuertas))
+    puerta.abierta = True
+    e = enemigos_normales(juego)[0]
+    e.rect.center = puerta.rect.center
+    e.x, e.y = e.rect.topleft
+    e.prev_x, e.prev_y = e.x - CASILLA_PIXEL, e.y   # venía de fuera de la puerta
+    assert juego.puertasQueBloquean(e) == []
+    puerta.abierta = False
+    assert juego.puertasQueBloquean(e) == [puerta]
 
 
 def coger(app, grupo):
@@ -320,22 +430,56 @@ def test_bala_enemigo_contra_pared(juego):
     assert not jefe.balas.has(bala)
 
 
-def test_scroll_camara_desplaza_todo(juego):
-    mover_jugador(juego, 40, BIAS + 40)
-    e = enemigos_normales(juego)[0]
-    x_enemigo = e.x
-    pared = next(iter(juego.maze.MazeParedes))
-    x_pared = pared.rect.x
-    puerta = next(iter(juego.maze.MazePuertas))
-    x_puerta = puerta.x
-    juego.maze.movimientoCamara = 1
-    juego.maze.flagCamaraCambio = True
+def test_camara_no_mueve_nada_del_mundo(juego):
+    # Al desplazarse la cámara, paredes, jugador y enemigos se quedan en sus coordenadas del laberinto.
+    paredes = sorted(tuple(p.rect) for p in juego.maze.MazeParedes)
+    enemigos = [(e.x, e.y) for e in enemigos_normales(juego)]
+    for e in enemigos_normales(juego):
+        e.update = lambda: None
+    fila20 = MazeLab.Maze.calcularPixelPorCasilla(20 * MazeLab.NUM_CASILLAS_H + 30)
+    mover_jugador(juego, fila20.x + 5, fila20.y + 5)    # columna 30: zona derecha
     juego.on_loop()
-    assert juego.player.x == 40 - CASILLA_PIXEL
-    assert e.x == x_enemigo - CASILLA_PIXEL == e.rect.x
-    assert pared.rect.x == x_pared - CASILLA_PIXEL
-    assert puerta.x == x_puerta - CASILLA_PIXEL
-    assert juego.maze.flagCamaraCambio is False
+    assert juego.maze.camaraX > 0
+    assert (juego.player.x, juego.player.y) == (fila20.x + 5, fila20.y + 5)
+    assert sorted(tuple(p.rect) for p in juego.maze.MazeParedes) == paredes
+    assert [(e.x, e.y) for e in enemigos_normales(juego)] == enemigos
+
+
+def test_jugador_entra_en_la_zona_derecha(juego):
+    # Antes una "pared invisible" no le dejaba pasar: el mapa pintado y las paredes no coincidían.
+    for e in list(juego.EnemigosGroup):
+        e.kill()
+    inicio = MazeLab.Maze.calcularPixelPorCasilla(20 * MazeLab.NUM_CASILLAS_H + 22)
+    mover_jugador(juego, inicio.x + 5, inicio.y + 5)
+    for _ in range(600):
+        juego.player.moveRight()
+        juego.on_loop()
+    casilla = MazeLab.Maze.calcularCasilla(*juego.player.rect.center)
+    assert juego.maze.MazeLaberinto[casilla + 1] == 0   # la columna 39 es la pared del borde
+    assert casilla % MazeLab.NUM_CASILLAS_H == 38       # llega a la última columna de suelo
+    assert juego.maze.camaraX == MazeLab.ANCHO_MUNDO - 864
+
+
+def test_render_pinta_lo_que_ve_la_camara(juego):
+    juego.on_render()
+    juego.maze.camaraX = 200
+    juego.on_render()
+    # Lo que hay en la pantalla en x es lo que hay en el mundo en x + camaraX.
+    for x, y in ((10, 300), (500, 600), (850, 900)):
+        assert juego.pantalla.get_at((x, y)) == juego.mundo.get_at((x + 200, y))
+
+
+def test_mapa_del_tamano_del_mundo(juego):
+    assert juego.map_surface.get_width() == juego.mundo.get_width() == MazeLab.ANCHO_MUNDO
+
+
+def test_mundo_sin_canal_alfa_para_no_dejar_la_pantalla_transparente(juego):
+    # En macOS, con canal alfa, los conos de visión lo ponían a 0 y el HUD salía en cuadros.
+    assert juego.mundo.get_masks()[3] == 0
+    juego.visionEnemigos = True
+    juego.on_loop()
+    juego.on_render()
+    assert juego.mundo.get_at((300, 500)).a == 255
 
 
 # ---------- on_render ----------
@@ -710,10 +854,57 @@ def test_tecla_k_alterna_numeros(app):
     assert MazeLab.Maze.pintaKasillaNumSuelo is (not antes)
 
 
-def test_tecla_d_abre_puertas(juego):
+def _puerta(juego, casilla):
+    return next(p for p in juego.maze.MazePuertas if p.casilla == casilla)
+
+
+def _jugador_en(juego, casilla):
+    columna, fila = casilla % MazeLab.NUM_CASILLAS_H, casilla // MazeLab.NUM_CASILLAS_H
+    mover_jugador(juego, columna * CASILLA_PIXEL + 5, fila * CASILLA_PIXEL + MazeLab.BIAS + 5)
+
+
+def test_tecla_d_abre_solo_la_puerta_cercana(monkeypatch, juego):
+    monkeypatch.setattr(juego, "on_init", lambda: True)   # que no recoloque al jugador
+    _jugador_en(juego, 394)                               # junto a la puerta 395
     teclas((pygame.KEYDOWN, pygame.K_d))
     ejecutar(juego)
-    assert juego.maze.MazePuertas and all(p.abierta for p in juego.maze.MazePuertas)
+    assert {p.casilla for p in juego.maze.MazePuertas if p.abierta} == {395}
+
+
+def test_tecla_d_lejos_de_las_puertas_no_abre_ninguna(monkeypatch, juego):
+    monkeypatch.setattr(juego, "on_init", lambda: True)
+    _jugador_en(juego, 41)
+    teclas((pygame.KEYDOWN, pygame.K_d))
+    ejecutar(juego)
+    assert not any(p.abierta for p in juego.maze.MazePuertas)
+
+
+@pytest.mark.parametrize("casilla", [395, 394, 396, 416, 496])
+def test_puertaCercana_en_la_casilla_o_contigua(juego, casilla):
+    # 395 y vecinas de 395 (394 y 396); 416 está encima de la puerta 456 y 496 debajo.
+    _jugador_en(juego, casilla)
+    esperada = 456 if casilla in (416, 496) else 395
+    assert juego.puertaCercana().casilla == esperada
+
+
+@pytest.mark.parametrize("casilla", [393, 397, 376, 41])
+def test_puertaCercana_a_mas_de_una_casilla(juego, casilla):
+    _jugador_en(juego, casilla)
+    assert juego.puertaCercana() is None
+
+
+def test_usarPuerta_abre_y_cierra_sin_tocar_las_demas(juego):
+    _puerta(juego, 967).abierta = True
+    _jugador_en(juego, 394)
+    assert juego.usarPuerta() is _puerta(juego, 395)
+    assert {p.casilla for p in juego.maze.MazePuertas if p.abierta} == {395, 967}
+    juego.usarPuerta()
+    assert {p.casilla for p in juego.maze.MazePuertas if p.abierta} == {967}
+
+
+def test_usarPuerta_sin_puerta_cerca(juego):
+    _jugador_en(juego, 41)
+    assert juego.usarPuerta() is None
 
 
 def test_puertas_siguen_abiertas_tras_rebuildMap(juego):
@@ -776,3 +967,25 @@ def test_menuOpciones_textos_dentro_del_boton(monkeypatch, app, dy, texto):
     izquierda = min(x for x, _ in blancos) - boton.left
     derecha = boton.right - max(x for x, _ in blancos)
     assert abs(izquierda - derecha) <= 4
+
+
+# ---------- Pantallas con canal alfa (macOS) ----------
+def test_mapa_opaco_aunque_la_pantalla_tenga_alfa(juego):
+    # En macOS la pantalla (y el mapa, que se crea con convert()) tiene canal alfa. Si el mapa queda
+    # con alfa 0, las capas translúcidas pintadas encima (conos de visión, linterna) sustituyen sus
+    # píxeles: los números de casilla se veían negros.
+    tamano = juego.map_surface.get_size()
+    juego.map_surface = pygame.Surface(tamano, 0, 32, (0xFF0000, 0xFF00, 0xFF, 0xFF000000))
+    juego.map_surface.fill((0, 0, 0, 0))
+    MazeLab.Maze.pintaKasillaNumSuelo = True
+    juego.rebuildMap()
+    assert all(juego.map_surface.get_at((x, y)).a == 255 for x in range(0, 864, 37) for y in range(0, 1000, 41))
+
+    # Una capa transparente encima no cambia los números (siguen rojos).
+    pantalla = juego.map_surface.copy()
+    capa = pygame.Surface(tamano, pygame.SRCALPHA)
+    capa.fill((0, 0, 0, 0))
+    rojos = lambda s: sum(1 for x in range(0, 864, 2) for y in range(136, 1000, 2) if s.get_at((x, y))[:3] == (255, 0, 0))
+    antes = rojos(pantalla)
+    pantalla.blit(capa, (0, 0))
+    assert antes > 500 and rojos(pantalla) == antes

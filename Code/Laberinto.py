@@ -12,6 +12,9 @@ if DIR_CODIGO not in sys.path:
 DIR_PROYECTO = os.path.dirname(DIR_CODIGO)
 os.chdir(DIR_PROYECTO)
 DIR_NIVELES = os.path.join(DIR_PROYECTO, "Levels")
+# Nivel con el que empieza "Nuevo Juego" (y el reinicio tras terminar una partida).
+# None: el laberinto por defecto escrito en MazeLab.
+NIVEL_INICIAL = "Level_0.json"
 RUTA_BD = os.path.join(DIR_PROYECTO, "DB", "tutorial.db")
 
 from typing import Any
@@ -24,6 +27,7 @@ import statistics
 import MazeLab
 import Sonido
 import Luces
+import KerberosIA
 import estadisticas
 from partida import PartidaGuardada
 import random
@@ -74,6 +78,15 @@ FLAGS_OBJETOS = ["flagLlave", "flagLlavePuerta", "flagChampi", "flagGranada", "f
 OBJETOS_JUGADOR = ["llavePuerta", "llaveFinNivel", "champi", "pistola", "granada", "laser"]
 PUNTOS_ENEMIGO = 50
 PUNTOS_JEFE = 200
+
+# Visión de los enemigos
+ALCANCE_VISION_ENEMIGO = 4 * CASILLA_PIXEL
+ALCANCE_VISION_JEFE = 5 * CASILLA_PIXEL
+COLOR_CONO_VISION = (199, 180, 70, 80)    # amarillo translúcido: patrulla
+COLOR_CONO_ALARMA = (255, 40, 40, 110)    # rojo translúcido: ha visto al jugador
+COLOR_CONO_ALERTA = (255, 150, 0, 100)    # naranja translúcido: ha oído un ruido
+DURACION_AVISO_ALERTA_MS = 1500           # bocadillo "¿ ? ?" al ponerse en alerta
+DURACION_BOCADILLO_ALARMA_MS = 3000
 
 # Especificación de la paleta de colores
 BLANCO = (255, 255, 255)
@@ -247,14 +260,22 @@ class App:
         self._JefeEnemigo = None
 
         # Gestión del Mapa
+        # Mapa y "mundo" del tamaño del laberinto completo (más ancho que la ventana): se pintan en
+        # coordenadas del laberinto y la cámara elige qué parte se ve.
         self.map_surface = pygame.Surface(
-            (self.windowWidth, self.windowHeight)).convert()
+            (MazeLab.ANCHO_MUNDO, self.windowHeight)).convert()
+        # Sin canal alfa: en macOS, con alfa, las capas translúcidas (conos, linterna) lo dejaban a 0
+        # y al copiar el mundo la pantalla entera quedaba transparente (el HUD salía en cuadros).
+        self.mundo = pygame.Surface((MazeLab.ANCHO_MUNDO, self.windowHeight), 0, 32,
+                                    (0xFF0000, 0x00FF00, 0x0000FF, 0))
         self.flagDebugEnemigos = True
         self.rebuild_map = True
         self.floor_surf = None
         self.wall_surf = None
 
         self.Sound = Sonido.Sonido()
+        self.sonidoAlarma = pygame.mixer.Sound("./Resources/Sonidos/alarm1.mp3")
+        self.superficieConos = None
 
         self.visionEnemigos = True
         self.tiempo_inicio = pygame.time.get_ticks()
@@ -268,8 +289,8 @@ class App:
         # Init Personajes
         self.player = player.Player()  # damos los valores por defecto.
 
-        # Cargando el escenario por defecto y colocando enemigos y jefe.
-        self.prepararNivel()
+        # Cargando el nivel inicial y colocando enemigos y jefe.
+        self.prepararNivelInicial()
 
         pygame.init()
 
@@ -302,6 +323,20 @@ class App:
         self.font_vida = pygame.font.SysFont('Arial', 27)
         self.font_fps = pygame.font.SysFont('Arial', 20)
 
+    # Prepara el nivel inicial (NIVEL_INICIAL). Si no se puede cargar, usa el laberinto por defecto
+    # del código para que el juego arranque igualmente.
+    def prepararNivelInicial(self):
+        if NIVEL_INICIAL is None:
+            self.prepararNivel()
+            return
+        try:
+            nivel = LevelParser(DIR_NIVELES).load_by_name(NIVEL_INICIAL)
+            self.prepararNivel(nivel)
+        except (FileNotFoundError, json.JSONDecodeError, ValueError) as error:
+            logging.error("No se puede cargar el nivel inicial %s (%s): se usa el laberinto por defecto",
+                          NIVEL_INICIAL, error)
+            self.prepararNivel()
+
     # Prepara el laberinto (el de por defecto o un nivel JSON de la carpeta Levels)
     # y coloca a los enemigos y al jefe sobre casillas de suelo.
     def prepararNivel(self, nivel=None):
@@ -330,7 +365,7 @@ class App:
         # Niveles oscuros: sólo se ve lo que ilumina la linterna (código en Luces.py).
         self.oscuridad = nivel.oscuridad if nivel is not None else 0.0
         if self.oscuridad > 0:
-            zonaLaberinto = (0, BIAS, SCREEN_WIDTH, SCREEN_HEIGHT - BIAS)
+            zonaLaberinto = (0, BIAS, MazeLab.ANCHO_MUNDO, SCREEN_HEIGHT - BIAS)
             self.linterna = Luces.Linterna(zonaLaberinto, opacidad=self.oscuridad)
             self.linterna.apuntar(self.player.orientacion, instantaneo=True)
         else:
@@ -359,6 +394,9 @@ class App:
             self.enemigo.conexiones = self.conexiones
             self.enemigo.pasarConexionesIA()
             self.enemigo.kia.asignarZona(self.zonas, self.tiposZona, self.enemigo.casilla)
+            self.enemigo.conoVision = KerberosIA.VisionEnemigo(alcance=ALCANCE_VISION_ENEMIGO, apertura=60)
+            self.enemigo.bubble_duration = DURACION_BOCADILLO_ALARMA_MS
+            self.enemigo.fade_duration = 1000
             self.enemigosArray.append(self.enemigo)
             self.EnemigosGroup.add(self.enemigo)
 
@@ -366,6 +404,7 @@ class App:
         self.JefeEnemigo = player.Enemigo()
         self.JefeEnemigo.isJefeEnemigo = True
         self.JefeEnemigo.vida = VIDA_JEFE
+        self.JefeEnemigo.conoVision = KerberosIA.VisionEnemigo(alcance=ALCANCE_VISION_JEFE, apertura=50)
         self.JefeEnemigo.casilla = candidatas.pop(0)
         pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
         self.JefeEnemigo.x = pos.x - (self.JefeEnemigo.rect.width // 2)
@@ -866,7 +905,7 @@ class App:
             },
             "objetosTocados": sorted(self.casillaObjetosTocados),
             "flagsObjetos": {nombre: bool(getattr(self.maze, nombre)) for nombre in FLAGS_OBJETOS},
-            "camara": self.maze.posicionCamara,
+            "camara": self.maze.camaraX,
             "enemigos": [enemigo(e) for e in self.enemigosArray],
             "jefe": enemigo(self.JefeEnemigo),
             "estadisticas": self.estadisticas.estado(),
@@ -906,14 +945,6 @@ class App:
         self.prepararNivel(nivel)
         self.HeadNivel.definirNumeroNivel(estado["nivel"])
 
-        # Cámara (laberinto por defecto): desplazar las paredes igual que al moverse.
-        desplazamiento = estado.get("camara", self.maze.posicionCamara) - self.maze.posicionCamara
-        if desplazamiento > 0:
-            self.maze.posicionCamara += desplazamiento
-            self.maze.movimientoCamara = self.maze.posicionCamara - 13
-            for pared in self.maze.MazeParedes:
-                pared.rect.x -= desplazamiento * CASILLA_PIXEL
-
         datos = estado["jugador"]
         self.player.x, self.player.y = datos["x"], datos["y"]
         self.player.guardarPosicionPrevia()
@@ -951,6 +982,7 @@ class App:
 
         self.estadisticas.restaurar(estado["estadisticas"])
         self.tiempoJugado_ms = estado["tiempo_ms"]
+        self.maze.moverCamara(self.player.x, self.player.y)  # la cámara vuelve a seguir al jugador
         if self.linterna is not None:
             self.linterna.apuntar(self.player.orientacion, instantaneo=True)
         logging.info("Partida restaurada: nivel %s", estado["nivel"])
@@ -1066,7 +1098,7 @@ class App:
         self.flagPintarBocadilloTexto = False
         self.alerta_activa = False
         self.movimiento = False
-        self.prepararNivel()
+        self.prepararNivelInicial()
 
     def on_init(self):
         pygame.display.set_caption('Laberinto SquidCastle 2026, Aurora.')
@@ -1146,9 +1178,13 @@ class App:
         )
         self.JefeEnemigo.cargarCasillaRecorrido(self.JefeEnemigo.casilla)
 
+        # Las puertas cerradas son pared para la IA de los enemigos.
+        casillasPuertasCerradas = {p.casilla for p in self.maze.MazePuertas if not p.abierta}
+
         # Resto de enemigos.
         i = 0
         for nemi in self.EnemigosGroup:
+            nemi.kia.casillasBloqueadas = casillasPuertasCerradas
             nemi.casilla = self.maze.calcularCasilla(nemi.x, nemi.y)
             nemi.cargarCasillaRecorrido(nemi.casilla)
             nemi.update()
@@ -1167,48 +1203,12 @@ class App:
         # Debug: verificar posiciones
         logging.info(f"Player en posición: ({self.player.x}, {self.player.y}) - Rect: {self.player.rect}")
 
-        # Gestión del scroll de la pantalla.
+        # Cámara: todo se queda en coordenadas del laberinto; la cámara sigue al jugador y
+        # sólo decide qué parte del mundo se pinta en pantalla (on_render).
         self.maze.moverCamara(self.player.x, self.player.y)
-        if self.maze.movimientoCamara > 0 and self.maze.flagCamaraCambio:
-            self.maze.flagCamaraCambio = False
-            self.maze.flagCamara = True
-            # Desplazamos todo a la izquierda (Paredes, Jugador, Enemigos, Puertas)
-            for x in self.maze.MazeParedes:
-                x.rect.x -= CASILLA_PIXEL
 
-            self.player.x -= CASILLA_PIXEL
-
-            for x in self.EnemigosGroup:
-                x.x -= CASILLA_PIXEL
-                x.rect.x = x.x
-                if x.prev_x is not None:
-                    x.prev_x -= CASILLA_PIXEL
-
-            # Puertas (bisagra y rect deben moverse juntos)
-            for puerta in self.maze.MazePuertas:
-                puerta.x -= CASILLA_PIXEL
-                puerta.pivot = (puerta.x, puerta.y)
-
-            # Objetos Extra
-            for x in self.maze.MazeBandera:
-                x.rect.x -= CASILLA_PIXEL
-            for x in self.maze.MazeBotiquin:
-                x.rect.x -= CASILLA_PIXEL
-            for x in self.maze.MazeChampi:
-                x.rect.x -= CASILLA_PIXEL
-            for x in self.maze.MazeGranada:
-                x.rect.x -= CASILLA_PIXEL
-            for x in self.maze.MazeHueso:
-                x.rect.x -= CASILLA_PIXEL
-            for x in self.maze.MazeLlave:
-                x.rect.x -= CASILLA_PIXEL
-            for x in self.maze.MazeLlavePuerta:
-                x.rect.x -= CASILLA_PIXEL
-                logging.debug("Desplazar Llave Puertas")
-            for x in self.maze.MazeOro:
-                x.rect.x -= CASILLA_PIXEL
-            for x in self.maze.MazePilaHuesos:
-                x.rect.x -= CASILLA_PIXEL
+        # Enemigos que van a encender una alarma o vuelven de hacerlo.
+        self.revisarAlarmas(pygame.time.get_ticks())
 
         for puerta in self.maze.MazePuertas:
             puerta.update()
@@ -1258,6 +1258,12 @@ class App:
 
             # El contacto hiere al jugador (el jefe hace más daño).
             self.herirJugador(DANO_JEFE if self.JefeEnemigo in colision_playerNemesis else DANO_ENEMIGO)
+
+            # Tocar al jugador es como verlo: el enemigo pasa a alarma y grita.
+            ahora = pygame.time.get_ticks()
+            for tocado in colision_playerNemesis:
+                if tocado.kia.verJugador(ahora):
+                    self.darAlarma(tocado)
 
             # Enemigo es Jefe Enemigo (sólo si sigue vivo: está en EnemigosGroup).
             if self.JefeEnemigo in colision_playerNemesis:
@@ -1324,7 +1330,7 @@ class App:
 
         # Colisión del jugador con Puerta
         #----------------------------------------
-        colision_playerPuerta = pygame.sprite.spritecollide(self.player, self.maze.MazePuertas, False)
+        colision_playerPuerta = self.puertasQueBloquean(self.player)
         if colision_playerPuerta:
             logging.info(f'COLISION PLAYER & DOOOOOR - num ELem ({len(colision_playerPuerta)})')
             if self.flagPrint_info:
@@ -1406,19 +1412,25 @@ class App:
                     nemesis.cambiar_direccion()
 
         # Colisión de ENemigos con Puerta
-        colision_enemigosPuerta = pygame.sprite.groupcollide(self.EnemigosGroup, self.maze.MazePuertas, False, False)
+        colision_enemigosPuerta = {}
+        for enemigo in self.EnemigosGroup:
+            puertas = self.puertasQueBloquean(enemigo)
+            if puertas:
+                colision_enemigosPuerta[enemigo] = puertas
         if colision_enemigosPuerta:
             logging.debug('COLISION Enemigo con Puerta DETECTADA - num ELem (%s)', len(colision_enemigosPuerta))
             # Opcional: procesar cada enemigo que colisionó
             for enemigo, puertas in colision_enemigosPuerta.items():
                 logging.debug('Enemigo en (%s, %s) colisionó con %s puertas', enemigo.x, enemigo.y, len(puertas))
 
-                # Revertir y cambiar dirección solo del enemigo que colisiona
-                if hasattr(enemigo, 'revertir_movimiento'):
-                    enemigo.revertir_movimiento()
-
-                # if hasattr(enemigo, 'cambiar_direccion'):
-                    # enemigo.cambiar_direccion()
+                # Una puerta cerrada es como una pared: vuelve atrás y da media vuelta para no
+                # quedarse empujándola.
+                enemigo.revertir_movimiento()
+                if enemigo.isJefeEnemigo:
+                    enemigo.orientacion = (enemigo.orientacion + 2) % 4
+                    enemigo.kia.colisionParedes = True   # recalcula por dónde ir
+                else:
+                    enemigo.cambiar_direccion()
 
         
         # Colisión de Extras Escenario con Player
@@ -1613,8 +1625,203 @@ class App:
             # Opcional: procesar cada enemigo que colisionó
             for muni, paredes in colision_PlayerBalasConParedes.items():
                 logging.info(f'Bala Player en ({muni.x}, {muni.y}) colisionó con {len(paredes)} paredes')
+                self.hacerRuido(muni.rect.center)  # el golpe de la bala en la pared se oye
                 muni.kill()
+
+        # Visión de los enemigos: si alguno ve al jugador, salta la alarma.
+        self.vigilar()
+
+    # Cada enemigo mira con su cono de visión (cortado por paredes y puertas). Si ve al jugador
+    # pasa a estado de alarma; si deja de verlo, al cabo de un rato vuelve a patrullar.
+    def vigilar(self):
+        paredes = [s.rect for s in self.maze.MazeParedes] + [p.rect for p in self.maze.MazePuertas]
+        jugador = self.player.rect.center
+        ahora = pygame.time.get_ticks()
+        for enemigo in self.EnemigosGroup:
+            enemigo.conoVision.actualizar(enemigo.rect.center, enemigo.anguloVision(), paredes)
+            if enemigo.conoVision.ve(jugador, paredes):
+                if enemigo.kia.verJugador(ahora):
+                    self.darAlarma(enemigo)
+            else:
+                enemigo.kia.actualizarEstado(ahora)
+
+    # Un enemigo acaba de ver al jugador: bocadillo "¡ALARMA!", sonido de alarma y el jefe va a por él.
+    def darAlarma(self, enemigo):
+        logging.info("¡Alarma! Un enemigo ha visto al jugador desde (%s, %s)", enemigo.x, enemigo.y)
+        enemigo.alarma = True
+        enemigo.restarRelojBocadilloTexto()
+        self.sonidoAlarma.play(maxtime=1500)
+        self.gritarAlarma(enemigo)
+        self.mandarAEncenderAlarma(enemigo)
+
+        jefe = self.JefeEnemigo
+        if jefe.alive():
+            inicio = self.maze.calcularCasilla(*jefe.rect.center)
+            destino = self.maze.calcularCasilla(*self.player.rect.center)
+            jefe.kia.playerDetectado = True
+            jefe.kia.casillaJugador = destino
+            jefe.kia.path = jefe.kia.calcular_camino_BFS(inicio, destino)
+
+    # El enemigo que ha visto al jugador corre a encender la alarma apagada más cercana (por el
+    # camino más corto, sin atravesar puertas cerradas). Si ya va otro a esa alarma, no va.
+    def mandarAEncenderAlarma(self, enemigo):
+        if enemigo.isJefeEnemigo or enemigo.alarmaDestino is not None or not self.maze.MazeAlarmas:
+            return None
+        ahora = pygame.time.get_ticks()
+        casilla = MazeLab.Maze.calcularCasilla(*enemigo.rect.center)
+        ocupadas = {e.alarmaDestino for e in self.EnemigosGroup if e.alarmaDestino is not None}
+        enemigo.kia.casilla = casilla
+        enemigo.kia.casillasBloqueadas = {p.casilla for p in self.maze.MazePuertas if not p.abierta}
+        mejor, distancia = None, None
+        for alarma in self.maze.MazeAlarmas:
+            if alarma.encendida(ahora) or alarma in ocupadas:
+                continue
+            camino = enemigo.kia.calcular_camino_BFS(casilla, alarma.casilla)
+            if camino and (distancia is None or len(camino) < distancia):
+                mejor, distancia = alarma, len(camino)
+        if mejor is not None:
+            enemigo.alarmaDestino = mejor
+            if enemigo.casillaVuelta is None:
+                enemigo.casillaVuelta = casilla
+            enemigo.kia.rumbo = mejor.casilla
+            logging.info("Enemigo en %s va a encender la alarma de la casilla %s", casilla, mejor.casilla)
+        return mejor
+
+    # Enemigos que van a una alarma o vuelven de ella: al llegar a la alarma la encienden (suena
+    # la sirena) y vuelven a su zona; al llegar de vuelta siguen patrullando. Si se quedan sin
+    # camino (p. ej. se ha cerrado una puerta) dejan la alarma y vuelven; si tampoco pueden
+    # volver, patrullan la zona en la que están.
+    def revisarAlarmas(self, ahora):
+        for enemigo in self.EnemigosGroup:
+            if enemigo.kia.rumbo is None:
+                continue
+            casilla = MazeLab.Maze.calcularCasilla(*enemigo.rect.center)
+            if casilla != enemigo.kia.rumbo:
+                centro = (enemigo.x + enemigo.rect.width // 2, enemigo.y + enemigo.rect.height // 2)
+                if MazeLab.Maze.estaCentroCasilla(*centro):
+                    enemigo.kia.casilla = casilla
+                    if enemigo.kia.direccionHacia(enemigo.kia.rumbo) is None:
+                        self.rumboSinCamino(enemigo, casilla)
+                continue
+            if enemigo.alarmaDestino is not None:
+                enemigo.alarmaDestino.encender(ahora)
+                logging.info("¡Alarma encendida en la casilla %s!", casilla)
+                self.sonidoAlarma.play(maxtime=1500)
+                enemigo.alarmaDestino = None
+                enemigo.kia.rumbo = enemigo.casillaVuelta
+            else:
+                enemigo.kia.rumbo = None
+                enemigo.casillaVuelta = None
+
+    def rumboSinCamino(self, enemigo, casilla):
+        if enemigo.alarmaDestino is not None:
+            logging.info("Enemigo en %s no puede llegar a la alarma de %s: vuelve", casilla,
+                         enemigo.alarmaDestino.casilla)
+            enemigo.alarmaDestino = None
+            if enemigo.casillaVuelta is not None and enemigo.casillaVuelta != casilla \
+                    and enemigo.kia.direccionHacia(enemigo.casillaVuelta) is not None:
+                enemigo.kia.rumbo = enemigo.casillaVuelta
+                return
+        # Ni alarma ni vuelta: se queda patrullando la zona en la que está.
+        enemigo.kia.rumbo = None
+        enemigo.casillaVuelta = None
+        if self.zonas is not None:
+            enemigo.kia.asignarZona(self.zonas, self.tiposZona, casilla)
+
+    # Lámparas de alarma (apagadas o encendidas) y, al final del mundo, sus haces giratorios.
+    def pintarAlarmas(self, ahora):
+        for alarma in self.maze.MazeAlarmas:
+            alarma.dibujar(self.pantalla, ahora)
+
+    def pintarHacesAlarmas(self, ahora):
+        encendidas = [a for a in self.maze.MazeAlarmas if a.encendida(ahora)]
+        if not encendidas:
+            return
+        obstaculos = [s.rect for s in self.maze.MazeParedes]
+        obstaculos += [p.rect for p in self.maze.MazePuertas if not p.abierta]
+        for alarma in encendidas:
+            alarma.dibujarHaces(self.pantalla, ahora, obstaculos)
+
+    # Un enemigo pasa a alerta: bocadillo "¿ ? ?" un momento.
+    def ponerEnAlerta(self, enemigo, ahora, punto):
+        if enemigo.kia.oirRuido(ahora, punto):
+            enemigo.avisoAlerta_ms = ahora
+            logging.info("Enemigo en (%s, %s) en alerta por un ruido en %s", enemigo.x, enemigo.y, punto)
+
+    # Ruido de un disparo o del golpe de una bala en una pared: lo oyen los enemigos que estén a
+    # RADIO_RUIDO_CASILLAS casillas o menos en línea recta (un disparo se oye a través de las paredes).
+    def hacerRuido(self, punto):
+        ahora = pygame.time.get_ticks()
+        radio = KerberosIA.RADIO_RUIDO_CASILLAS * CASILLA_PIXEL
+        for enemigo in self.EnemigosGroup:
+            cx, cy = enemigo.rect.center
+            if math.hypot(cx - punto[0], cy - punto[1]) <= radio:
+                self.ponerEnAlerta(enemigo, ahora, punto)
+
+    # Grito del enemigo que ha visto o tocado al jugador. El sonido recorre el laberinto hasta
+    # RADIO_RUIDO_CASILLAS casillas y no atraviesa las puertas cerradas: si grita dentro de una
+    # habitación cerrada, no se le oye fuera. Devuelve los enemigos que lo han oído.
+    def gritarAlarma(self, enemigo):
+        ahora = pygame.time.get_ticks()
+        origen = MazeLab.Maze.calcularCasilla(*enemigo.rect.center)
+        puertasCerradas = {p.casilla for p in self.maze.MazePuertas if not p.abierta}
+        alcanzadas = KerberosIA.propagarSonido(origen, self.conexiones, puertasCerradas)
+        oyentes = []
+        for otro in self.EnemigosGroup:
+            if otro is enemigo:
+                continue
+            if MazeLab.Maze.calcularCasilla(*otro.rect.center) in alcanzadas:
+                self.ponerEnAlerta(otro, ahora, enemigo.rect.center)
+                oyentes.append(otro)
+        return oyentes
+
+    # Conos de visión de los enemigos vivos, translúcidos: amarillo (normal), naranja (alerta), rojo (alarma).
+    def pintarConosVision(self):
+        if self.superficieConos is None or self.superficieConos.get_size() != self.pantalla.get_size():
+            self.superficieConos = pygame.Surface(self.pantalla.get_size(), pygame.SRCALPHA)
+        self.superficieConos.fill((0, 0, 0, 0))
+        for enemigo in self.EnemigosGroup:
+            poligono = enemigo.conoVision.poligono()
+            if len(poligono) >= 3:
+                color = {KerberosIA.ESTADO_ALARMA: COLOR_CONO_ALARMA,
+                         KerberosIA.ESTADO_ALERTA: COLOR_CONO_ALERTA}.get(enemigo.kia.estado, COLOR_CONO_VISION)
+                pygame.draw.polygon(self.superficieConos, color, poligono)
+        self.pantalla.blit(self.superficieConos, (0, 0))
     
+    # Puerta que el jugador tiene a mano: la de su casilla o la de una casilla contigua
+    # (arriba, abajo, izquierda o derecha). Si hay varias, la más cercana. None si no hay ninguna.
+    def puertaCercana(self):
+        centro = pygame.math.Vector2(self.player.x + self.player.rect.width // 2,
+                                     self.player.y + self.player.rect.height // 2)
+        casilla = MazeLab.Maze.calcularCasilla(centro.x, centro.y)
+        columna, fila = casilla % MazeLab.NUM_CASILLAS_H, casilla // MazeLab.NUM_CASILLAS_H
+        cercanas = [puerta for puerta in self.maze.MazePuertas
+                    if abs(puerta.casilla % MazeLab.NUM_CASILLAS_H - columna)
+                    + abs(puerta.casilla // MazeLab.NUM_CASILLAS_H - fila) <= 1]
+        if not cercanas:
+            return None
+        return min(cercanas, key=lambda puerta: centro.distance_to(puerta.rect.center))
+
+    # Tecla D: abre (o cierra) sólo la puerta que el jugador tiene a mano; el resto no cambia.
+    def usarPuerta(self):
+        puerta = self.puertaCercana()
+        if puerta is not None:
+            puerta.abierta = not puerta.abierta
+            logging.info('Puerta de la casilla %s %s', puerta.casilla, 'abierta' if puerta.abierta else 'cerrada')
+        return puerta
+
+    # Puertas con las que choca 'sprite'. Las abiertas dejan pasar, y una cerrada tampoco bloquea
+    # a quien ya estaba debajo cuando se cerró, para que pueda salir de ella. Se usa la posición
+    # (x, y) y no el rect, que en el jefe va un paso por detrás.
+    def puertasQueBloquean(self, sprite):
+        actual = sprite.rect.copy()
+        actual.topleft = (getattr(sprite, "x", sprite.rect.x), getattr(sprite, "y", sprite.rect.y))
+        previo = sprite.rect.copy()
+        previo.topleft = (getattr(sprite, "prev_x", actual.x), getattr(sprite, "prev_y", actual.y))
+        return [puerta for puerta in self.maze.MazePuertas
+                if not puerta.abierta and puerta.rect.colliderect(actual)
+                and not puerta.rect.colliderect(previo)]
+
     # Repinto el Laberinto
     def rebuildMap(self):
        self.map_surface.fill((0,0,0))
@@ -1625,148 +1832,199 @@ class App:
            self.wall_surf,
            self.casillaObjetosTocados
        )
+
+       # En macOS la pantalla tiene canal alfa y el mapa lo hereda con valores 0. Las capas
+       # translúcidas (conos de visión, linterna) pintadas encima sustituían esos píxeles por
+       # su propio color (p. ej. los números de casilla salían negros). Se deja todo opaco.
+       self.map_surface.fill((0, 0, 0, 255), special_flags=pygame.BLEND_RGBA_MAX)
     
     # on RENDER
     #--------------------
+    # Todo lo que pertenece al mundo, en coordenadas del laberinto (self.pantalla es self.mundo).
+    def pintarMundo(self):
+       # SOLO si cambió el mapa
+        if self.rebuild_map:
+            self.rebuildMap()
+            self.rebuild_map = False
+
+        # Dibujar mapa ya preparado
+        self.pantalla.blit(self.map_surface, (0,0))
+
+        for puerta in self.maze.MazePuertas:
+            puerta.draw(self.pantalla)
+
+        self.pintarAlarmas(pygame.time.get_ticks())
+
+        if self.flagDebugEnemigos:
+            self.maze.pintarDetallesCasillaEnemigo(self.pantalla)
+
+        if self.flagExplosion and self.explosion_timer > 0:
+            self.explosion_timer -= 1
+            self.grupo_explosiones.update()
+            self.grupo_explosiones.draw(self.pantalla)
+
+            if self.explosion_timer <= 0:
+                self.flagExplosion = False
+
+        if self.flagHumo and self.humo_timer > 0:
+            self.humo_timer -= 1
+            self.grupo_humo.update()
+            self.grupo_humo.draw(self.pantalla)
+
+            if self.humo_timer <= 0:
+                self.flagHumo = False
+
+        if self.iteracion == 35:
+           self.iteracion = 0
+
+        # Parte bocadillo de Texto.
+        if self.flagPintarBocadilloTexto and self.bocadillo_timer != 0:
+            self.bocadillo_timer -= 1
+            if self.impactoEnemigo:
+                self.JefeEnemigo.bocadilloTexto(self.pantalla, self.textoBocadillo, self.enemigoImpactado.rect.centerx, self.enemigoImpactado.rect.top, 255)
+            elif self.impactoJefeEnemigo:
+                self.JefeEnemigo.bocadilloTexto(self.pantalla, self.textoBocadillo, self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, 255)
+
+        # Aquí busco lugar suelo para Jugador
+        # Llamada a la IA
+        if self.flagInit == True:
+            self.flagInit = False
+            if self.flagPrint_info:
+                print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
+            self.player.casilla = self.maze.posicionInitJugador    
+            pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
+            self.player.x = pos.x
+            self.player.y = pos.y
+            self.player.guardarPosicionPrevia()  # si no, una colisión lo devolvería a (23, 23)
+            self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+        else:
+            self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
+
+        if self.pintaRectángulos == True:
+            pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
+
+        if self.flagPrint_info:
+            print(f"Casillas con puerta (visible): ", len(self.maze.MazePuertas))
+
+        # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
+        # logging.debug("Pintamos los enemigos.")  # Comentado para mejorar rendimiento
+        for i, enemy in enumerate(self.enemigosArray):
+            if not enemy.alive():
+                continue  # muerto
+            if(enemy.isJefeEnemigo):
+                if self.flagPrint_info:
+                    print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
+                self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+            else:
+                if self.flagPrint_info:
+                    print('---Posición DRAW ENEMIGO: ',i, enemy.x, enemy.y)
+                self.pantalla.blit(self._enemigo, (enemy.x, enemy.y))
+                if self.pintaRectángulos == True:
+                    pygame.draw.rect(self.pantalla, (255, 0, 0), enemy.rect, 2)
+
+        # Jefe Enemigo + VISIÓN (si sigue vivo)
+        # logging.debug('Pintamos el JEFE enemigo.') 
+        jefeVivo = self.JefeEnemigo.alive()
+        if jefeVivo:
+            self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+        if jefeVivo and self.pintaRectángulos == True:
+            pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
+        # VISIÓN: conos de todos los enemigos (se calculan en vigilar(), dentro de on_loop).
+        if self.visionEnemigos == True:
+            self.pintarConosVision()
+
+        # Bocadillo "¿ ? ?" de los enemigos que acaban de ponerse en alerta (si no están en alarma).
+        ahoraBocadillo = pygame.time.get_ticks()
+        for enemigo in self.EnemigosGroup:
+            if enemigo.avisoAlerta_ms is None or enemigo.alarma:
+                continue
+            if ahoraBocadillo - enemigo.avisoAlerta_ms < DURACION_AVISO_ALERTA_MS:
+                enemigo.bocadilloTexto(self.pantalla, "¿ ? ?", enemigo.rect.centerx, enemigo.rect.top, 255)
+            else:
+                enemigo.avisoAlerta_ms = None
+
+        # Bocadillo "¡ ALARMA !" de cada enemigo que ha dado la alarma (o del jefe con INTRO).
+        for enemigo in self.EnemigosGroup:
+            if not enemigo.alarma:
+                continue
+            # --- Control del tiempo del bocadillo ---
+            current_time = pygame.time.get_ticks()
+            elapsed = current_time - enemigo.bubble_start_time
+            if elapsed < enemigo.bubble_duration:
+                # Calculamos opacidad
+                if elapsed > enemigo.bubble_duration - enemigo.fade_duration:
+                    alphaBTexto = int(255 * (1 - (elapsed - (enemigo.bubble_duration - enemigo.fade_duration)) / enemigo.fade_duration))
+                else:
+                    alphaBTexto = 255
+
+                enemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", enemigo.rect.centerx, enemigo.rect.top, alphaBTexto)
+            else:
+                enemigo.alarma = False
+                enemigo.restarRelojBocadilloTexto()
+
+        # Maze Extra --> Recuadros
+        if self.pintaRectángulos == True:
+            for extra in self.maze.MazeExtra:
+                pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
+
+        # Pintar disparos del Player
+        if self.player.flagDisparo == True:
+            # logging.debug('DISPARO DeL Player.')  # Comentado para mejorar rendimiento
+            self.player.balas.draw(self.pantalla)
+
+        # Pintar disparos de Jefe Enemigo
+        if self.JefeEnemigo.flagDisparo == True:
+            # logging.debug('Pintamos Disparo DEL JEFE enemigo.')  # Comentado para mejorar rendimiento
+            self.JefeEnemigo.balas.draw(self.pantalla)
+
+        # Nivel oscuro: la linterna sigue la dirección del jugador y no atraviesa
+        # paredes, enemigos ni puertas.
+        if self.linterna is not None:
+            self.linterna.apuntar(self.player.orientacion)
+            obstaculos = [s.rect for s in self.maze.MazeParedes]
+            obstaculos += [s.rect for s in self.EnemigosGroup]
+            obstaculos += [p.rect for p in self.maze.MazePuertas]
+            self.linterna.dibujar(self.pantalla, self.player.rect.center, obstaculos)
+
+        # Haces de las alarmas encendidas, por encima de todo (también de la oscuridad).
+        self.pintarHacesAlarmas(pygame.time.get_ticks())
+
+    # Parpadeo rojo del jugador y de los enemigos tras un choque (también en el mundo).
+    def pintarEfectoRojo(self):
+        # Aplicar efecto rojo y vibración cuando jugador y Enemigo/s
+        if self.efecto_rojo:
+            ahora = pygame.time.get_ticks()
+
+            if ahora - self.tiempo_rojo < 2000:
+                if (ahora // 100) % 2:
+                    if self.impactoPlayer:
+                        self.pantalla.blit(self.imagePlayer_roja, (self.player.x, self.player.y))
+                    if self.impactoEnemigo:
+                        self.pantalla.blit(self.imageEnemigo_roja, (self.enemigoImpactado.x, self.enemigoImpactado.y))
+                    if self.impactoJefeEnemigo:
+                        self.pantalla.blit(self.imageJefe_roja, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+                else:
+                    if self.impactoPlayer:
+                        self.pantalla.blit(self.player.image, (self.player.x, self.player.y))
+                    if self.impactoEnemigo:
+                        self.pantalla.blit(self.enemigoImpactado.imageEnemigo, (self.enemigoImpactado.x, self.enemigoImpactado.y))
+                    if self.impactoJefeEnemigo:
+                        self.pantalla.blit(self.enemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
+            else:
+                self.efecto_rojo = False
+
     def on_render(self):
         if self.pause == False:
-           # SOLO si cambió el mapa
-            if self.rebuild_map:
-                self.rebuildMap()
-                self.rebuild_map = False
-            
-            # Dibujar mapa ya preparado
-            self.pantalla.blit(self.map_surface, (0,0))
-            
-            for puerta in self.maze.MazePuertas:
-                puerta.draw(self.pantalla)
-
-            if self.flagDebugEnemigos:
-                self.maze.pintarDetallesCasillaEnemigo(self.pantalla)
-
-            if self.flagExplosion and self.explosion_timer > 0:
-                self.explosion_timer -= 1
-                self.grupo_explosiones.update()
-                self.grupo_explosiones.draw(self.pantalla)
-
-                if self.explosion_timer <= 0:
-                    self.flagExplosion = False
-
-            if self.flagHumo and self.humo_timer > 0:
-                self.humo_timer -= 1
-                self.grupo_humo.update()
-                self.grupo_humo.draw(self.pantalla)
-
-                if self.humo_timer <= 0:
-                    self.flagHumo = False
-
-            if self.iteracion == 35:
-               self.iteracion = 0
-
-            # Parte bocadillo de Texto.
-            if self.flagPintarBocadilloTexto and self.bocadillo_timer != 0:
-                self.bocadillo_timer -= 1
-                if self.impactoEnemigo:
-                    self.JefeEnemigo.bocadilloTexto(self.pantalla, self.textoBocadillo, self.enemigoImpactado.rect.centerx, self.enemigoImpactado.rect.top, 255)
-                elif self.impactoJefeEnemigo:
-                    self.JefeEnemigo.bocadilloTexto(self.pantalla, self.textoBocadillo, self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, 255)
-
-            # Aquí busco lugar suelo para Jugador
-            # Llamada a la IA
-            if self.flagInit == True:
-                self.flagInit = False
-                if self.flagPrint_info:
-                    print("Casilla Inicial Jugador: ", self.maze.posicionInitJugador)
-                self.player.casilla = self.maze.posicionInitJugador    
-                pos = MazeLab.Maze.calcularPixelPorCasilla(self.player.casilla)
-                self.player.x = pos.x
-                self.player.y = pos.y
-                self.player.guardarPosicionPrevia()  # si no, una colisión lo devolvería a (23, 23)
-                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-            else:
-                self.pantalla.blit(self._jugador, (self.player.x, self.player.y))
-            
-            if self.pintaRectángulos == True:
-                pygame.draw.rect(self.pantalla, (0, 255, 0), self.player.rect, 2)
- 
-            if self.flagPrint_info:
-                print(f"Casillas con puerta (visible): ", len(self.maze.MazePuertas))
-
-            # Aquí busco lugar suelo para Enemigo y Jefe Enemigo.
-            # logging.debug("Pintamos los enemigos.")  # Comentado para mejorar rendimiento
-            for i, enemy in enumerate(self.enemigosArray):
-                if not enemy.alive():
-                    continue  # muerto
-                if(enemy.isJefeEnemigo):
-                    if self.flagPrint_info:
-                        print('---Posición DRAW LORD: ',self.JefeEnemigo.x, self.JefeEnemigo.y)
-                    self.pantalla.blit(self._JefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-                else:
-                    if self.flagPrint_info:
-                        print('---Posición DRAW ENEMIGO: ',i, enemy.x, enemy.y)
-                    self.pantalla.blit(self._enemigo, (enemy.x, enemy.y))
-                    if self.pintaRectángulos == True:
-                        pygame.draw.rect(self.pantalla, (255, 0, 0), enemy.rect, 2)
-
-            # Jefe Enemigo + VISIÓN (si sigue vivo)
-            # logging.debug('Pintamos el JEFE enemigo.') 
-            jefeVivo = self.JefeEnemigo.alive()
-            if jefeVivo:
-                self.pantalla.blit(self.JefeEnemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-            if jefeVivo and self.pintaRectángulos == True:
-                pygame.draw.rect(self.pantalla, (0, 0, 255), self.JefeEnemigo.rect, 2)
-            # VISION
-            if jefeVivo and self.visionEnemigos == True:
-                self.JefeEnemigo.visionRotar()
-                self.JefeEnemigo.vision(self.JefeEnemigo.imageJefeEnemigo.get_rect().center)
-                centro = (self.JefeEnemigo.x+10, self.JefeEnemigo.y+10)
-                radio = 20
-                x = centro[0] + radio * math.cos(math.radians(self.JefeEnemigo.angle))
-                y = centro[1] + radio * math.sin(math.radians(self.JefeEnemigo.angle))
-                rot_angle = -self.JefeEnemigo.angle + 90
-                rotated = pygame.transform.rotate(self.JefeEnemigo.visionImage, rot_angle)
-                rect = rotated.get_rect(center=(x, y))
-                self.pantalla.blit(rotated, rect)
- 
-            if(self.JefeEnemigo.alarma):
-                # --- Control del tiempo del bocadillo ---
-                current_time = pygame.time.get_ticks()
-                elapsed = current_time - self.JefeEnemigo.bubble_start_time
-                if elapsed < self.JefeEnemigo.bubble_duration:
-                    # Calculamos opacidad
-                    if elapsed > self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration:
-                        alphaBTexto = int(255 * (1 - (elapsed - (self.JefeEnemigo.bubble_duration - self.JefeEnemigo.fade_duration)) / self.JefeEnemigo.fade_duration))
-                    else:
-                        alphaBTexto = 255
- 
-                    self.JefeEnemigo.bocadilloTexto(self.pantalla, "¡ ALARMA !", self.JefeEnemigo.rect.centerx, self.JefeEnemigo.rect.top, alphaBTexto)
-                else:
-                    self.JefeEnemigo.alarma = False
-                    self.JefeEnemigo.restarRelojBocadilloTexto()
-        
-            # Maze Extra --> Recuadros
-            if self.pintaRectángulos == True:
-                for extra in self.maze.MazeExtra:
-                    pygame.draw.rect(self.pantalla, (255, 0, 255), extra.rect, 2)
- 
-            # Pintar disparos del Player
-            if self.player.flagDisparo == True:
-                # logging.debug('DISPARO DeL Player.')  # Comentado para mejorar rendimiento
-                self.player.balas.draw(self.pantalla)
- 
-            # Pintar disparos de Jefe Enemigo
-            if self.JefeEnemigo.flagDisparo == True:
-                # logging.debug('Pintamos Disparo DEL JEFE enemigo.')  # Comentado para mejorar rendimiento
-                self.JefeEnemigo.balas.draw(self.pantalla)
-
-            # Nivel oscuro: la linterna sigue la dirección del jugador y no atraviesa
-            # paredes, enemigos ni puertas.
-            if self.linterna is not None:
-                self.linterna.apuntar(self.player.orientacion)
-                obstaculos = [s.rect for s in self.maze.MazeParedes]
-                obstaculos += [s.rect for s in self.EnemigosGroup]
-                obstaculos += [p.rect for p in self.maze.MazePuertas]
-                self.linterna.dibujar(self.pantalla, self.player.rect.center, obstaculos)
+            # El mundo (laberinto, objetos, personajes, conos, linterna...) se pinta en su propia
+            # superficie, con coordenadas del laberinto. La cámara decide qué parte se ve.
+            pantallaReal = self.pantalla
+            self.pantalla = self.mundo
+            try:
+                self.pintarMundo()
+                self.pintarEfectoRojo()
+            finally:
+                self.pantalla = pantallaReal
+            self.pantalla.blit(self.mundo, (-self.maze.camaraX, 0))
 
         self.iteracion += 1
 
@@ -1880,28 +2138,6 @@ class App:
                 self.pantalla.blit(overlay, (0, y - 10))
                 self.pantalla.blit(texto_surface, (x_texto, y))
 
-        # Aplicar efecto rojo y vibración cuando jugador y Enemigo/s
-        if self.efecto_rojo:
-            ahora = pygame.time.get_ticks()
-
-            if ahora - self.tiempo_rojo < 2000:
-                if (ahora // 100) % 2:
-                    if self.impactoPlayer:
-                        self.pantalla.blit(self.imagePlayer_roja, (self.player.x, self.player.y))
-                    if self.impactoEnemigo:
-                        self.pantalla.blit(self.imageEnemigo_roja, (self.enemigoImpactado.x, self.enemigoImpactado.y))
-                    if self.impactoJefeEnemigo:
-                        self.pantalla.blit(self.imageJefe_roja, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-                else:
-                    if self.impactoPlayer:
-                        self.pantalla.blit(self.player.image, (self.player.x, self.player.y))
-                    if self.impactoEnemigo:
-                        self.pantalla.blit(self.enemigoImpactado.imageEnemigo, (self.enemigoImpactado.x, self.enemigoImpactado.y))
-                    if self.impactoJefeEnemigo:
-                        self.pantalla.blit(self.enemigo.imageJefeEnemigo, (self.JefeEnemigo.x, self.JefeEnemigo.y))
-            else:
-                self.efecto_rojo = False
-
         pygame.display.flip() # Aquí es donde ploteamos todo.
 
     def on_cleanup(self):
@@ -1953,6 +2189,7 @@ class App:
                         logging.info('¡Disparo jugador!')
                         if self.player.disparo():
                             self.estadisticas.registrarDisparo()
+                            self.hacerRuido(self.player.rect.center)  # el disparo se oye
                     if event.key == pygame.K_RETURN:
                         logging.info('¡¡¡ INTRO !!!')
                         self.JefeEnemigo.alarma = True
@@ -1975,8 +2212,7 @@ class App:
                         self.explosion_timer = 150
                     if event.key == pygame.K_d:
                         logging.info('Tecla D presionada')
-                        for puerta in self.maze.MazePuertas:
-                            puerta.abierta = not puerta.abierta
+                        self.usarPuerta()
                     if event.key == pygame.K_k:
                         logging.info('Tecla K presionada')
                         if MazeLab.Maze.pintaKasillaNumSuelo:

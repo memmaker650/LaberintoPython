@@ -92,7 +92,7 @@ def test_esAlcanzable_suelo_y_pared(maze):
     assert maze.esAlcanzable(5, BIAS + 5) is False             # casilla 0: pared
 
 
-@pytest.mark.parametrize("x, y", [(-1, 300), (900, 300), (100, -5), (100, 1001)])
+@pytest.mark.parametrize("x, y", [(-1, 300), (MazeLab.ANCHO_MUNDO, 300), (100, -5), (100, 1001)])
 def test_esAlcanzable_fuera_de_pantalla(maze, x, y):
     assert maze.esAlcanzable(x, y) is False
 
@@ -100,6 +100,11 @@ def test_esAlcanzable_fuera_de_pantalla(maze, x, y):
 def test_esAlcanzable_zona_cabecera(maze):
     # (40, 10) está en la cabecera (HUD), nunca debería ser alcanzable.
     assert maze.esAlcanzable(40, 10) is False
+
+
+def test_esAlcanzable_zona_derecha_del_mundo(maze):
+    # Coordenadas del mundo: la zona derecha (x > 864) también existe.
+    assert maze.esAlcanzable(33 * 32 + 5, BIAS + 20 * 32 + 5) is True
 
 
 def test_esAlcanzableCasilla(maze):
@@ -146,33 +151,38 @@ def test_precalcular_conexiones_laberinto_real_simetricas(maze, conexiones):
 
 
 # ---------- Cámara ----------
-def test_moverCamara_derecha(maze):
-    y = BIAS + 20 * 32 + 5  # fila 20: suelo hasta la columna 39
-    maze.moverCamara(26 * 32 + 5, y)
-    assert maze.posicionCamara == 14
-    assert maze.movimientoCamara == 1
-    assert maze.flagCamara is False and maze.flagCamaraCambio is True
+# camaraX = x del mundo que se ve en el borde izquierdo de la pantalla (864 px = 27 casillas).
+ANCHO = MazeLab.ANCHO_MUNDO
+DERECHA = 864 - MazeLab.MARGEN_CAMARA - CASILLA_PIXEL   # a partir de aquí la cámara se mueve
 
 
-def test_moverCamara_derecha_sobre_pared_no_mueve(maze):
-    maze.moverCamara(26 * 32 + 5, BIAS + 5)  # fila 0: pared
-    assert maze.posicionCamara == 13
-    assert maze.flagCamaraCambio is False
+def test_camara_quieta_lejos_de_los_bordes(maze):
+    assert maze.camaraX == 0
+    assert maze.moverCamara(400) == 0
+    assert maze.moverCamara(DERECHA) == 0
 
 
-def test_moverCamara_izquierda(maze):
-    maze.posicionCamara = 15
-    maze.movimientoCamara = 2
-    maze.moverCamara(10, BIAS + 40)
-    assert maze.posicionCamara == 14
-    assert maze.movimientoCamara == 1
-    assert maze.flagCamaraCambio is True
+def test_camara_sigue_al_jugador_a_la_derecha(maze):
+    assert maze.moverCamara(DERECHA + 10) == 10
+    assert maze.moverCamara(DERECHA + 100) == 100
 
 
-def test_moverCamara_sin_flag_no_mueve(maze):
-    maze.flagCamara = False
-    maze.moverCamara(26 * 32 + 5, BIAS + 20 * 32 + 5)
-    assert maze.posicionCamara == 13
+def test_camara_no_se_sale_del_laberinto(maze):
+    assert maze.moverCamara(ANCHO - 20) == ANCHO - 864           # 1280 - 864 = 416
+    assert maze.moverCamara(-50) == 0
+
+
+def test_camara_vuelve_a_la_izquierda(maze):
+    maze.moverCamara(DERECHA + 300)
+    assert maze.camaraX == 300
+    assert maze.moverCamara(300 + MazeLab.MARGEN_CAMARA + 10) == 300   # todavía en pantalla
+    assert maze.moverCamara(300 + MazeLab.MARGEN_CAMARA - 40) == 260
+    assert maze.moverCamara(0) == 0
+
+
+def test_camara_fija(maze):
+    maze.camaraFija = True
+    assert maze.moverCamara(ANCHO - 20) == 0
 
 
 def test_nuevaCasillaTrasCamaraMovida(maze):
@@ -187,7 +197,8 @@ def test_nuevaPosicionXYTrasCamaraMovida(maze):
 
 # ---------- Dibujo ----------
 def _visibles(maze, valor):
-    return [i for i, v in enumerate(maze.mazeDataExtra) if v == valor and i % NUM_CASILLAS_H <= 27]
+    # Con la cámara, draw() pinta y crea los objetos de TODO el laberinto (también la zona derecha).
+    return [i for i, v in enumerate(maze.mazeDataExtra) if v == valor]
 
 
 def test_draw_pinta_suelo_y_paredes(maze, superficie):
@@ -242,13 +253,21 @@ def test_draw_respeta_flags(maze, superficie):
     assert len(maze.MazeLlave) == 0
 
 
-def test_draw_con_camara_desplazada(maze, superficie):
-    suelo = pygame.Surface((32, 32))
-    maze.posicionCamara = 15
-    maze.draw(superficie, suelo, suelo)
-    assert maze.movimientoCamara == 2
-    # La puerta de la casilla 395 (columna 35) sigue fuera de la vista.
-    assert 395 not in {c for c, _ in maze.posicionPuerta}
+def test_draw_pinta_la_zona_derecha_en_coordenadas_del_mundo(maze):
+    # La zona derecha (columnas 27-39) se pinta a partir de x = 864 en la superficie del mundo.
+    mundo = pygame.Surface((MazeLab.ANCHO_MUNDO, 1000))
+    suelo = pygame.Surface((32, 32)); suelo.fill((10, 200, 10))
+    pared = pygame.Surface((32, 32)); pared.fill((200, 10, 10))
+    Maze.pintaKasillaNumSuelo = False
+    try:
+        maze.draw(mundo, suelo, pared)
+    finally:
+        Maze.pintaKasillaNumSuelo = True
+    c = 20 * NUM_CASILLAS_H + 33                       # fila 20, columna 33: suelo
+    assert maze.maze[c] == 1
+    assert mundo.get_at((33 * 32 + 5, BIAS + 20 * 32 + 5))[:3] == (10, 200, 10)
+    assert mundo.get_at((39 * 32 + 5, BIAS + 5))[:3] == (200, 10, 10)
+    assert 395 in {c for c, _ in maze.posicionPuerta}  # la puerta de la columna 35 también existe
 
 
 def test_addText(maze):
@@ -325,27 +344,38 @@ def test_puerta_init():
     assert p.image_original.get_size() == (15, 32)
     assert p.angle == 0 and p.abierta is False
     assert p.pivot == (100, 200)
-    # Cerrada: el centro queda a 'radio' píxeles de la bisagra en el eje X.
+    # Vertical (1) cerrada: la hoja baja desde la bisagra, 'radio' píxeles en el eje Y.
+    assert p.rect.center == (100, 216)
+    assert p.image.get_size() == (15, 32)
+
+
+def test_puerta_horizontal_init():
+    p = MazeLab.Puerta(100, 200, 4)
+    # Horizontal (4) cerrada: la hoja sale hacia la derecha de la bisagra.
     assert p.rect.center == (116, 200)
+    assert p.image.get_size() == (32, 15)
 
 
-def test_puerta_abrir_y_cerrar():
-    p = MazeLab.Puerta(100, 200, 1)
+@pytest.mark.parametrize("orientacion, abierta", [(1, (116, 200)), (4, (100, 216))])
+def test_puerta_abrir_y_cerrar(orientacion, abierta):
+    p = MazeLab.Puerta(100, 200, orientacion)
+    cerrada = p.rect.center
     p.abierta = True
     for _ in range(60):
         p.update()
     assert p.angle == 90
-    assert p.rect.center == (100, 216)
+    assert p.rect.center == abierta
     p.abierta = False
     p.update()
     assert p.angle == 88
     for _ in range(60):
         p.update()
     assert p.angle == 0
+    assert p.rect.center == cerrada
 
 
 def test_puerta_rotar_tamano():
-    p = MazeLab.Puerta(100, 200, 1)
+    p = MazeLab.Puerta(100, 200, 4)
     p.angle = 90
     p.rotar()
     assert p.image.get_size() == (15, 32)
@@ -354,8 +384,51 @@ def test_puerta_rotar_tamano():
     assert p.image.get_size() == (32, 15)
 
 
+def test_puertas_centradas_en_su_casilla(maze, superficie):
+    # Cerradas, la bisagra está en mitad del lado de la pared y la hoja cruza la casilla por el centro.
+    maze.draw(superficie, pygame.Surface((32, 32)), pygame.Surface((32, 32)))
+    assert maze.MazePuertas
+    for puerta in maze.MazePuertas:
+        columna, fila = puerta.casilla % NUM_CASILLAS_H, puerta.casilla // NUM_CASILLAS_H
+        casilla = pygame.Rect(columna * CASILLA_PIXEL, fila * CASILLA_PIXEL + BIAS, CASILLA_PIXEL, CASILLA_PIXEL)
+        assert puerta.rect.center == casilla.center
+        if puerta.orientacion == 1:
+            assert puerta.pivot == casilla.midtop
+        else:
+            assert puerta.pivot == casilla.midleft
+
+
 def test_puerta_draw(superficie):
     p = MazeLab.Puerta(100, 200, 1)
     p.draw(superficie)
     assert superficie.get_at((100, 200))[:3] == (128, 128, 128)  # bisagra
     assert superficie.get_at(p.rect.center)[:3] != (0, 0, 0)
+
+
+def test_numeros_de_casilla_encima_de_los_objetos(maze, superficie):
+    # Los números se pintan al final: ni los objetos de la casilla ni el suelo de la siguiente los tapan.
+    suelo = pygame.Surface((32, 32))
+    suelo.fill((90, 90, 90))
+    Maze.pintaKasillaNumSuelo = True
+    maze.draw(superficie, suelo, suelo)
+    hueso = _visibles(maze, 2)[0]
+    centro = Maze.centroCasilla(hueso)
+    zona = pygame.Rect(centro.x, centro.y, 24, 14)  # donde empieza el número
+    rojos = [p for p in ((x, y) for x in range(zona.left, zona.right) for y in range(zona.top, zona.bottom))
+             if superficie.get_at(p)[:3] == (255, 0, 0)]
+    assert rojos
+
+
+def test_sin_numeros_de_casilla(maze, superficie):
+    suelo = pygame.Surface((32, 32))
+    suelo.fill((90, 90, 90))
+    Maze.pintaKasillaNumSuelo = False
+    try:
+        maze.draw(superficie, suelo, suelo)
+    finally:
+        Maze.pintaKasillaNumSuelo = True
+    # Casilla 42: suelo sin objetos. Sin números no hay nada rojo en ella.
+    esquina = Maze.calcularPixelPorCasilla(42)
+    assert maze.mazeDataExtra[42] == 1
+    assert not any(superficie.get_at((esquina.x + dx, esquina.y + dy))[:3] == (255, 0, 0)
+                   for dx in range(32) for dy in range(32))

@@ -10,11 +10,91 @@ import sys
 import pygame
 from pygame.locals import *
 from collections import deque
+import math
+import Luces
 
 DEBUG_IA = False # Flag para controlar los print
 
 # Patrulla de los enemigos normales dentro de su zona (habitación o pasillo).
 PROB_SEGUIR_RECTO = 0.75  # en una habitación, probabilidad de seguir recto si se puede
+
+# Estados de los enemigos (y del jefe).
+#   normal --(oye un disparo o un grito)--> alerta
+#   normal / alerta --(ve o toca al jugador)--> alarma (grita y avisa)
+#   alarma --(4 s sin verlo)--> alerta --(8 s sin oír nada)--> normal
+ESTADO_NORMAL = 0       # hace su ronda (patrulla su zona)
+ESTADO_PERSECUCION = 1  # sigue al jugador (el jefe, por el camino BFS)
+ESTADO_ALARMA = 2       # ha visto o tocado al jugador y da la alarma
+ESTADO_EQUIPO = 3       # trabajo en equipo (pendiente)
+ESTADO_ALERTA = 4       # ha oído un ruido (disparo, bala contra una pared o el grito de otro enemigo)
+ESTADO_PATRULLA = ESTADO_NORMAL  # nombre antiguo del estado normal
+NOMBRES_ESTADO = {ESTADO_NORMAL: "normal", ESTADO_PERSECUCION: "persecución",
+                  ESTADO_ALARMA: "alarma", ESTADO_EQUIPO: "equipo", ESTADO_ALERTA: "alerta"}
+
+DURACION_ALARMA_MS = 4000   # sin volver a ver al jugador, la alarma dura esto y pasa a alerta
+DURACION_ALERTA_MS = 8000   # sin oír nada más, la alerta dura esto y vuelve a normal
+RADIO_RUIDO_CASILLAS = 6    # distancia máxima (en casillas) a la que se oye un ruido
+
+
+# Casillas a las que llega un grito dado en 'origen': el sonido avanza por el suelo del laberinto
+# (siguiendo 'conexiones') hasta 'maximo' casillas de recorrido y no atraviesa las casillas
+# 'bloqueadas' (puertas cerradas). Devuelve {casilla: distancia en casillas}.
+def propagarSonido(origen, conexiones, bloqueadas=(), maximo=RADIO_RUIDO_CASILLAS):
+    ancho = MazeLab.NUM_CASILLAS_H
+    paso = {0: -ancho, 1: 1, 2: ancho, 3: -1}
+    distancias = {origen: 0}
+    cola = deque([origen])
+    while cola:
+        actual = cola.popleft()
+        if distancias[actual] == maximo:
+            continue
+        for direccion in conexiones.get(actual, []):
+            vecina = actual + paso[direccion]
+            if vecina in distancias or vecina in bloqueadas:
+                continue
+            distancias[vecina] = distancias[actual] + 1
+            cola.append(vecina)
+    return distancias
+
+
+# Cono de visión de un enemigo. Se calcula con rayos que se cortan en las paredes (y puertas),
+# así que el enemigo no ve a través de ellas.
+class VisionEnemigo:
+    def __init__(self, alcance=4 * 32, apertura=60, num_rayos=15):
+        self.alcance = alcance      # píxeles
+        self.apertura = apertura    # grados
+        self.num_rayos = num_rayos
+        self.origen = (0, 0)
+        self.angulo = 0.0
+        self.puntos = []            # extremos de los rayos (el polígono del cono es origen + puntos)
+
+    # Recalcula el cono desde 'origen' mirando hacia 'angulo' (grados, eje Y hacia abajo).
+    def actualizar(self, origen, angulo, paredes):
+        self.origen = origen
+        self.angulo = angulo % 360
+        self.puntos = Luces.abanicoRayos(origen, self.angulo, self.apertura, self.num_rayos,
+                                         self.alcance, paredes)
+        return self.puntos
+
+    def poligono(self):
+        return [self.origen] + self.puntos if self.puntos else []
+
+    # ¿Ve el punto? Tiene que estar al alcance, dentro del ángulo del cono y sin paredes en medio.
+    def ve(self, punto, paredes):
+        ox, oy = self.origen
+        px, py = punto
+        distancia = math.hypot(px - ox, py - oy)
+        if distancia > self.alcance:
+            return False
+        if distancia > 0:
+            direccion = math.degrees(math.atan2(py - oy, px - ox))
+            diferencia = (direccion - self.angulo + 180) % 360 - 180
+            if abs(diferencia) > self.apertura / 2:
+                return False
+        for rect in Luces.obstaculosCercanos(self.origen, self.alcance, paredes):
+            if rect.clipline(self.origen, punto):
+                return False
+        return True
 
 class posicion:
     def __init__(self, valorX = 0, valorY = 0):
@@ -39,6 +119,8 @@ class KerberosIA:
         self.animo = 0  # 0 OK, 1 Angry, 2 Sad, 3 Alarmado
         self.tipo = 0  # 0 soldier, 1 boss or lieutenant
         self.colisionParedes = False
+        # Casillas por las que no puede pasar aunque estén conectadas (puertas cerradas).
+        self.casillasBloqueadas = set()
 
         self.ordenJefe = False
         self.combatir = False
@@ -58,10 +140,19 @@ class KerberosIA:
         self.posicion = posicion(x, y)
         self.casilla = 0
 
+        # Momento (ms) en que vio al jugador por última vez (para la duración de la alarma).
+        self.ultimaVezVisto = None
+        # Último ruido oído: momento (ms) y punto de la pantalla de donde venía.
+        self.ultimoRuido = None
+        self.puntoRuido = None
+
         # Zonas del laberinto (MazeLab.Maze.calcularZonas) y zona en la que patrulla este enemigo.
         self.zonas = None
         self.tiposZona = None
         self.zona = None
+        # Casilla a la que va por el camino más corto en vez de patrullar (p. ej. a encender
+        # una alarma y luego de vuelta a su zona). None: patrulla.
+        self.rumbo = None
 
     def definirPosicion(self, x, y ):
         self.posicion.cargar(x, y)
@@ -95,13 +186,48 @@ class KerberosIA:
             self.orientacion = 1
 
     def esInterseccion(self):
-        opciones = self.conexiones.get(self.casilla, [])
+        opciones = self.direccionesLibres(self.casilla)
 
         return len(opciones) >= 3
 
     def gritarAlarma(self):
         self.alarma = True
         # Pintar el gruñido de alarma
+
+    # El enemigo ve al jugador: pasa a estado de alarma. Devuelve True si la alarma acaba de saltar
+    # (no estaba ya en alarma), para avisar al resto sólo una vez.
+    def verJugador(self, ahora_ms):
+        self.ultimaVezVisto = ahora_ms
+        nueva = self.estado != ESTADO_ALARMA
+        self.estado = ESTADO_ALARMA
+        self.gritarAlarma()
+        return nueva
+
+    # Oye un ruido (disparo, bala contra una pared o el grito de otro enemigo) que viene de 'punto'.
+    # Pasa a alerta salvo que ya esté en alarma. Devuelve True si acaba de ponerse en alerta.
+    def oirRuido(self, ahora_ms, punto):
+        if self.estado == ESTADO_ALARMA:
+            return False
+        nueva = self.estado != ESTADO_ALERTA
+        self.estado = ESTADO_ALERTA
+        self.ultimoRuido = ahora_ms
+        self.puntoRuido = punto
+        return nueva
+
+    # Sin ver al jugador: la alarma pasa a alerta y, sin oír nada más, la alerta vuelve a normal.
+    def actualizarEstado(self, ahora_ms):
+        if self.estado == ESTADO_ALARMA and ahora_ms - self.ultimaVezVisto >= DURACION_ALARMA_MS:
+            self.estado = ESTADO_ALERTA
+            self.alarma = False
+            self.ultimoRuido = ahora_ms  # la alerta empieza a contar ahora
+        elif self.estado == ESTADO_ALERTA and ahora_ms - self.ultimoRuido >= DURACION_ALERTA_MS:
+            self.estado = ESTADO_NORMAL
+            self.puntoRuido = None
+
+    actualizarAlarma = actualizarEstado  # nombre anterior
+
+    def nombreEstado(self):
+        return NOMBRES_ESTADO.get(self.estado, str(self.estado))
 
     def reiniciarArraySiguientesCasillas(self):
         self.casillasLibres.clear()
@@ -127,6 +253,14 @@ class KerberosIA:
             return 3
 
         return self.orientacion
+
+    # Direcciones de 'conexiones' que no llevan a una casilla bloqueada (puerta cerrada).
+    def direccionesLibres(self, casilla):
+        direcciones = self.conexiones.get(casilla, [])
+        if not self.casillasBloqueadas:
+            return direcciones
+        return [d for d in direcciones
+                if self.obtenerCasillaSiguiente(casilla, d) not in self.casillasBloqueadas]
 
     def obtenerCasillaSiguiente(self, casilla, direccion):
         # 0 Arriba
@@ -175,7 +309,7 @@ class KerberosIA:
         return casillas
 
     def elegirDireccionEvitar(self, direccionBloqueada=None):
-        opciones = list(self.conexiones.get(self.casilla, []))
+        opciones = list(self.direccionesLibres(self.casilla))
 
         if not opciones:
             return self.orientacion
@@ -219,7 +353,7 @@ class KerberosIA:
             visitados.add(casillaActual)
 
             # Obtener conexiones
-            direcciones = self.conexiones.get(casillaActual, [])
+            direcciones = self.direccionesLibres(casillaActual)
 
             for direccion in direcciones:
 
@@ -236,7 +370,7 @@ class KerberosIA:
         return []    
     
     def elegirDireccion(self):
-        opciones = self.conexiones.get(self.casilla, [])
+        opciones = self.direccionesLibres(self.casilla)
 
         if not opciones:
             return self.orientacion
@@ -261,6 +395,17 @@ class KerberosIA:
         self.casilla = casilla
         self.zona = zonas.get(casilla)
 
+    # Dirección del primer paso del camino más corto hasta 'destino' (respeta las puertas
+    # cerradas). None si ya está allí o si no hay camino.
+    def direccionHacia(self, destino):
+        camino = self.calcular_camino_BFS(self.casilla, destino)
+        if len(camino) < 2:
+            return None
+        for direccion in self.direccionesLibres(self.casilla):
+            if self.obtenerCasillaSiguiente(self.casilla, direccion) == camino[1]:
+                return direccion
+        return None
+
     def tipoZona(self):
         if self.tiposZona is None or self.zona is None:
             return None
@@ -269,7 +414,7 @@ class KerberosIA:
     def direccionPatrulla(self):
         if self.zonas is None or self.zona is None:
             return None
-        opciones = [d for d in self.conexiones.get(self.casilla, [])
+        opciones = [d for d in self.direccionesLibres(self.casilla)
                     if self.zonas.get(self.obtenerCasillaSiguiente(self.casilla, d)) == self.zona]
         if not opciones:
             return None  # zona de una sola casilla: se queda quieto
@@ -344,10 +489,7 @@ class KerberosIA:
             if self.casilla != self.ultimaCasilla:
                 self.ultimaCasilla = self.casilla
 
-                opciones = self.conexiones.get(
-                    self.casilla,
-                    []
-                )
+                opciones = self.direccionesLibres(self.casilla)
                 # Callejón
                 if len(opciones) == 1:
                     if self.log_debug:

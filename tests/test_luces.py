@@ -182,7 +182,7 @@ def test_level_2_crea_la_linterna(app):
     jugar_nivel_2(app)
     assert app.linterna is not None
     assert app.linterna.alfa_oscuridad == 230
-    assert app.linterna.zona == pygame.Rect(0, BIAS, 864, 1000 - BIAS)
+    assert app.linterna.zona == pygame.Rect(0, BIAS, MazeLab.ANCHO_MUNDO, 1000 - BIAS)
 
 
 def test_level_2_oscurece_la_pantalla(app):

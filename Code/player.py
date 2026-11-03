@@ -1,6 +1,7 @@
 from plyer import orientation
 import mates
 import KerberosIA
+import Luces
 
 import logging
 import statistics
@@ -151,7 +152,7 @@ class Disparos(pygame.sprite.Sprite):
             self.kill()
         elif self.rect.y < 0:
             self.kill()
-        elif self.rect.x > SCREEN_WIDTH:
+        elif self.rect.x > MazeLab.ANCHO_MUNDO:  # el mundo es más ancho que la pantalla (cámara)
             self.kill()
         elif self.rect.y < BIAS:
             self.kill()
@@ -336,6 +337,9 @@ class Enemigo(pygame.sprite.Sprite):
     bubble_duration = 10000  # 10 segundos
     fade_duration = 2000     # últimos 2 segundos para desvanecerse
     fontBocadillo = None
+    avisoAlerta_ms = None  # momento en que se puso en alerta (para el bocadillo "¿ ? ?")
+    alarmaDestino = None   # Luces.LuzAlarma que va a encender (tras ver al jugador)
+    casillaVuelta = None   # casilla de su zona a la que vuelve después
 
     posicionesRecorridas = []
     tiempoOlvido = 5
@@ -371,6 +375,8 @@ class Enemigo(pygame.sprite.Sprite):
 
         # Inicio IA enemigos
         self.kia = KerberosIA.KerberosIA()
+        # Cono de visión (se corta en las paredes). El del jefe lo configura el juego.
+        self.conoVision = KerberosIA.VisionEnemigo()
         self.kia.KasRecorridas = self.posicionesRecorridas
 
         self.vida = 100
@@ -460,6 +466,13 @@ class Enemigo(pygame.sprite.Sprite):
     def vision(self, pos):
         logging.info("Pintamos cono de visión")
         
+    # Hacia dónde mira el cono de visión: los enemigos normales, hacia donde caminan;
+    # el jefe barre a su alrededor girando (visionRotar).
+    def anguloVision(self):
+        if self.isJefeEnemigo:
+            return self.angle
+        return Luces.ANGULO_ORIENTACION.get(self.orientacion, 90)
+
     def visionRotar(self):
         # logging.info("visión Rotar")
         self.angle = (self.angle + self.velocidadVisionRotacion) % 360
@@ -495,7 +508,14 @@ class Enemigo(pygame.sprite.Sprite):
     def patrullar(self):
         cx = self.x + self.rect.width // 2
         cy = self.y + self.rect.height // 2
-        if self.kia.zonas is not None and MazeLab.Maze.estaCentroCasilla(cx, cy):
+        if self.kia.rumbo is not None and MazeLab.Maze.estaCentroCasilla(cx, cy):
+            # Va a una casilla concreta (a encender una alarma o de vuelta a su zona).
+            self.kia.casilla = MazeLab.Maze.calcularCasilla(cx, cy)
+            direccion = self.kia.direccionHacia(self.kia.rumbo)
+            if direccion is None:
+                return  # ha llegado (o no hay camino): espera a que Laberinto le dé otro rumbo
+            self.orientacion = direccion
+        elif self.kia.zonas is not None and MazeLab.Maze.estaCentroCasilla(cx, cy):
             self.kia.casilla = MazeLab.Maze.calcularCasilla(cx, cy)
             self.kia.orientacion = self.orientacion
             direccion = self.kia.direccionPatrulla()

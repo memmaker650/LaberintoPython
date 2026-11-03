@@ -206,13 +206,16 @@ def test_restaurar_nivel_json_oscuro(monkeypatch, app):
     assert len(otra.maze.posicionesEnemigos) == 41
 
 
-def test_restaurar_camara_desplazada(monkeypatch, juego):
+def test_restaurar_jugador_en_la_zona_derecha(monkeypatch, juego):
+    # La cámara se recalcula a partir de la posición del jugador (todo está en coordenadas del mundo).
+    zona = MazeLab.Maze.calcularPixelPorCasilla(20 * MazeLab.NUM_CASILLAS_H + 35)
+    mover_jugador(juego, zona.x + 5, zona.y + 5)
+    juego.on_loop()
     estado = juego.estadoPartida()
-    estado["camara"] = 15
+    assert estado["camara"] == juego.maze.camaraX > 0
     otra = nueva_app_restaurada(monkeypatch, estado)
-    assert otra.maze.posicionCamara == 15 and otra.maze.movimientoCamara == 2
-    xs = {p.rect.x for p in otra.maze.MazeParedes}
-    assert min(xs) == -2 * Laberinto.CASILLA_PIXEL
+    assert (otra.player.x, otra.player.y) == (zona.x + 5, zona.y + 5)
+    assert otra.maze.camaraX == juego.maze.camaraX
 
 
 def test_restaurar_nivel_que_ya_no_existe(app):

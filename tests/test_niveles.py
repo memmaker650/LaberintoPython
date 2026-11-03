@@ -8,7 +8,7 @@ import pytest
 
 import Laberinto
 import MazeLab
-from levels_parser import Layer, LevelData, LevelParser, informe_niveles
+from levels_parser import OBJETOS_NIVEL, Layer, LevelData, LevelParser, informe_niveles
 from test_laberinto import Salida, app, clic, lanzar  # noqa: F401 (app es un fixture)
 
 H = MazeLab.NUM_CASILLAS_H
@@ -158,13 +158,15 @@ def test_levels_2_a_5_borde_cerrado_con_marco(n):
     assert (nv.playerSpawnX, nv.playerSpawnY) == (25, 1)
     borde = [(x, y) for x in range(27) for y in range(27) if x in (0, 26) or y in (0, 26)]
     assert not any(nv.es_suelo(x, y) for x, y in borde)
-    assert nv.mismo_mapa(nivel_real(0))
+    # Comparten mapa entre ellos (Level_0 ya no: tiene una pared menos y la alarma).
+    assert nv.mismo_mapa(nivel_real(2))
 
 
 def test_informe_niveles():
     texto = informe_niveles(LEVELS_DIR)
-    assert "Level_0.json: 27x27" in texto
-    assert "Es idéntico a Level_0.json, Level_2.json, Level_3.json, Level_4.json" in texto
+    assert "Level_0.json: 40x27, inicio (2, 2)" in texto
+    assert "1 Alarm" in texto and "3 Door" in texto
+    assert "Es idéntico a Level_2.json, Level_3.json, Level_4.json" in texto
     assert "Level_1.json: 25x25, inicio (23, 1)" in texto
     assert "1 Exit, oscuro (90%)" in texto
 
@@ -195,9 +197,38 @@ def test_maze_desde_nivel_real():
 
 
 def test_maze_nivel_de_27_filas_no_se_desplaza_en_vertical():
-    m = MazeLab.Maze(nivel_real(0))
+    m = MazeLab.Maze(nivel_real(2))
     assert m.desplazamientoNivel == (1, 0)
-    assert m.casillaInicioJugador() == 2 * H + 3
+    assert m.casillaInicioJugador() == 1 * H + 26
+
+
+def test_maze_level_0_ocupa_el_ancho_del_mundo():
+    # Level_0 tiene 40 columnas (la zona derecha del scroll): ni marco ni desplazamiento.
+    m = MazeLab.Maze(nivel_real(0))
+    assert m.desplazamientoNivel == (0, 0)
+    assert m.camaraFija is False
+    assert m.casillaInicioJugador() == 2 * H + 2
+
+
+def test_maze_level_0_tiene_los_objetos_del_laberinto_por_defecto():
+    # Mismos objetos que el laberinto escrito en MazeLab, más la alarma (el inicio va aparte).
+    m, defecto = MazeLab.Maze(nivel_real(0)), MazeLab.Maze()
+    objetos = lambda datos: {i: v for i, v in enumerate(datos) if v not in (0, 1, 44)}
+    esperados = objetos(defecto.mazeDataExtra)
+    esperados[10 + 22 * H] = MazeLab.CODIGO_ALARMA
+    assert objetos(m.mazeDataExtra) == esperados
+
+
+@pytest.mark.parametrize("nombre, codigo", sorted(OBJETOS_NIVEL.items()))
+def test_maze_carga_cada_objeto_del_nivel(nombre, codigo):
+    nombres = ["Floor", "Wall", nombre]
+    m = MazeLab.Maze(nivel(FONDO_OK, con(OBJETOS_OK, 2, 1, 3), nombres=nombres))
+    assert m.mazeDataExtra[(1 + 1) * H + (2 + 1)] == codigo   # (2, 1) + el marco de 1 casilla
+
+
+def test_analizar_avisa_de_objetos_desconocidos():
+    nv = nivel(FONDO_OK, con(OBJETOS_OK, 2, 1, 6), nombres=NOMBRES + ["Dragon"])
+    assert any("'Dragon', que no es un objeto conocido" in p for p in nv.analizar())
 
 
 def test_maze_ignora_objetos_sobre_pared():
@@ -423,9 +454,9 @@ def test_confirmarCargaNivel_si_carga_y_empieza(monkeypatch, app):
     monkeypatch.setattr(app, "dialogoConfirmacion", lambda *a, **k: True)
     lanzar(monkeypatch, app, "on_execute")
     with pytest.raises(Salida, match="on_execute"):
-        app.confirmarCargaNivel(0)
+        app.confirmarCargaNivel(2)
     assert app.maze.desplazamientoNivel == (1, 0)
-    assert app.HeadNivel.NumeroNivel == 0
+    assert app.HeadNivel.NumeroNivel == 2
     assert app.tocaMenu is False
 
 
@@ -501,8 +532,8 @@ def test_menu_nivel_dialogo_cancelar_completo(monkeypatch, app):
 def test_nivel_que_cabe_en_pantalla_fija_la_camara():
     m = MazeLab.Maze(nivel_real(2))
     assert m.camaraFija is True
-    m.moverCamara(26 * 32 + 5, MazeLab.BIAS + 32 + 5)
-    assert m.posicionCamara == 13 and m.flagCamaraCambio is False
+    assert m.moverCamara(26 * 32 + 5, MazeLab.BIAS + 32 + 5) == 0
+    assert m.camaraX == 0
 
 
 def test_laberinto_por_defecto_mantiene_la_camara_movil():
@@ -518,3 +549,35 @@ def test_inicio_en_la_ultima_columna_visible(app):
         app.on_render()
     assert MazeLab.Maze.calcularCasilla(app.player.x, app.player.y) == app.maze.casillaInicioJugador()
     assert (app.player.prev_x, app.player.prev_y) == (app.player.x, app.player.y)
+
+
+# ---------- Nivel inicial (NIVEL_INICIAL) ----------
+def test_nivel_inicial_es_level_0():
+    # El resto de tests lo cambia a None (conftest): se comprueba el valor escrito en el código.
+    fuente = open(Laberinto.__file__, encoding="utf-8").read()
+    assert 'NIVEL_INICIAL = "Level_0.json"' in fuente
+
+
+def test_nuevo_juego_empieza_en_level_0(monkeypatch):
+    monkeypatch.setattr(Laberinto, "NIVEL_INICIAL", "Level_0.json")
+    app = Laberinto.App()
+    assert app.ficheroNivel == "Level_0.json"
+    assert app.maze.mazeDataExtra.count(MazeLab.CODIGO_ALARMA) == 1
+
+
+def test_reinicio_vuelve_a_level_0(monkeypatch, app):
+    monkeypatch.setattr(Laberinto, "NIVEL_INICIAL", "Level_0.json")
+    app.reiniciarPartida()
+    assert app.ficheroNivel == "Level_0.json"
+
+
+def test_nivel_inicial_que_no_existe_usa_el_laberinto_por_defecto(monkeypatch, app):
+    monkeypatch.setattr(Laberinto, "NIVEL_INICIAL", "No_existe.json")
+    app.prepararNivelInicial()
+    assert app.ficheroNivel is None
+    assert app.maze.MazeLaberinto == MazeLab.Maze().MazeLaberinto
+
+
+def test_nivel_inicial_none_usa_el_laberinto_por_defecto(app):
+    app.prepararNivelInicial()
+    assert app.ficheroNivel is None
