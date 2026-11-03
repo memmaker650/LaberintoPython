@@ -9,7 +9,8 @@ from Luces import DURACION_LUZ_ALARMA_MS, LuzAlarma
 from test_laberinto import app  # noqa: F401 (fixture)
 from test_niveles import nivel, nivel_real, F, W
 
-CASILLA_ALARMA_LEVEL_0 = 573   # (12, 14) del JSON + el marco de 1 casilla
+CASILLA_ALARMA_LEVEL_0 = 10 + 22 * MazeLab.NUM_CASILLAS_H   # (10, 22): 40 columnas, sin marco
+PUERTA_DE_LA_ALARMA = 967      # puerta cerrada en el único camino desde la esquina de abajo a la izquierda
 
 
 def parecido(color, esperado, tolerancia=3):
@@ -124,7 +125,7 @@ def test_draw_crea_las_alarmas_y_conserva_su_estado():
     maze.draw(superficie, suelo, suelo)
     assert [a.casilla for a in maze.MazeAlarmas] == [CASILLA_ALARMA_LEVEL_0]
     alarma = maze.MazeAlarmas[0]
-    assert alarma.rect.topleft == (13 * 32, 14 * 32 + MazeLab.BIAS)
+    assert alarma.rect.topleft == (10 * 32, 22 * 32 + MazeLab.BIAS)
     alarma.encender(500)
     maze.draw(superficie, suelo, suelo)
     assert maze.MazeAlarmas[0] is alarma and alarma.encendida_ms == 500
@@ -153,26 +154,45 @@ def enemigo_normal(juego):
     return next(e for e in juego.EnemigosGroup if not e.isJefeEnemigo)
 
 
+def camino_a_la_alarma(juego, e):
+    e.kia.casilla = MazeLab.Maze.calcularCasilla(*e.rect.center)
+    e.kia.casillasBloqueadas = {p.casilla for p in juego.maze.MazePuertas if not p.abierta}
+    return e.kia.calcular_camino_BFS(e.kia.casilla, CASILLA_ALARMA_LEVEL_0)
+
+
+def enemigos_con_camino(juego):
+    # Enemigos normales que pueden llegar a la alarma sin atravesar puertas cerradas.
+    return [e for e in juego.EnemigosGroup if not e.isJefeEnemigo and camino_a_la_alarma(juego, e)]
+
+
+def colocar(e, casilla):
+    centro = MazeLab.Maze.centroCasilla(casilla)
+    e.x, e.y = centro.x - e.rect.width // 2, centro.y - e.rect.height // 2
+    e.prev_x, e.prev_y = e.x, e.y
+    e.rect.topleft = (e.x, e.y)
+    e.casilla = casilla
+
+
 def test_enemigo_que_ve_al_jugador_va_a_la_alarma(juego):
-    e = enemigo_normal(juego)
+    e = enemigos_con_camino(juego)[0]
     juego.darAlarma(e)
     alarma = juego.maze.MazeAlarmas[0]
     assert e.alarmaDestino is alarma and e.kia.rumbo == alarma.casilla
 
 
 def test_enemigo_enciende_la_alarma_y_vuelve_a_su_zona(juego):
-    e = enemigo_normal(juego)
+    e = enemigos_con_camino(juego)[0]
     origen = MazeLab.Maze.calcularCasilla(*e.rect.center)
     alarma = juego.maze.MazeAlarmas[0]
     juego.darAlarma(e)
-    for _ in range(3000):
+    for _ in range(4000):
         juego.on_loop()
         if alarma.encendida_ms is not None:
             break
     assert alarma.encendida_ms is not None
     assert MazeLab.Maze.calcularCasilla(*e.rect.center) == alarma.casilla
     assert e.alarmaDestino is None and e.kia.rumbo == origen
-    for _ in range(3000):
+    for _ in range(4000):
         juego.on_loop()
         if e.kia.rumbo is None:
             break
@@ -180,7 +200,7 @@ def test_enemigo_enciende_la_alarma_y_vuelve_a_su_zona(juego):
 
 
 def test_solo_va_un_enemigo_por_alarma(juego):
-    primero, segundo = [e for e in juego.EnemigosGroup if not e.isJefeEnemigo][:2]
+    primero, segundo = enemigos_con_camino(juego)[:2]
     assert juego.mandarAEncenderAlarma(primero) is not None
     assert juego.mandarAEncenderAlarma(segundo) is None
     assert segundo.kia.rumbo is None
@@ -188,7 +208,7 @@ def test_solo_va_un_enemigo_por_alarma(juego):
 
 def test_nadie_va_si_la_alarma_ya_esta_encendida(juego):
     juego.maze.MazeAlarmas[0].encender(pygame.time.get_ticks())
-    assert juego.mandarAEncenderAlarma(enemigo_normal(juego)) is None
+    assert juego.mandarAEncenderAlarma(enemigos_con_camino(juego)[0]) is None
 
 
 def test_el_jefe_no_va_a_la_alarma(juego):
@@ -204,9 +224,28 @@ def test_sin_alarmas_en_el_nivel_no_cambia_nada(app):
 
 
 def test_no_va_si_una_puerta_cerrada_corta_el_camino(juego):
+    # Desde 1004 sólo se llega a la alarma pasando por la puerta de la casilla 967.
     e = enemigo_normal(juego)
-    e.kia.casillasBloqueadas = set(juego.conexiones)      # todo bloqueado: no hay camino
+    colocar(e, 1004)
     assert juego.mandarAEncenderAlarma(e) is None
+    next(p for p in juego.maze.MazePuertas if p.casilla == PUERTA_DE_LA_ALARMA).abierta = True
+    assert juego.mandarAEncenderAlarma(e) is juego.maze.MazeAlarmas[0]
+
+
+def test_si_se_cierra_la_puerta_por_el_camino_vuelve(juego):
+    e = enemigo_normal(juego)
+    colocar(e, 1004)
+    puerta = next(p for p in juego.maze.MazePuertas if p.casilla == PUERTA_DE_LA_ALARMA)
+    puerta.abierta = True
+    assert juego.mandarAEncenderAlarma(e) is not None
+    puerta.abierta = False                         # el jugador la cierra antes de que pase
+    for _ in range(600):
+        juego.on_loop()
+        if e.alarmaDestino is None:
+            break
+    assert e.alarmaDestino is None
+    assert e.kia.rumbo in (1004, None)             # vuelve a su sitio (o patrulla donde está)
+    assert juego.maze.MazeAlarmas[0].encendida_ms is None
 
 
 def test_render_pinta_la_lampara_y_los_haces(juego):
@@ -218,4 +257,4 @@ def test_render_pinta_la_lampara_y_los_haces(juego):
     juego.on_render()
     assert parecido(juego.mundo.get_at((alarma.rect.x + 15, alarma.rect.y + 12)), LuzAlarma.imagen(True).get_at((15, 12)))
     despues = juego.mundo.get_at((alarma.rect.centerx + 100, alarma.rect.centery))
-    assert despues.r > antes.r and despues.g < antes.g     # el haz (ángulo 0) tiñe de rojo a la derecha
+    assert despues.r > antes.r and despues.r - despues.g > antes.r - antes.g   # el haz (ángulo 0) tiñe de rojo

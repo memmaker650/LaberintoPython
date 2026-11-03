@@ -6,6 +6,24 @@ from dataclasses import dataclass
 from glob import glob
 from typing import Any, Dict, List, Optional, Iterable
 
+# Objetos de la capa Objects (nombre en tileNames) y su código en el laberinto del juego
+# (MazeLab.mazeDataExtra). Los "Dog..." no son objetos: marcan dónde empiezan los enemigos.
+OBJETOS_NIVEL = {
+    "Bone": 2,          # hueso
+    "PileOfBones": 3,   # pila de huesos
+    "Exit": 4,          # bandera de fin de nivel
+    "Key": 6,           # llave dorada (fin de nivel)
+    "DoorKey": 7,       # llave de las puertas
+    "Mushroom": 8,      # champiñón
+    "RedStar": 9,       # estrella roja
+    "Tunnel": 10,       # túnel
+    "Gold": 11,         # monedas de oro
+    "Grenade": 13,      # granada
+    "FirstAid": 15,     # botiquín
+    "Alarm": 16,        # luz de alarma
+    "Door": 33,         # puerta
+}
+
 
 @dataclass
 class Layer:
@@ -89,7 +107,8 @@ class LevelData:
     # ----------------------------------------------------------------
     # Análisis de coherencia del nivel.
     # Los ids de tile empiezan en 1 y apuntan a tileNames (0 = vacío):
-    # 1 Floor, 2 Wall, 3 Bone, 4 DogDown1, 5 Exit...
+    # 1 Floor, 2 Wall, 3 Bone, 4 DogDown1, 5 Exit... Los objetos que se
+    # pueden poner en la capa Objects están en OBJETOS_NIVEL.
     # ----------------------------------------------------------------
     def tile_name(self, tile_id: int) -> Optional[str]:
         if 1 <= tile_id <= len(self.tileNames):
@@ -187,6 +206,9 @@ class LevelData:
                 continue
             if nombre.startswith("id "):
                 problemas.append(f"La capa Objects usa un {nombre} que no existe en tileNames")
+            elif nombre not in OBJETOS_NIVEL and not nombre.startswith("Dog"):
+                problemas.append(f"La capa Objects usa '{nombre}', que no es un objeto conocido "
+                                 f"({', '.join(sorted(OBJETOS_NIVEL))} o Dog...)")
             en_pared = [p for p in posiciones if p not in suelo]
             if en_pared:
                 problemas.append(f"{len(en_pared)} de {len(posiciones)} '{nombre}' están sobre una pared")

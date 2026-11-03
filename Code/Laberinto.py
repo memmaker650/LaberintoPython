@@ -1671,6 +1671,7 @@ class App:
         casilla = MazeLab.Maze.calcularCasilla(*enemigo.rect.center)
         ocupadas = {e.alarmaDestino for e in self.EnemigosGroup if e.alarmaDestino is not None}
         enemigo.kia.casilla = casilla
+        enemigo.kia.casillasBloqueadas = {p.casilla for p in self.maze.MazePuertas if not p.abierta}
         mejor, distancia = None, None
         for alarma in self.maze.MazeAlarmas:
             if alarma.encendida(ahora) or alarma in ocupadas:
@@ -1687,13 +1688,20 @@ class App:
         return mejor
 
     # Enemigos que van a una alarma o vuelven de ella: al llegar a la alarma la encienden (suena
-    # la sirena) y vuelven a su zona; al llegar de vuelta siguen patrullando.
+    # la sirena) y vuelven a su zona; al llegar de vuelta siguen patrullando. Si se quedan sin
+    # camino (p. ej. se ha cerrado una puerta) dejan la alarma y vuelven; si tampoco pueden
+    # volver, patrullan la zona en la que están.
     def revisarAlarmas(self, ahora):
         for enemigo in self.EnemigosGroup:
             if enemigo.kia.rumbo is None:
                 continue
             casilla = MazeLab.Maze.calcularCasilla(*enemigo.rect.center)
             if casilla != enemigo.kia.rumbo:
+                centro = (enemigo.x + enemigo.rect.width // 2, enemigo.y + enemigo.rect.height // 2)
+                if MazeLab.Maze.estaCentroCasilla(*centro):
+                    enemigo.kia.casilla = casilla
+                    if enemigo.kia.direccionHacia(enemigo.kia.rumbo) is None:
+                        self.rumboSinCamino(enemigo, casilla)
                 continue
             if enemigo.alarmaDestino is not None:
                 enemigo.alarmaDestino.encender(ahora)
@@ -1704,6 +1712,21 @@ class App:
             else:
                 enemigo.kia.rumbo = None
                 enemigo.casillaVuelta = None
+
+    def rumboSinCamino(self, enemigo, casilla):
+        if enemigo.alarmaDestino is not None:
+            logging.info("Enemigo en %s no puede llegar a la alarma de %s: vuelve", casilla,
+                         enemigo.alarmaDestino.casilla)
+            enemigo.alarmaDestino = None
+            if enemigo.casillaVuelta is not None and enemigo.casillaVuelta != casilla \
+                    and enemigo.kia.direccionHacia(enemigo.casillaVuelta) is not None:
+                enemigo.kia.rumbo = enemigo.casillaVuelta
+                return
+        # Ni alarma ni vuelta: se queda patrullando la zona en la que está.
+        enemigo.kia.rumbo = None
+        enemigo.casillaVuelta = None
+        if self.zonas is not None:
+            enemigo.kia.asignarZona(self.zonas, self.tiposZona, casilla)
 
     # Lámparas de alarma (apagadas o encendidas) y, al final del mundo, sus haces giratorios.
     def pintarAlarmas(self, ahora):

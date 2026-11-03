@@ -12,7 +12,7 @@ from pygame.locals import *
 
 import json
 from plyer import notification
-from levels_parser import LevelParser
+from levels_parser import LevelParser, OBJETOS_NIVEL
 import Luces
 
 # -----------
@@ -28,7 +28,7 @@ NUM_CASILLAS_VERTI = 27
 NUM_CASILLAS_CAMARA = 27
 ANCHO_MUNDO = NUM_CASILLAS_H * CASILLA_PIXEL   # ancho del laberinto completo en píxeles (40 casillas)
 # Código de mazeDataExtra de la luz de alarma ("Alarm" en los niveles JSON).
-CODIGO_ALARMA = 16
+CODIGO_ALARMA = OBJETOS_NIVEL["Alarm"]
 MARGEN_CAMARA = 4 * CASILLA_PIXEL              # la cámara se mueve si el jugador se acerca tanto al borde
 IMG_DIR = "Resources"
 EXPLOSION_DIR = "assets/explosions/images/explosion/"
@@ -164,7 +164,7 @@ class Maze:
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 
+            0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
             0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -243,12 +243,8 @@ class Maze:
                 c = casilla(x, y)
                 if self.maze[c] != 1:
                     continue
-                if nombre == "Bone":
-                    self.mazeDataExtra[c] = 2
-                elif nombre == "Exit":
-                    self.mazeDataExtra[c] = 4
-                elif nombre == "Alarm":
-                    self.mazeDataExtra[c] = CODIGO_ALARMA
+                if nombre in OBJETOS_NIVEL:
+                    self.mazeDataExtra[c] = OBJETOS_NIVEL[nombre]
                 elif nombre.startswith("Dog"):
                     self.posicionesEnemigos.append(c)
 
