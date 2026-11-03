@@ -12,6 +12,9 @@ if DIR_CODIGO not in sys.path:
 DIR_PROYECTO = os.path.dirname(DIR_CODIGO)
 os.chdir(DIR_PROYECTO)
 DIR_NIVELES = os.path.join(DIR_PROYECTO, "Levels")
+# Nivel con el que empieza "Nuevo Juego" (y el reinicio tras terminar una partida).
+# None: el laberinto por defecto escrito en MazeLab.
+NIVEL_INICIAL = "Level_0.json"
 RUTA_BD = os.path.join(DIR_PROYECTO, "DB", "tutorial.db")
 
 from typing import Any
@@ -286,8 +289,8 @@ class App:
         # Init Personajes
         self.player = player.Player()  # damos los valores por defecto.
 
-        # Cargando el escenario por defecto y colocando enemigos y jefe.
-        self.prepararNivel()
+        # Cargando el nivel inicial y colocando enemigos y jefe.
+        self.prepararNivelInicial()
 
         pygame.init()
 
@@ -319,6 +322,20 @@ class App:
         self.font_nivel = pygame.font.SysFont('Arial', 40)
         self.font_vida = pygame.font.SysFont('Arial', 27)
         self.font_fps = pygame.font.SysFont('Arial', 20)
+
+    # Prepara el nivel inicial (NIVEL_INICIAL). Si no se puede cargar, usa el laberinto por defecto
+    # del código para que el juego arranque igualmente.
+    def prepararNivelInicial(self):
+        if NIVEL_INICIAL is None:
+            self.prepararNivel()
+            return
+        try:
+            nivel = LevelParser(DIR_NIVELES).load_by_name(NIVEL_INICIAL)
+            self.prepararNivel(nivel)
+        except (FileNotFoundError, json.JSONDecodeError, ValueError) as error:
+            logging.error("No se puede cargar el nivel inicial %s (%s): se usa el laberinto por defecto",
+                          NIVEL_INICIAL, error)
+            self.prepararNivel()
 
     # Prepara el laberinto (el de por defecto o un nivel JSON de la carpeta Levels)
     # y coloca a los enemigos y al jefe sobre casillas de suelo.
@@ -1081,7 +1098,7 @@ class App:
         self.flagPintarBocadilloTexto = False
         self.alerta_activa = False
         self.movimiento = False
-        self.prepararNivel()
+        self.prepararNivelInicial()
 
     def on_init(self):
         pygame.display.set_caption('Laberinto SquidCastle 2026, Aurora.')
@@ -1161,9 +1178,13 @@ class App:
         )
         self.JefeEnemigo.cargarCasillaRecorrido(self.JefeEnemigo.casilla)
 
+        # Las puertas cerradas son pared para la IA de los enemigos.
+        casillasPuertasCerradas = {p.casilla for p in self.maze.MazePuertas if not p.abierta}
+
         # Resto de enemigos.
         i = 0
         for nemi in self.EnemigosGroup:
+            nemi.kia.casillasBloqueadas = casillasPuertasCerradas
             nemi.casilla = self.maze.calcularCasilla(nemi.x, nemi.y)
             nemi.cargarCasillaRecorrido(nemi.casilla)
             nemi.update()
@@ -1185,6 +1206,9 @@ class App:
         # Cámara: todo se queda en coordenadas del laberinto; la cámara sigue al jugador y
         # sólo decide qué parte del mundo se pinta en pantalla (on_render).
         self.maze.moverCamara(self.player.x, self.player.y)
+
+        # Enemigos que van a encender una alarma o vuelven de hacerlo.
+        self.revisarAlarmas(pygame.time.get_ticks())
 
         for puerta in self.maze.MazePuertas:
             puerta.update()
@@ -1399,12 +1423,14 @@ class App:
             for enemigo, puertas in colision_enemigosPuerta.items():
                 logging.debug('Enemigo en (%s, %s) colisionó con %s puertas', enemigo.x, enemigo.y, len(puertas))
 
-                # Revertir y cambiar dirección solo del enemigo que colisiona
-                if hasattr(enemigo, 'revertir_movimiento'):
-                    enemigo.revertir_movimiento()
-
-                # if hasattr(enemigo, 'cambiar_direccion'):
-                    # enemigo.cambiar_direccion()
+                # Una puerta cerrada es como una pared: vuelve atrás y da media vuelta para no
+                # quedarse empujándola.
+                enemigo.revertir_movimiento()
+                if enemigo.isJefeEnemigo:
+                    enemigo.orientacion = (enemigo.orientacion + 2) % 4
+                    enemigo.kia.colisionParedes = True   # recalcula por dónde ir
+                else:
+                    enemigo.cambiar_direccion()
 
         
         # Colisión de Extras Escenario con Player
@@ -1626,6 +1652,7 @@ class App:
         enemigo.restarRelojBocadilloTexto()
         self.sonidoAlarma.play(maxtime=1500)
         self.gritarAlarma(enemigo)
+        self.mandarAEncenderAlarma(enemigo)
 
         jefe = self.JefeEnemigo
         if jefe.alive():
@@ -1634,6 +1661,63 @@ class App:
             jefe.kia.playerDetectado = True
             jefe.kia.casillaJugador = destino
             jefe.kia.path = jefe.kia.calcular_camino_BFS(inicio, destino)
+
+    # El enemigo que ha visto al jugador corre a encender la alarma apagada más cercana (por el
+    # camino más corto, sin atravesar puertas cerradas). Si ya va otro a esa alarma, no va.
+    def mandarAEncenderAlarma(self, enemigo):
+        if enemigo.isJefeEnemigo or enemigo.alarmaDestino is not None or not self.maze.MazeAlarmas:
+            return None
+        ahora = pygame.time.get_ticks()
+        casilla = MazeLab.Maze.calcularCasilla(*enemigo.rect.center)
+        ocupadas = {e.alarmaDestino for e in self.EnemigosGroup if e.alarmaDestino is not None}
+        enemigo.kia.casilla = casilla
+        mejor, distancia = None, None
+        for alarma in self.maze.MazeAlarmas:
+            if alarma.encendida(ahora) or alarma in ocupadas:
+                continue
+            camino = enemigo.kia.calcular_camino_BFS(casilla, alarma.casilla)
+            if camino and (distancia is None or len(camino) < distancia):
+                mejor, distancia = alarma, len(camino)
+        if mejor is not None:
+            enemigo.alarmaDestino = mejor
+            if enemigo.casillaVuelta is None:
+                enemigo.casillaVuelta = casilla
+            enemigo.kia.rumbo = mejor.casilla
+            logging.info("Enemigo en %s va a encender la alarma de la casilla %s", casilla, mejor.casilla)
+        return mejor
+
+    # Enemigos que van a una alarma o vuelven de ella: al llegar a la alarma la encienden (suena
+    # la sirena) y vuelven a su zona; al llegar de vuelta siguen patrullando.
+    def revisarAlarmas(self, ahora):
+        for enemigo in self.EnemigosGroup:
+            if enemigo.kia.rumbo is None:
+                continue
+            casilla = MazeLab.Maze.calcularCasilla(*enemigo.rect.center)
+            if casilla != enemigo.kia.rumbo:
+                continue
+            if enemigo.alarmaDestino is not None:
+                enemigo.alarmaDestino.encender(ahora)
+                logging.info("¡Alarma encendida en la casilla %s!", casilla)
+                self.sonidoAlarma.play(maxtime=1500)
+                enemigo.alarmaDestino = None
+                enemigo.kia.rumbo = enemigo.casillaVuelta
+            else:
+                enemigo.kia.rumbo = None
+                enemigo.casillaVuelta = None
+
+    # Lámparas de alarma (apagadas o encendidas) y, al final del mundo, sus haces giratorios.
+    def pintarAlarmas(self, ahora):
+        for alarma in self.maze.MazeAlarmas:
+            alarma.dibujar(self.pantalla, ahora)
+
+    def pintarHacesAlarmas(self, ahora):
+        encendidas = [a for a in self.maze.MazeAlarmas if a.encendida(ahora)]
+        if not encendidas:
+            return
+        obstaculos = [s.rect for s in self.maze.MazeParedes]
+        obstaculos += [p.rect for p in self.maze.MazePuertas if not p.abierta]
+        for alarma in encendidas:
+            alarma.dibujarHaces(self.pantalla, ahora, obstaculos)
 
     # Un enemigo pasa a alerta: bocadillo "¿ ? ?" un momento.
     def ponerEnAlerta(self, enemigo, ahora, punto):
@@ -1681,13 +1765,38 @@ class App:
                 pygame.draw.polygon(self.superficieConos, color, poligono)
         self.pantalla.blit(self.superficieConos, (0, 0))
     
+    # Puerta que el jugador tiene a mano: la de su casilla o la de una casilla contigua
+    # (arriba, abajo, izquierda o derecha). Si hay varias, la más cercana. None si no hay ninguna.
+    def puertaCercana(self):
+        centro = pygame.math.Vector2(self.player.x + self.player.rect.width // 2,
+                                     self.player.y + self.player.rect.height // 2)
+        casilla = MazeLab.Maze.calcularCasilla(centro.x, centro.y)
+        columna, fila = casilla % MazeLab.NUM_CASILLAS_H, casilla // MazeLab.NUM_CASILLAS_H
+        cercanas = [puerta for puerta in self.maze.MazePuertas
+                    if abs(puerta.casilla % MazeLab.NUM_CASILLAS_H - columna)
+                    + abs(puerta.casilla // MazeLab.NUM_CASILLAS_H - fila) <= 1]
+        if not cercanas:
+            return None
+        return min(cercanas, key=lambda puerta: centro.distance_to(puerta.rect.center))
+
+    # Tecla D: abre (o cierra) sólo la puerta que el jugador tiene a mano; el resto no cambia.
+    def usarPuerta(self):
+        puerta = self.puertaCercana()
+        if puerta is not None:
+            puerta.abierta = not puerta.abierta
+            logging.info('Puerta de la casilla %s %s', puerta.casilla, 'abierta' if puerta.abierta else 'cerrada')
+        return puerta
+
     # Puertas con las que choca 'sprite'. Las abiertas dejan pasar, y una cerrada tampoco bloquea
-    # a quien ya estaba debajo cuando se cerró, para que pueda salir de ella.
+    # a quien ya estaba debajo cuando se cerró, para que pueda salir de ella. Se usa la posición
+    # (x, y) y no el rect, que en el jefe va un paso por detrás.
     def puertasQueBloquean(self, sprite):
+        actual = sprite.rect.copy()
+        actual.topleft = (getattr(sprite, "x", sprite.rect.x), getattr(sprite, "y", sprite.rect.y))
         previo = sprite.rect.copy()
-        previo.topleft = (getattr(sprite, "prev_x", sprite.rect.x), getattr(sprite, "prev_y", sprite.rect.y))
+        previo.topleft = (getattr(sprite, "prev_x", actual.x), getattr(sprite, "prev_y", actual.y))
         return [puerta for puerta in self.maze.MazePuertas
-                if not puerta.abierta and puerta.rect.colliderect(sprite.rect)
+                if not puerta.abierta and puerta.rect.colliderect(actual)
                 and not puerta.rect.colliderect(previo)]
 
     # Repinto el Laberinto
@@ -1720,6 +1829,8 @@ class App:
 
         for puerta in self.maze.MazePuertas:
             puerta.draw(self.pantalla)
+
+        self.pintarAlarmas(pygame.time.get_ticks())
 
         if self.flagDebugEnemigos:
             self.maze.pintarDetallesCasillaEnemigo(self.pantalla)
@@ -1851,6 +1962,9 @@ class App:
             obstaculos += [s.rect for s in self.EnemigosGroup]
             obstaculos += [p.rect for p in self.maze.MazePuertas]
             self.linterna.dibujar(self.pantalla, self.player.rect.center, obstaculos)
+
+        # Haces de las alarmas encendidas, por encima de todo (también de la oscuridad).
+        self.pintarHacesAlarmas(pygame.time.get_ticks())
 
     # Parpadeo rojo del jugador y de los enemigos tras un choque (también en el mundo).
     def pintarEfectoRojo(self):
@@ -2075,8 +2189,7 @@ class App:
                         self.explosion_timer = 150
                     if event.key == pygame.K_d:
                         logging.info('Tecla D presionada')
-                        for puerta in self.maze.MazePuertas:
-                            puerta.abierta = not puerta.abierta
+                        self.usarPuerta()
                     if event.key == pygame.K_k:
                         logging.info('Tecla K presionada')
                         if MazeLab.Maze.pintaKasillaNumSuelo:

@@ -119,6 +119,8 @@ class KerberosIA:
         self.animo = 0  # 0 OK, 1 Angry, 2 Sad, 3 Alarmado
         self.tipo = 0  # 0 soldier, 1 boss or lieutenant
         self.colisionParedes = False
+        # Casillas por las que no puede pasar aunque estén conectadas (puertas cerradas).
+        self.casillasBloqueadas = set()
 
         self.ordenJefe = False
         self.combatir = False
@@ -148,6 +150,9 @@ class KerberosIA:
         self.zonas = None
         self.tiposZona = None
         self.zona = None
+        # Casilla a la que va por el camino más corto en vez de patrullar (p. ej. a encender
+        # una alarma y luego de vuelta a su zona). None: patrulla.
+        self.rumbo = None
 
     def definirPosicion(self, x, y ):
         self.posicion.cargar(x, y)
@@ -181,7 +186,7 @@ class KerberosIA:
             self.orientacion = 1
 
     def esInterseccion(self):
-        opciones = self.conexiones.get(self.casilla, [])
+        opciones = self.direccionesLibres(self.casilla)
 
         return len(opciones) >= 3
 
@@ -249,6 +254,14 @@ class KerberosIA:
 
         return self.orientacion
 
+    # Direcciones de 'conexiones' que no llevan a una casilla bloqueada (puerta cerrada).
+    def direccionesLibres(self, casilla):
+        direcciones = self.conexiones.get(casilla, [])
+        if not self.casillasBloqueadas:
+            return direcciones
+        return [d for d in direcciones
+                if self.obtenerCasillaSiguiente(casilla, d) not in self.casillasBloqueadas]
+
     def obtenerCasillaSiguiente(self, casilla, direccion):
         # 0 Arriba
         if direccion == 0:
@@ -296,7 +309,7 @@ class KerberosIA:
         return casillas
 
     def elegirDireccionEvitar(self, direccionBloqueada=None):
-        opciones = list(self.conexiones.get(self.casilla, []))
+        opciones = list(self.direccionesLibres(self.casilla))
 
         if not opciones:
             return self.orientacion
@@ -340,7 +353,7 @@ class KerberosIA:
             visitados.add(casillaActual)
 
             # Obtener conexiones
-            direcciones = self.conexiones.get(casillaActual, [])
+            direcciones = self.direccionesLibres(casillaActual)
 
             for direccion in direcciones:
 
@@ -357,7 +370,7 @@ class KerberosIA:
         return []    
     
     def elegirDireccion(self):
-        opciones = self.conexiones.get(self.casilla, [])
+        opciones = self.direccionesLibres(self.casilla)
 
         if not opciones:
             return self.orientacion
@@ -382,6 +395,17 @@ class KerberosIA:
         self.casilla = casilla
         self.zona = zonas.get(casilla)
 
+    # Dirección del primer paso del camino más corto hasta 'destino' (respeta las puertas
+    # cerradas). None si ya está allí o si no hay camino.
+    def direccionHacia(self, destino):
+        camino = self.calcular_camino_BFS(self.casilla, destino)
+        if len(camino) < 2:
+            return None
+        for direccion in self.direccionesLibres(self.casilla):
+            if self.obtenerCasillaSiguiente(self.casilla, direccion) == camino[1]:
+                return direccion
+        return None
+
     def tipoZona(self):
         if self.tiposZona is None or self.zona is None:
             return None
@@ -390,7 +414,7 @@ class KerberosIA:
     def direccionPatrulla(self):
         if self.zonas is None or self.zona is None:
             return None
-        opciones = [d for d in self.conexiones.get(self.casilla, [])
+        opciones = [d for d in self.direccionesLibres(self.casilla)
                     if self.zonas.get(self.obtenerCasillaSiguiente(self.casilla, d)) == self.zona]
         if not opciones:
             return None  # zona de una sola casilla: se queda quieto
@@ -465,10 +489,7 @@ class KerberosIA:
             if self.casilla != self.ultimaCasilla:
                 self.ultimaCasilla = self.casilla
 
-                opciones = self.conexiones.get(
-                    self.casilla,
-                    []
-                )
+                opciones = self.direccionesLibres(self.casilla)
                 # Callejón
                 if len(opciones) == 1:
                     if self.log_debug:

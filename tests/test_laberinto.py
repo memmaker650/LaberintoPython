@@ -271,12 +271,74 @@ def test_se_puede_salir_de_una_puerta_que_se_cierra_encima(juego):
     assert juego.player.x < 35 * CASILLA_PIXEL
 
 
+def _enemigo_hacia_puerta(juego, jefe):
+    # Coloca a un enemigo en el pasillo de la puerta 395 (cerrada) yendo hacia ella.
+    puerta = _puerta(juego, 395)
+    e = juego.JefeEnemigo if jefe else enemigos_normales(juego)[0]
+    for otro in list(juego.EnemigosGroup):
+        if otro is not e:
+            otro.kill()
+    e.x, e.y = 33 * CASILLA_PIXEL + 5, 9 * CASILLA_PIXEL + MazeLab.BIAS + 5
+    e.prev_x, e.prev_y = e.x, e.y
+    e.rect.topleft = (e.x, e.y)
+    e.orientacion = 1
+    if not jefe:
+        e.kia.zonas = None          # que siga recto, sin patrullar su zona
+    mover_jugador(juego, 2000, 2000)
+    return e, puerta
+
+
+@pytest.mark.parametrize("jefe", [False, True])
+def test_enemigo_no_atraviesa_puerta_cerrada(juego, jefe):
+    e, puerta = _enemigo_hacia_puerta(juego, jefe)
+    for _ in range(200):
+        juego.on_loop()
+        assert e.x + e.rect.width <= puerta.rect.right   # nunca pasa al otro lado de la hoja
+
+
+def test_enemigo_da_media_vuelta_en_puerta_cerrada(juego):
+    e, puerta = _enemigo_hacia_puerta(juego, False)
+    for _ in range(200):
+        juego.on_loop()
+        if e.orientacion == 3:
+            break
+    assert e.orientacion == 3
+
+
+@pytest.mark.parametrize("abierta", [True, False])
+def test_jefe_y_la_puerta_en_el_paso_siguiente(juego, abierta):
+    # El jefe está pegado a la hoja (fuera del centro de casilla, así que sigue recto a la derecha).
+    e, puerta = _enemigo_hacia_puerta(juego, True)
+    puerta.abierta = abierta
+    puerta.angle = 90 if abierta else 0
+    puerta.rotar()
+    hoja = _puerta(juego, 395).rect if not abierta else pygame.Rect(35 * CASILLA_PIXEL + 8, 0, 15, 0)
+    e.x = hoja.left - e.rect.width
+    e.prev_x = e.x
+    e.rect.topleft = (e.x, e.y)
+    x0 = e.x
+    juego.on_loop()
+    if abierta:
+        assert e.x > x0
+    else:
+        assert e.x == x0 and e.orientacion == 3
+
+
+def test_ia_trata_las_puertas_cerradas_como_pared(juego):
+    juego.on_loop()
+    assert all(e.kia.casillasBloqueadas == {395, 456, 967} for e in juego.EnemigosGroup)
+    _puerta(juego, 395).abierta = True
+    juego.on_loop()
+    assert all(e.kia.casillasBloqueadas == {456, 967} for e in juego.EnemigosGroup)
+
+
 def test_enemigo_atraviesa_puerta_abierta(juego):
     puerta = next(iter(juego.maze.MazePuertas))
     puerta.abierta = True
     e = enemigos_normales(juego)[0]
     e.rect.center = puerta.rect.center
-    e.prev_x, e.prev_y = e.rect.x - CASILLA_PIXEL, e.rect.y   # venía de fuera de la puerta
+    e.x, e.y = e.rect.topleft
+    e.prev_x, e.prev_y = e.x - CASILLA_PIXEL, e.y   # venía de fuera de la puerta
     assert juego.puertasQueBloquean(e) == []
     puerta.abierta = False
     assert juego.puertasQueBloquean(e) == [puerta]
@@ -792,10 +854,57 @@ def test_tecla_k_alterna_numeros(app):
     assert MazeLab.Maze.pintaKasillaNumSuelo is (not antes)
 
 
-def test_tecla_d_abre_puertas(juego):
+def _puerta(juego, casilla):
+    return next(p for p in juego.maze.MazePuertas if p.casilla == casilla)
+
+
+def _jugador_en(juego, casilla):
+    columna, fila = casilla % MazeLab.NUM_CASILLAS_H, casilla // MazeLab.NUM_CASILLAS_H
+    mover_jugador(juego, columna * CASILLA_PIXEL + 5, fila * CASILLA_PIXEL + MazeLab.BIAS + 5)
+
+
+def test_tecla_d_abre_solo_la_puerta_cercana(monkeypatch, juego):
+    monkeypatch.setattr(juego, "on_init", lambda: True)   # que no recoloque al jugador
+    _jugador_en(juego, 394)                               # junto a la puerta 395
     teclas((pygame.KEYDOWN, pygame.K_d))
     ejecutar(juego)
-    assert juego.maze.MazePuertas and all(p.abierta for p in juego.maze.MazePuertas)
+    assert {p.casilla for p in juego.maze.MazePuertas if p.abierta} == {395}
+
+
+def test_tecla_d_lejos_de_las_puertas_no_abre_ninguna(monkeypatch, juego):
+    monkeypatch.setattr(juego, "on_init", lambda: True)
+    _jugador_en(juego, 41)
+    teclas((pygame.KEYDOWN, pygame.K_d))
+    ejecutar(juego)
+    assert not any(p.abierta for p in juego.maze.MazePuertas)
+
+
+@pytest.mark.parametrize("casilla", [395, 394, 396, 416, 496])
+def test_puertaCercana_en_la_casilla_o_contigua(juego, casilla):
+    # 395 y vecinas de 395 (394 y 396); 416 está encima de la puerta 456 y 496 debajo.
+    _jugador_en(juego, casilla)
+    esperada = 456 if casilla in (416, 496) else 395
+    assert juego.puertaCercana().casilla == esperada
+
+
+@pytest.mark.parametrize("casilla", [393, 397, 376, 41])
+def test_puertaCercana_a_mas_de_una_casilla(juego, casilla):
+    _jugador_en(juego, casilla)
+    assert juego.puertaCercana() is None
+
+
+def test_usarPuerta_abre_y_cierra_sin_tocar_las_demas(juego):
+    _puerta(juego, 967).abierta = True
+    _jugador_en(juego, 394)
+    assert juego.usarPuerta() is _puerta(juego, 395)
+    assert {p.casilla for p in juego.maze.MazePuertas if p.abierta} == {395, 967}
+    juego.usarPuerta()
+    assert {p.casilla for p in juego.maze.MazePuertas if p.abierta} == {967}
+
+
+def test_usarPuerta_sin_puerta_cerca(juego):
+    _jugador_en(juego, 41)
+    assert juego.usarPuerta() is None
 
 
 def test_puertas_siguen_abiertas_tras_rebuildMap(juego):

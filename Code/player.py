@@ -338,6 +338,8 @@ class Enemigo(pygame.sprite.Sprite):
     fade_duration = 2000     # últimos 2 segundos para desvanecerse
     fontBocadillo = None
     avisoAlerta_ms = None  # momento en que se puso en alerta (para el bocadillo "¿ ? ?")
+    alarmaDestino = None   # Luces.LuzAlarma que va a encender (tras ver al jugador)
+    casillaVuelta = None   # casilla de su zona a la que vuelve después
 
     posicionesRecorridas = []
     tiempoOlvido = 5
@@ -506,7 +508,14 @@ class Enemigo(pygame.sprite.Sprite):
     def patrullar(self):
         cx = self.x + self.rect.width // 2
         cy = self.y + self.rect.height // 2
-        if self.kia.zonas is not None and MazeLab.Maze.estaCentroCasilla(cx, cy):
+        if self.kia.rumbo is not None and MazeLab.Maze.estaCentroCasilla(cx, cy):
+            # Va a una casilla concreta (a encender una alarma o de vuelta a su zona).
+            self.kia.casilla = MazeLab.Maze.calcularCasilla(cx, cy)
+            direccion = self.kia.direccionHacia(self.kia.rumbo)
+            if direccion is None:
+                return  # ha llegado (o no hay camino): espera a que Laberinto le dé otro rumbo
+            self.orientacion = direccion
+        elif self.kia.zonas is not None and MazeLab.Maze.estaCentroCasilla(cx, cy):
             self.kia.casilla = MazeLab.Maze.calcularCasilla(cx, cy)
             self.kia.orientacion = self.orientacion
             direccion = self.kia.direccionPatrulla()

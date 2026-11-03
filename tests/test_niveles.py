@@ -158,13 +158,15 @@ def test_levels_2_a_5_borde_cerrado_con_marco(n):
     assert (nv.playerSpawnX, nv.playerSpawnY) == (25, 1)
     borde = [(x, y) for x in range(27) for y in range(27) if x in (0, 26) or y in (0, 26)]
     assert not any(nv.es_suelo(x, y) for x, y in borde)
-    assert nv.mismo_mapa(nivel_real(0))
+    # Comparten mapa entre ellos (Level_0 ya no: tiene una pared menos y la alarma).
+    assert nv.mismo_mapa(nivel_real(2))
 
 
 def test_informe_niveles():
     texto = informe_niveles(LEVELS_DIR)
     assert "Level_0.json: 27x27" in texto
-    assert "Es idéntico a Level_0.json, Level_2.json, Level_3.json, Level_4.json" in texto
+    assert "1 Alarm" in texto
+    assert "Es idéntico a Level_2.json, Level_3.json, Level_4.json" in texto
     assert "Level_1.json: 25x25, inicio (23, 1)" in texto
     assert "1 Exit, oscuro (90%)" in texto
 
@@ -518,3 +520,35 @@ def test_inicio_en_la_ultima_columna_visible(app):
         app.on_render()
     assert MazeLab.Maze.calcularCasilla(app.player.x, app.player.y) == app.maze.casillaInicioJugador()
     assert (app.player.prev_x, app.player.prev_y) == (app.player.x, app.player.y)
+
+
+# ---------- Nivel inicial (NIVEL_INICIAL) ----------
+def test_nivel_inicial_es_level_0():
+    # El resto de tests lo cambia a None (conftest): se comprueba el valor escrito en el código.
+    fuente = open(Laberinto.__file__, encoding="utf-8").read()
+    assert 'NIVEL_INICIAL = "Level_0.json"' in fuente
+
+
+def test_nuevo_juego_empieza_en_level_0(monkeypatch):
+    monkeypatch.setattr(Laberinto, "NIVEL_INICIAL", "Level_0.json")
+    app = Laberinto.App()
+    assert app.ficheroNivel == "Level_0.json"
+    assert app.maze.mazeDataExtra.count(MazeLab.CODIGO_ALARMA) == 1
+
+
+def test_reinicio_vuelve_a_level_0(monkeypatch, app):
+    monkeypatch.setattr(Laberinto, "NIVEL_INICIAL", "Level_0.json")
+    app.reiniciarPartida()
+    assert app.ficheroNivel == "Level_0.json"
+
+
+def test_nivel_inicial_que_no_existe_usa_el_laberinto_por_defecto(monkeypatch, app):
+    monkeypatch.setattr(Laberinto, "NIVEL_INICIAL", "No_existe.json")
+    app.prepararNivelInicial()
+    assert app.ficheroNivel is None
+    assert app.maze.MazeLaberinto == MazeLab.Maze().MazeLaberinto
+
+
+def test_nivel_inicial_none_usa_el_laberinto_por_defecto(app):
+    app.prepararNivelInicial()
+    assert app.ficheroNivel is None

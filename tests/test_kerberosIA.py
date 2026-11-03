@@ -324,3 +324,30 @@ def test_update_log_debug_imprime(kia, conexiones, capsys):
         kia.ultimaCasilla = -1
         kia.update()
         assert texto in capsys.readouterr().out
+
+
+# ---------- Puertas cerradas (casillasBloqueadas) ----------
+def test_direccionesLibres_sin_bloqueos(kia, conexiones):
+    assert kia.casillasBloqueadas == set()
+    assert kia.direccionesLibres(394) == conexiones[394]
+
+
+def test_direccionesLibres_quita_la_puerta_cerrada(kia):
+    kia.casillasBloqueadas = {395}
+    assert 1 not in kia.direccionesLibres(394)        # a la derecha está la puerta
+    assert 3 in kia.direccionesLibres(394)
+
+
+def test_bfs_no_pasa_por_puertas_cerradas(kia):
+    assert 395 in kia.calcular_camino_BFS(394, 396)
+    kia.casillasBloqueadas = {395}
+    camino = kia.calcular_camino_BFS(394, 396)
+    assert 395 not in camino
+
+
+def test_elegirDireccionEvitar_no_elige_la_puerta(kia):
+    colocar(kia, 394)
+    kia.orientacion = 1
+    kia.casillasBloqueadas = {395}
+    for _ in range(20):
+        assert kia.elegirDireccionEvitar() != 1

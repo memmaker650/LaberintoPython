@@ -13,6 +13,7 @@ from pygame.locals import *
 import json
 from plyer import notification
 from levels_parser import LevelParser
+import Luces
 
 # -----------
 # Constantes
@@ -26,6 +27,8 @@ NUM_CASILLAS_H = 40
 NUM_CASILLAS_VERTI = 27
 NUM_CASILLAS_CAMARA = 27
 ANCHO_MUNDO = NUM_CASILLAS_H * CASILLA_PIXEL   # ancho del laberinto completo en píxeles (40 casillas)
+# Código de mazeDataExtra de la luz de alarma ("Alarm" en los niveles JSON).
+CODIGO_ALARMA = 16
 MARGEN_CAMARA = 4 * CASILLA_PIXEL              # la cámara se mueve si el jugador se acerca tanto al borde
 IMG_DIR = "Resources"
 EXPLOSION_DIR = "assets/explosions/images/explosion/"
@@ -84,6 +87,7 @@ class Maze:
     MazeGranada = pygame.sprite.Group()
     MazeBotiquin = pygame.sprite.Group()
     MazePuertas = pygame.sprite.Group()
+    MazeAlarmas = []    # Luces.LuzAlarma de las casillas con alarma (código CODIGO_ALARMA)
     
     imageHuesos = pygame.image.load("./Resources/Bone.png")
     imagePilaHuesos = pygame.image.load("./Resources/PileOfBones.png")
@@ -243,6 +247,8 @@ class Maze:
                     self.mazeDataExtra[c] = 2
                 elif nombre == "Exit":
                     self.mazeDataExtra[c] = 4
+                elif nombre == "Alarm":
+                    self.mazeDataExtra[c] = CODIGO_ALARMA
                 elif nombre.startswith("Dog"):
                     self.posicionesEnemigos.append(c)
 
@@ -288,6 +294,9 @@ class Maze:
         estadoPuertas = {p.casilla: (p.abierta, p.angle) for p in self.MazePuertas}
         self.MazePuertas.empty()
         self.posicionPuerta = []
+        # Igual con las alarmas: si estaban encendidas siguen encendidas.
+        alarmasPrevias = {a.casilla: a for a in self.MazeAlarmas}
+        self.MazeAlarmas = []
 
         xfont = pygame.font.SysFont('Corbel', 14)
         numerosCasilla = []
@@ -419,6 +428,13 @@ class Maze:
                 Botiquin = pygame.sprite.Sprite()
                 Botiquin.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL+BIAS, 32, 32)
                 self.MazeBotiquin.add(Botiquin)
+
+            # Alarma (luz rotativa). La lámpara y sus haces se pintan en cada fotograma (Laberinto).
+            if self.mazeDataExtra[bx + (by * self.M)] == CODIGO_ALARMA:
+                kasylla = bx + (by * self.M)
+                alarma = alarmasPrevias.get(kasylla) or Luces.LuzAlarma(
+                    kasylla, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, CASILLA_PIXEL, CASILLA_PIXEL))
+                self.MazeAlarmas.append(alarma)
 
             # Puerta/s
             #------------------------

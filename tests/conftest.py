@@ -84,6 +84,14 @@ def bd_de_prueba(monkeypatch, tmp_path):
     return ruta
 
 
+@pytest.fixture(autouse=True)
+def laberinto_por_defecto(monkeypatch):
+    # Los tests usan el laberinto por defecto de MazeLab (sus puertas, zonas y scroll); los del
+    # nivel inicial real (Level_0.json) lo vuelven a poner en su sitio.
+    import Laberinto
+    monkeypatch.setattr(Laberinto, "NIVEL_INICIAL", None)
+
+
 @pytest.fixture
 def maze():
     return MazeLab.Maze()

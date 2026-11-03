@@ -126,3 +126,127 @@ class Linterna:
 
         pygame.draw.circle(self.oscuridad, (0, 0, 0, 0), (round(ox), round(oy)), self.radio_jugador)
         pantalla.blit(self.oscuridad, self.zona.topleft)
+
+
+# ---------------------------------------------------------------------------------------
+# Luz de alarma (rotativo rojo). Apagada se ve la lámpara; encendida, dos haces rojos opuestos
+# giran 360 grados durante DURACION_LUZ_ALARMA_MS. Los haces son translúcidos, como el cono de
+# visión de los enemigos. Con HACES_ALARMA_ATRAVIESAN_PAREDES = False se cortarían en las paredes
+# y puertas cerradas, pero en un pasillo estrecho apenas se verían girar.
+# ---------------------------------------------------------------------------------------
+DURACION_LUZ_ALARMA_MS = 30000
+ALCANCE_HAZ_ALARMA = 8 * 32         # más largo que la visión de los enemigos (4-5 casillas)
+APERTURA_HAZ_ALARMA = 26            # grados de cada haz
+RAYOS_HAZ_ALARMA = 12
+VUELTA_ALARMA_MS = 2000             # una vuelta completa cada 2 segundos
+COLOR_HAZ_ALARMA = (255, 20, 20, 70)
+ESCALA_LAMPARA_ALARMA = 0.85        # la lámpara ocupa el 85 % de la casilla, centrada
+COLOR_HAZ_ALARMA_CERCA = (255, 30, 30, 120)  # mitad cercana, más intensa: degradado
+HACES_ALARMA_ATRAVIESAN_PAREDES = True
+
+
+class LuzAlarma:
+    _imagenes = {}  # lámpara apagada / encendida (se dibujan una vez)
+
+    def __init__(self, casilla, rect):
+        self.casilla = casilla
+        self.rect = pygame.Rect(rect)
+        self.encendida_ms = None
+        self.capa = None            # superficie translúcida de los haces
+
+    # La enciende (o vuelve a empezar los 30 segundos si ya lo estaba).
+    def encender(self, ahora_ms):
+        self.encendida_ms = ahora_ms
+
+    def apagar(self):
+        self.encendida_ms = None
+
+    def encendida(self, ahora_ms):
+        if self.encendida_ms is None:
+            return False
+        if ahora_ms - self.encendida_ms >= DURACION_LUZ_ALARMA_MS:
+            self.encendida_ms = None
+            return False
+        return True
+
+    # Ángulo (grados) del primer haz; el segundo va siempre en el sentido opuesto.
+    def angulo(self, ahora_ms):
+        if self.encendida_ms is None:
+            return 0.0
+        return (ahora_ms - self.encendida_ms) * 360.0 / VUELTA_ALARMA_MS % 360
+
+    # Polígonos de los dos haces (vacío si está apagada).
+    def haces(self, ahora_ms, obstaculos):
+        if not self.encendida(ahora_ms):
+            return []
+        return [poligono for poligono, _ in self._haces(ahora_ms, obstaculos, ALCANCE_HAZ_ALARMA)]
+
+    def _haces(self, ahora_ms, obstaculos, alcance):
+        if HACES_ALARMA_ATRAVIESAN_PAREDES:
+            obstaculos = []
+        origen = self.rect.center
+        resultado = []
+        for angulo in (self.angulo(ahora_ms), self.angulo(ahora_ms) + 180):
+            puntos = abanicoRayos(origen, angulo, APERTURA_HAZ_ALARMA, RAYOS_HAZ_ALARMA,
+                                  alcance, obstaculos)
+            resultado.append(([origen] + puntos, angulo))
+        return resultado
+
+    @classmethod
+    def imagen(cls, encendida):
+        if encendida not in cls._imagenes:
+            lampara = cls._dibujarLampara(encendida)
+            lado = round(32 * ESCALA_LAMPARA_ALARMA)
+            lampara = pygame.transform.smoothscale(lampara, (lado, lado))
+            img = pygame.Surface((32, 32), pygame.SRCALPHA)
+            img.blit(lampara, ((32 - lado) // 2, (32 - lado) // 2))
+            cls._imagenes[encendida] = img
+        return cls._imagenes[encendida]
+
+    # Rotativo de 32x32: base gris, aro rojo y cúpula roja estriada con un brillo.
+    @staticmethod
+    def _dibujarLampara(encendida):
+        img = pygame.Surface((32, 32), pygame.SRCALPHA)
+        rojo = (255, 45, 45) if encendida else (150, 18, 18)
+        oscuro = (200, 20, 20) if encendida else (105, 10, 10)
+        claro = (255, 150, 150) if encendida else (200, 70, 70)
+        # Base gris
+        pygame.draw.rect(img, (205, 205, 200), (8, 21, 16, 9), border_radius=2)
+        pygame.draw.rect(img, (120, 120, 115), (8, 21, 16, 9), 1, border_radius=2)
+        # Cúpula
+        pygame.draw.rect(img, rojo, (9, 5, 14, 15), border_top_left_radius=6, border_top_right_radius=6)
+        for x in (12, 15, 18, 21):
+            pygame.draw.line(img, oscuro, (x, 8), (x, 18))
+        pygame.draw.line(img, claro, (11, 7), (11, 17), 2)
+        pygame.draw.rect(img, oscuro, (9, 5, 14, 15), 1, border_top_left_radius=6, border_top_right_radius=6)
+        # Aro rojo entre la cúpula y la base
+        pygame.draw.rect(img, oscuro, (7, 18, 18, 4), border_radius=1)
+        return img
+
+    # Lámpara (cada fotograma, porque cambia al encenderse).
+    def dibujar(self, superficie, ahora_ms):
+        encendida = self.encendida(ahora_ms)
+        if encendida:
+            # Destello que late alrededor de la cúpula.
+            brillo = pygame.Surface((48, 48), pygame.SRCALPHA)
+            alfa = 70 + int(50 * abs(math.sin(math.radians(self.angulo(ahora_ms) * 2))))
+            pygame.draw.circle(brillo, (255, 30, 30, alfa), (24, 24), round(20 * ESCALA_LAMPARA_ALARMA))
+            superficie.blit(brillo, (self.rect.centerx - 24, self.rect.top + 12 - 24))
+        superficie.blit(self.imagen(encendida), self.rect.topleft)
+
+    # Haces translúcidos encima de lo que haya en 'superficie'. La capa sólo cubre el alcance de
+    # los haces (un cuadrado centrado en la lámpara), no el mundo entero.
+    def dibujarHaces(self, superficie, ahora_ms, obstaculos):
+        poligonos = self.haces(ahora_ms, obstaculos)
+        if not poligonos:
+            return
+        lado = 2 * ALCANCE_HAZ_ALARMA + 2
+        if self.capa is None:
+            self.capa = pygame.Surface((lado, lado), pygame.SRCALPHA)
+        self.capa.fill((0, 0, 0, 0))
+        esquina = (self.rect.centerx - lado // 2, self.rect.centery - lado // 2)
+        cercanos = [p for p, _ in self._haces(ahora_ms, obstaculos, ALCANCE_HAZ_ALARMA // 2)]
+        for color, lista in ((COLOR_HAZ_ALARMA, poligonos), (COLOR_HAZ_ALARMA_CERCA, cercanos)):
+            for poligono in lista:
+                pygame.draw.polygon(self.capa, color, [(x - esquina[0], y - esquina[1]) for x, y in poligono])
+        superficie.blit(self.capa, esquina)
