@@ -77,7 +77,7 @@ def eventos_sin_bloqueo(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def bd_de_prueba(monkeypatch, tmp_path):
-    # Ningún test escribe en la base de datos real (DB/tutorial.db).
+    # Ningún test escribe en la base de datos real (la de la carpeta de datos, ver rutas.py).
     import Laberinto
     ruta = str(tmp_path / "prueba.db")
     monkeypatch.setattr(Laberinto, "RUTA_BD", ruta)

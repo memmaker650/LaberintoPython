@@ -6,17 +6,23 @@ DIR_CODIGO = os.path.dirname(os.path.abspath(__file__))
 if DIR_CODIGO not in sys.path:
     sys.path.insert(0, DIR_CODIGO)
 
-# Todas las rutas del juego (Resources, log, DB, Levels, Code/assets) son relativas a la
+# Las rutas del juego (Resources, Levels, Code/assets) son relativas a la
 # raíz del proyecto. Nos situamos ahí ANTES de importar los módulos que cargan imágenes,
 # para que el juego arranque igual desde la raíz, desde Code/ o desde PyCharm.
 DIR_PROYECTO = os.path.dirname(DIR_CODIGO)
 os.chdir(DIR_PROYECTO)
 DIR_NIVELES = os.path.join(DIR_PROYECTO, "Levels")
-DIR_LOG = os.path.join(DIR_PROYECTO, "log")
+# Logs y base de datos van a la carpeta de datos del sistema, fuera del proyecto (ver rutas.py):
+# en macOS ~/Library/Application Support/com.SkullWithGasMask/OctopusMaze.
+import rutas
+DIR_DATOS = str(rutas.carpeta_datos())
+DIR_LOG = os.path.join(DIR_DATOS, "log")
+# Base de datos que viene con el proyecto: se copia a la carpeta de datos la primera vez.
+RUTA_BD_INICIAL = os.path.join(DIR_PROYECTO, "DB", rutas.NOMBRE_BD)
 # Nivel con el que empieza "Nuevo Juego" (y el reinicio tras terminar una partida).
 # None: el laberinto por defecto escrito en MazeLab.
 NIVEL_INICIAL = "Level_0.json"
-RUTA_BD = os.path.join(DIR_PROYECTO, "DB", "tutorial.db")
+RUTA_BD = os.path.join(DIR_DATOS, rutas.NOMBRE_BD)
 
 from typing import Any
 import mates
@@ -2306,13 +2312,14 @@ class App:
 
 
 if __name__ == "__main__":
-    # Log: un fichero por día (log/squidcastle_YYYYMMDD.log) y sólo los 10 últimos, ver registro.py.
-    # La carpeta log/ no está en git: se crea al arrancar.
+    # Log: un fichero por día (squidcastle_YYYYMMDD.log) y sólo los 10 últimos, ver registro.py.
+    # Va a la carpeta de datos (DIR_DATOS/log), que se crea al arrancar.
     registro.configurar_log(DIR_LOG)
-    logging.warning("Inicio LaberintoPy!!!")
+    logging.warning("Inicio LaberintoPy!!! Datos en %s", DIR_DATOS)
     registro.limpiar_logs_antiguos(DIR_LOG)
+    rutas.preparar_carpeta_datos(DIR_DATOS, RUTA_BD_INICIAL)
 
-    sqliteConnection = sqlite3.connect("./DB/tutorial.db")
+    sqliteConnection = sqlite3.connect(RUTA_BD)
     cursor = sqliteConnection.cursor()
     logging.info("Successfully Connected to SQLite")
 

@@ -201,5 +201,5 @@ def test_el_juego_limpia_los_logs_al_arrancar():
     assert arranque.index("registro.configurar_log(") < arranque.index("registro.limpiar_logs_antiguos(")
 
 
-def test_carpeta_de_log_en_el_proyecto():
-    assert Path(Laberinto.DIR_LOG) == Path(Laberinto.DIR_PROYECTO) / "log"
+def test_carpeta_de_log_en_la_carpeta_de_datos():
+    assert Path(Laberinto.DIR_LOG) == Path(Laberinto.DIR_DATOS) / "log"

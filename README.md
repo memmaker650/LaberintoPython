@@ -24,7 +24,8 @@ venv2/bin/python -m pip install -r requirements.txt
 venv2/bin/python Code/Laberinto.py
 ```
 Funciona igual lanzándolo desde la raíz del proyecto, desde `Code/` o desde PyCharm: al arrancar, el juego
-se sitúa en la raíz del proyecto para encontrar `Resources/`, `Levels/`, `DB/` y `log/`.
+se sitúa en la raíz del proyecto para encontrar `Resources/` y `Levels/`. El log y la base de datos van a la
+carpeta de datos del sistema (ver «Base de datos y log»).
 
 ### Tests
 ```bash
@@ -119,7 +120,7 @@ flowchart TD
     LAB --> SON[Sonido.py]
     PL --> IA[KerberosIA.py<br/>IA: BFS, patrulla por zonas]
     MAZE --> LP[levels_parser.py<br/>carga y analiza Levels/*.json]
-    EST --> BD[(DB/tutorial.db)]
+    EST --> BD[(OctoMaze.db)]
     PAR --> BD
 ```
 
@@ -204,7 +205,21 @@ capas recortadas a 3×2 para que se lea; en el fichero real tienen `width` × `h
 
 ---
 
-## Base de datos (`DB/tutorial.db`)
+## Base de datos y log
+
+El juego guarda sus datos fuera del proyecto, en la carpeta de datos del sistema (`Code/rutas.py`):
+
+| Sistema | Carpeta |
+|---|---|
+| macOS | `~/Library/Application Support/com.SkullWithGasMask/OctopusMaze` |
+| iOS | `Library/Application Support/com.SkullWithGasMask/OctopusMaze` dentro del contenedor privado de la app |
+| Windows | `%APPDATA%\com.SkullWithGasMask\OctopusMaze` |
+| Linux | `~/.local/share/com.SkullWithGasMask/OctopusMaze` |
+
+Dentro están `OctoMaze.db` (SQLite) y `log/` (`squidcastle_YYYYMMDD.log`, uno por día y sólo los 10 últimos).
+La primera vez se copia `DB/OctoMaze.db` del proyecto para conservar partidas y estadísticas. Con la variable
+de entorno `OCTOPUSMAZE_DATOS` se puede usar otra carpeta.
+
 
 | Tabla | Contenido |
 |---|---|
@@ -225,8 +240,7 @@ LaberintoPython/
 │   └── Pruebas/      prototipos y ejemplos sueltos (no forman parte del juego)
 ├── Levels/           niveles en JSON
 ├── Resources/        imágenes, iconos y sonidos
-├── DB/tutorial.db    base de datos SQLite
-├── log/              registro del juego: squidcastle_YYYYMMDD.log, uno por día y sólo los 10 últimos
+├── DB/OctoMaze.db    base de datos inicial (se copia a la carpeta de datos la primera vez)
 ├── tests/            tests de pytest
 ├── Historico-SVN/    versiones antiguas
 ├── requirements.txt
