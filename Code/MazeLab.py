@@ -303,9 +303,8 @@ class Maze:
         # Se pinta TODO el laberinto en coordenadas del mundo (columna bx -> x = bx * 32).
         # La cámara (camaraX) sólo decide qué parte se ve en pantalla.
         for i in range(0, self.M * self.N):
-            rectSuelo = pygame.sprite.Sprite()
-            rectSuelo.image = pygame.Surface([bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS])
-            rectSuelo.rect = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, 32, 32)
+            # Sólo hace falta el rectángulo de la casilla (para centrar su número).
+            rectCasilla = pygame.Rect(bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, CASILLA_PIXEL, CASILLA_PIXEL)
 
             if self.maze[bx + (by * self.M)] == 1:
                 display_surf.blit(image_surf, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS))
@@ -317,7 +316,7 @@ class Maze:
             # (si no, lo tapaban el suelo de la casilla siguiente y los objetos).
             # -------------------------------------------------
             if self.pintaKasillaNumSuelo:
-                numerosCasilla.append((str(i), rectSuelo.rect.center))
+                numerosCasilla.append((str(i), rectCasilla.center))
 
             casiya = bx + (by * self.M)
             # if not len(casillasObjetos) == 0:

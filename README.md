@@ -226,7 +226,7 @@ LaberintoPython/
 ├── Levels/           niveles en JSON
 ├── Resources/        imágenes, iconos y sonidos
 ├── DB/tutorial.db    base de datos SQLite
-├── log/              registro del juego (squidcastle.log), se crea al arrancar
+├── log/              registro del juego: squidcastle_YYYYMMDD.log, uno por día y sólo los 10 últimos
 ├── tests/            tests de pytest
 ├── Historico-SVN/    versiones antiguas
 ├── requirements.txt

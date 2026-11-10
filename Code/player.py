@@ -385,11 +385,11 @@ class Enemigo(pygame.sprite.Sprite):
         self.visionPos = Vector2 (0, 0)
         self.angle = 2
         self.flagDisparo = False
-        self.imageEnemigo = load_image("Chainsaw.png", IMG_DIR, alpha=True)
-        self.imageEnemigo = pygame.transform.scale(self.imageEnemigo, (22, 22))
-        self.rect = self.imageEnemigo.get_rect()
-        self.imageJefeEnemigo = load_image("wilber-eeek.png", IMG_DIR, alpha=True)
-        self.imageJefeEnemigo = pygame.transform.scale(self.imageJefeEnemigo, (22, 22))
+        # Imágenes y sonido se leen del disco una sola vez y los comparten todos los enemigos
+        # (nadie los modifica: el parpadeo rojo trabaja sobre una copia).
+        recursos = Enemigo.recursosCompartidos()
+        self.imageEnemigo = recursos["enemigo"]
+        self.imageJefeEnemigo = recursos["jefe"]
         self.rect = self.imageJefeEnemigo.get_rect()
         # self.visionImage = load_image("linterna.png", "Code/assets", alpha=True)
         # self.visionImage = pygame.transform.scale(self.visionImage, (60, 60))
@@ -408,7 +408,19 @@ class Enemigo(pygame.sprite.Sprite):
         self.visionPos = Vector2([Enemigo.x, Enemigo.y])
         self.offset = Vector2(200, 0)
         self.angle = 0
-        self.sonidoDisparoEnemigo = pygame.mixer.Sound("./Resources/Sonidos/gunfire.mp3")
+        self.sonidoDisparoEnemigo = recursos["disparo"]
+
+    _recursos = None
+
+    @classmethod
+    def recursosCompartidos(cls):
+        if cls._recursos is None:
+            cls._recursos = {
+                "enemigo": pygame.transform.scale(load_image("Chainsaw.png", IMG_DIR, alpha=True), (22, 22)),
+                "jefe": pygame.transform.scale(load_image("wilber-eeek.png", IMG_DIR, alpha=True), (22, 22)),
+                "disparo": pygame.mixer.Sound("./Resources/Sonidos/gunfire.mp3"),
+            }
+        return cls._recursos
 
     def inicio(self, vx, vy):
         # logging.info("Inicio Enemigos")

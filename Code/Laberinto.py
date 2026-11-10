@@ -12,6 +12,7 @@ if DIR_CODIGO not in sys.path:
 DIR_PROYECTO = os.path.dirname(DIR_CODIGO)
 os.chdir(DIR_PROYECTO)
 DIR_NIVELES = os.path.join(DIR_PROYECTO, "Levels")
+DIR_LOG = os.path.join(DIR_PROYECTO, "log")
 # Nivel con el que empieza "Nuevo Juego" (y el reinicio tras terminar una partida).
 # None: el laberinto por defecto escrito en MazeLab.
 NIVEL_INICIAL = "Level_0.json"
@@ -42,6 +43,7 @@ import sqlite3
 import json
 from plyer import notification
 from levels_parser import LevelParser
+import registro
 from MazeLab import Puerta
 
 # ---------------
@@ -2304,10 +2306,11 @@ class App:
 
 
 if __name__ == "__main__":
-    os.makedirs("./log", exist_ok=True)  # la carpeta log/ no está en git: se crea al arrancar
-    logging.basicConfig(filename="./log/squidcastle.log", level=logging.WARNING,
-    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
+    # Log: un fichero por día (log/squidcastle_YYYYMMDD.log) y sólo los 10 últimos, ver registro.py.
+    # La carpeta log/ no está en git: se crea al arrancar.
+    registro.configurar_log(DIR_LOG)
     logging.warning("Inicio LaberintoPy!!!")
+    registro.limpiar_logs_antiguos(DIR_LOG)
 
     sqliteConnection = sqlite3.connect("./DB/tutorial.db")
     cursor = sqliteConnection.cursor()

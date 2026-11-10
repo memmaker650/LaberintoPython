@@ -213,6 +213,23 @@ def test_player_escalaGrises(jugador):
 
 
 # ---------- Enemigo ----------
+def test_enemigos_comparten_imagenes_y_sonido():
+    # Se leen del disco una sola vez (antes, cada enemigo volvía a cargarlas).
+    uno, otro = player.Enemigo(), player.Enemigo()
+    assert uno.imageEnemigo is otro.imageEnemigo
+    assert uno.imageJefeEnemigo is otro.imageJefeEnemigo
+    assert uno.sonidoDisparoEnemigo is otro.sonidoDisparoEnemigo
+    assert uno.imageEnemigo.get_size() == uno.imageJefeEnemigo.get_size() == (22, 22)
+
+
+def test_parpadeo_rojo_no_toca_la_imagen_compartida():
+    e = player.Enemigo()
+    antes = pygame.image.tobytes(e.imageEnemigo, "RGBA")
+    roja = e.dibujaDaño(False)
+    assert roja is not e.imageEnemigo
+    assert pygame.image.tobytes(e.imageEnemigo, "RGBA") == antes
+
+
 def test_enemigo_init(enemigo):
     assert enemigo.vida == 100 and enemigo.municion == 100
     assert enemigo.orientacion == 2
