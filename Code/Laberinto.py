@@ -41,6 +41,7 @@ import random
 import os
 import sys
 import math
+import re
 
 import pygame
 from pygame.locals import *
@@ -86,6 +87,15 @@ FLAGS_OBJETOS = ["flagLlave", "flagLlavePuerta", "flagChampi", "flagGranada", "f
 OBJETOS_JUGADOR = ["llavePuerta", "llaveFinNivel", "champi", "pistola", "granada", "laser"]
 PUNTOS_ENEMIGO = 50
 PUNTOS_JEFE = 200
+
+# Dificultad (pantalla de Nuevo Juego): número de enemigos normales, multiplicador del daño que
+# recibe el jugador y alcance de la visión de los enemigos normales (en casillas).
+DIFICULTADES = {
+    "Fácil":   {"enemigos": 3, "dano": 0.5, "vision": 3},
+    "Medio":   {"enemigos": 5, "dano": 1.0, "vision": 4},
+    "Difícil": {"enemigos": 7, "dano": 1.5, "vision": 5},
+}
+DIFICULTAD_POR_DEFECTO = "Medio"
 
 # Visión de los enemigos
 ALCANCE_VISION_ENEMIGO = 4 * CASILLA_PIXEL
@@ -172,7 +182,8 @@ class App:
     enemigo = 0
     JefeEnemigo = 0
     flagInit = True
-    numEnemigos = 5
+    numEnemigos = DIFICULTADES[DIFICULTAD_POR_DEFECTO]["enemigos"]
+    dificultad = DIFICULTAD_POR_DEFECTO
     enemigosArray = []
     PlayerGroup = pygame.sprite.Group()
     EnemigosGroup = pygame.sprite.Group() #Incluirá también al jefe Enemigo.
@@ -402,7 +413,7 @@ class App:
             self.enemigo.conexiones = self.conexiones
             self.enemigo.pasarConexionesIA()
             self.enemigo.kia.asignarZona(self.zonas, self.tiposZona, self.enemigo.casilla)
-            self.enemigo.conoVision = KerberosIA.VisionEnemigo(alcance=ALCANCE_VISION_ENEMIGO, apertura=60)
+            self.enemigo.conoVision = KerberosIA.VisionEnemigo(alcance=self.alcanceVisionEnemigo(), apertura=60)
             self.enemigo.bubble_duration = DURACION_BOCADILLO_ALARMA_MS
             self.enemigo.fade_duration = 1000
             self.enemigosArray.append(self.enemigo)
@@ -423,6 +434,17 @@ class App:
         self.JefeEnemigo.prev_y = self.JefeEnemigo.y
         self.JefeEnemigo.kia.definirPosicion(pos.x, pos.y)
         self.JefeEnemigo.kia.casilla = self.JefeEnemigo.casilla
+
+    # Cambia la dificultad: se aplica al preparar el siguiente nivel (número de enemigos y su visión)
+    # y desde ya al daño que recibe el jugador.
+    def definirDificultad(self, dificultad):
+        if dificultad not in DIFICULTADES:
+            raise ValueError(f"Dificultad desconocida: {dificultad}")
+        self.dificultad = dificultad
+        self.numEnemigos = DIFICULTADES[dificultad]["enemigos"]
+
+    def alcanceVisionEnemigo(self):
+        return DIFICULTADES[self.dificultad]["vision"] * CASILLA_PIXEL
 
     # Casillas de suelo visibles donde pueden empezar los enemigos, sin repetir y lejos del jugador.
     # Primero las que marca el nivel (perros del JSON) y luego el resto, ambas en orden aleatorio.
@@ -545,7 +567,7 @@ class App:
                             self.continuarPartida()  # sin partida guardada avisa y sigue en el menú
                         elif accion == 'nuevo':
                             self.tocaMenu = False
-                            self.on_execute()
+                            self.pantallaNuevaPartida()
                         elif accion == 'opciones':
                             self.tocaMenu = False
                             self.menuOpciones()
@@ -575,6 +597,118 @@ class App:
 
                 # updates the frames of the game
                 pygame.display.update()
+
+    # ---------- Pantalla de Nuevo Juego ----------
+    # Botones: (y relativa a la mitad de la pantalla, acción). Empezar va justo encima de Dificultad.
+    BOTONES_NUEVA_PARTIDA = [(-60, 'empezar'), (-10, 'dificultad'), (40, 'nivel'), (190, 'volver')]
+    ANCHO_BOTON_NUEVA_PARTIDA = 300
+
+    # Ficheros de nivel que se pueden elegir (Levels/Level_*.json, ordenados).
+    def nivelesDisponibles(self):
+        return [os.path.basename(f) for f in LevelParser(DIR_NIVELES).list_level_files()]
+
+    # Número de nivel que se muestra en el HUD: el del nombre del fichero (Level_3.json -> 3).
+    @staticmethod
+    def numeroDeNivel(fichero):
+        coincidencia = re.fullmatch(r"Level_(\d+)\.json", fichero or "")
+        return int(coincidencia.group(1)) if coincidencia else 0
+
+    # Elemento siguiente (paso=1) o anterior (paso=-1) de una lista, dando la vuelta.
+    @staticmethod
+    def siguienteOpcion(opciones, actual, paso=1):
+        indice = opciones.index(actual) if actual in opciones else -1
+        return opciones[(indice + paso) % len(opciones)]
+
+    def textoBotonNuevaPartida(self, accion):
+        if accion == 'empezar':
+            return 'Empezar'
+        if accion == 'dificultad':
+            return f'Dificultad: {self.dificultad}'
+        if accion == 'nivel':
+            return f'Nivel: {os.path.splitext(self.nivelElegido)[0]}' if self.nivelElegido else 'Nivel: (ninguno)'
+        return 'Volver'
+
+    # Pantalla tras pulsar "Nuevo Juego": elegir dificultad y nivel, y empezar.
+    # Clic (izquierdo) en Dificultad o Nivel pasa a la opción siguiente; clic derecho, a la anterior.
+    # INTRO empieza y ESC vuelve al menú principal.
+    def pantallaNuevaPartida(self):
+        width = self.pantalla.get_width()
+        height = self.pantalla.get_height()
+        ancho = self.ANCHO_BOTON_NUEVA_PARTIDA
+        smallfont = pygame.font.SysFont('Corbel', 35)
+        Titlefont = pygame.font.SysFont('Impact', 150)
+        textTitle = Titlefont.render('Octopussy', True, color_otherorange)
+        subtitulo = smallfont.render('Nuevo Juego', True, color_darkorange)
+
+        niveles = self.nivelesDisponibles()
+        if getattr(self, "nivelElegido", None) not in niveles:
+            self.nivelElegido = NIVEL_INICIAL if NIVEL_INICIAL in niveles else (niveles[0] if niveles else None)
+        dificultades = list(DIFICULTADES)
+
+        def boton(dy):
+            return pygame.Rect(int(width / 2) - ancho // 2, int(height / 2) + dy, ancho, 40)
+
+        while True:
+            for ev in pygame.event.get():
+                if ev.type == pygame.QUIT:
+                    self.salir = True
+                    pygame.quit()
+                    sys.exit()
+                if ev.type == pygame.KEYDOWN:
+                    if ev.key == pygame.K_ESCAPE:
+                        self.menu()
+                    elif ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        self.empezarPartida(self.nivelElegido, self.dificultad)
+                if ev.type == pygame.MOUSEBUTTONDOWN and ev.button in (1, 3):
+                    paso = -1 if ev.button == 3 else 1
+                    for dy, accion in self.BOTONES_NUEVA_PARTIDA:
+                        if not boton(dy).collidepoint(ev.pos):
+                            continue
+                        logging.info("Nuevo Juego: pulsado '%s'", accion)
+                        if accion == 'empezar':
+                            self.empezarPartida(self.nivelElegido, self.dificultad)
+                        elif accion == 'dificultad':
+                            self.definirDificultad(self.siguienteOpcion(dificultades, self.dificultad, paso))
+                        elif accion == 'nivel' and niveles:
+                            self.nivelElegido = self.siguienteOpcion(niveles, self.nivelElegido, paso)
+                        elif accion == 'volver':
+                            self.menu()
+
+            self.pantalla.fill((60, 25, 60))
+            mouse = pygame.mouse.get_pos()
+            for dy, accion in self.BOTONES_NUEVA_PARTIDA:
+                rect = boton(dy)
+                encima = rect.collidepoint(mouse)
+                if accion == 'volver':
+                    colorBoton = color_overblue if encima else color_darkblue
+                elif accion == 'empezar':
+                    colorBoton = color_darkorange if encima else color_darkgreen
+                else:
+                    colorBoton = color_darkorange if encima else color_dark
+                pygame.draw.rect(self.pantalla, colorBoton, rect)
+                texto = smallfont.render(self.textoBotonNuevaPartida(accion), True, (255, 255, 255))
+                self.pantalla.blit(texto, texto.get_rect(center=rect.center))
+            self.pantalla.blit(textTitle, ((width / 2) - 400, (height / 2) - 400))
+            self.pantalla.blit(subtitulo, subtitulo.get_rect(center=(width // 2, int(height / 2) - 130)))
+            pygame.display.update()
+
+    # Botón Empezar: aplica la dificultad, carga el nivel elegido y empieza la partida.
+    # Si el nivel no se puede cargar avisa y devuelve False (se sigue en la pantalla de Nuevo Juego).
+    def empezarPartida(self, fichero, dificultad):
+        self.definirDificultad(dificultad)
+        try:
+            nivel = LevelParser(DIR_NIVELES).load_by_name(fichero) if fichero else None
+            self.prepararNivel(nivel)
+        except (FileNotFoundError, json.JSONDecodeError, ValueError) as error:
+            logging.error("No se puede cargar el nivel %s: %s", fichero, error)
+            self.dialogoConfirmacion(f"No se puede cargar {fichero}", [str(error)],
+                                     textoSi="Aceptar", textoNo=None)
+            return False
+        self.HeadNivel.definirNumeroNivel(self.numeroDeNivel(fichero))
+        logging.warning("Nueva partida: nivel %s, dificultad %s", fichero, dificultad)
+        self.tocaMenu = False
+        self.on_execute()
+        return True
 
     def menuOpciones(self):
         color = (255, 255, 255)
@@ -901,6 +1035,7 @@ class App:
         return {
             "version": 1,
             "fichero": self.ficheroNivel,
+            "dificultad": self.dificultad,
             "nivel": self.HeadNivel.NumeroNivel,
             "tiempo_ms": pygame.time.get_ticks() - self.tiempo_inicio,
             "vida": self.HeadBarraDeVida.vida,
@@ -950,6 +1085,8 @@ class App:
         nivel = None
         if estado.get("fichero"):
             nivel = LevelParser(DIR_NIVELES).load_by_name(estado["fichero"])
+        # Antes que el nivel: decide cuántos enemigos hay (las partidas antiguas no la guardaban).
+        self.definirDificultad(estado.get("dificultad", DIFICULTAD_POR_DEFECTO))
         self.prepararNivel(nivel)
         self.HeadNivel.definirNumeroNivel(estado["nivel"])
 
@@ -1027,6 +1164,7 @@ class App:
         if ahora - self.ultimaHerida_ms < TIEMPO_INVULNERABLE_MS:
             return False
         self.ultimaHerida_ms = ahora
+        dano = max(1, round(dano * DIFICULTADES[self.dificultad]["dano"]))
         self.HeadBarraDeVida.vida = max(0, self.HeadBarraDeVida.vida - dano)
         self.estadisticas.registrarHerida(dano)
         logging.info("Jugador herido (-%s). Vida: %s", dano, self.HeadBarraDeVida.vida)

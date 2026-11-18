@@ -607,7 +607,7 @@ def test_menu_quit_sale(app):
 
 
 @pytest.mark.parametrize("pos, destino", [
-    ((500, 450), "on_execute"),    # Nuevo Juego  (botón en y 440-480)
+    ((500, 450), "pantallaNuevaPartida"),  # Nuevo Juego (botón en y 440-480)
     ((500, 510), "menuOpciones"),  # Opciones     (botón en y 490-530)
 ])
 def test_menu_botones(monkeypatch, app, pos, destino):
