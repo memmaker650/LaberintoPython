@@ -281,12 +281,9 @@ class App:
         # Gestión del Mapa
         # Mapa y "mundo" del tamaño del laberinto completo (más ancho que la ventana): se pintan en
         # coordenadas del laberinto y la cámara elige qué parte se ve.
-        self.map_surface = pygame.Surface(
-            (MazeLab.ANCHO_MUNDO, self.windowHeight)).convert()
-        # Sin canal alfa: en macOS, con alfa, las capas translúcidas (conos, linterna) lo dejaban a 0
-        # y al copiar el mundo la pantalla entera quedaba transparente (el HUD salía en cuadros).
-        self.mundo = pygame.Surface((MazeLab.ANCHO_MUNDO, self.windowHeight), 0, 32,
-                                    (0xFF0000, 0x00FF00, 0x0000FF, 0))
+        self.map_surface = None
+        self.mundo = None
+        self.prepararSuperficiesMundo()
         self.flagDebugEnemigos = True
         self.rebuild_map = True
         self.floor_surf = None
@@ -342,6 +339,22 @@ class App:
         self.font_vida = pygame.font.SysFont('Arial', 27)
         self.font_fps = pygame.font.SysFont('Arial', 20)
 
+    # Superficies del mundo (mapa y mundo) del tamaño del laberinto, que depende del nivel
+    # (MazeLab.ANCHO_MUNDO x MazeLab.ALTO_MUNDO). Sólo se crean de nuevo si cambia el tamaño.
+    def prepararSuperficiesMundo(self):
+        tamano = (MazeLab.ANCHO_MUNDO, MazeLab.ALTO_MUNDO)
+        if self.mundo is not None and self.mundo.get_size() == tamano:
+            return
+        self.map_surface = pygame.Surface(tamano).convert()
+        # Sin canal alfa: en macOS, con alfa, las capas translúcidas (conos, linterna) lo dejaban a 0
+        # y al copiar el mundo la pantalla entera quedaba transparente (el HUD salía en cuadros).
+        self.mundo = pygame.Surface(tamano, 0, 32, (0xFF0000, 0x00FF00, 0x0000FF, 0))
+        self.superficieConos = None
+
+    # Parte del mundo que se ve en pantalla (con la franja del HUD), en coordenadas del mundo.
+    def vistaCamara(self):
+        return pygame.Rect(self.maze.camaraX, self.maze.camaraY, SCREEN_WIDTH, SCREEN_HEIGHT)
+
     # Prepara el nivel inicial (NIVEL_INICIAL). Si no se puede cargar, usa el laberinto por defecto
     # del código para que el juego arranque igualmente.
     def prepararNivelInicial(self):
@@ -360,6 +373,7 @@ class App:
     # y coloca a los enemigos y al jefe sobre casillas de suelo.
     def prepararNivel(self, nivel=None):
         self.maze = MazeLab.Maze(nivel)
+        self.prepararSuperficiesMundo()
         logging.info("Cargado el escenario")
         self.conexiones = MazeLab.Maze.precalcular_conexiones(
             self.maze.MazeLaberinto,
@@ -384,7 +398,8 @@ class App:
         # Niveles oscuros: sólo se ve lo que ilumina la linterna (código en Luces.py).
         self.oscuridad = nivel.oscuridad if nivel is not None else 0.0
         if self.oscuridad > 0:
-            zonaLaberinto = (0, BIAS, MazeLab.ANCHO_MUNDO, SCREEN_HEIGHT - BIAS)
+            # Sólo se oscurece la parte visible del laberinto: la zona sigue a la cámara (pintarMundo).
+            zonaLaberinto = (0, BIAS, SCREEN_WIDTH, SCREEN_HEIGHT - BIAS)
             self.linterna = Luces.Linterna(zonaLaberinto, opacidad=self.oscuridad)
             self.linterna.apuntar(self.player.orientacion, instantaneo=True)
         else:
@@ -1049,6 +1064,7 @@ class App:
             "objetosTocados": sorted(self.casillaObjetosTocados),
             "flagsObjetos": {nombre: bool(getattr(self.maze, nombre)) for nombre in FLAGS_OBJETOS},
             "camara": self.maze.camaraX,
+            "camaraY": self.maze.camaraY,
             "enemigos": [enemigo(e) for e in self.enemigosArray],
             "jefe": enemigo(self.JefeEnemigo),
             "estadisticas": self.estadisticas.estado(),
@@ -1923,16 +1939,19 @@ class App:
 
     # Conos de visión de los enemigos vivos, translúcidos: amarillo (normal), naranja (alerta), rojo (alarma).
     def pintarConosVision(self):
-        if self.superficieConos is None or self.superficieConos.get_size() != self.pantalla.get_size():
-            self.superficieConos = pygame.Surface(self.pantalla.get_size(), pygame.SRCALPHA)
+        # La capa es del tamaño de la pantalla y se coloca donde mira la cámara: en un nivel grande
+        # no se rellena y copia el mundo entero en cada frame.
+        vista = self.vistaCamara()
+        if self.superficieConos is None or self.superficieConos.get_size() != vista.size:
+            self.superficieConos = pygame.Surface(vista.size, pygame.SRCALPHA)
         self.superficieConos.fill((0, 0, 0, 0))
         for enemigo in self.EnemigosGroup:
-            poligono = enemigo.conoVision.poligono()
+            poligono = [(x - vista.x, y - vista.y) for x, y in enemigo.conoVision.poligono()]
             if len(poligono) >= 3:
                 color = {KerberosIA.ESTADO_ALARMA: COLOR_CONO_ALARMA,
                          KerberosIA.ESTADO_ALERTA: COLOR_CONO_ALERTA}.get(enemigo.kia.estado, COLOR_CONO_VISION)
                 pygame.draw.polygon(self.superficieConos, color, poligono)
-        self.pantalla.blit(self.superficieConos, (0, 0))
+        self.pantalla.blit(self.superficieConos, vista.topleft)
     
     # Puerta que el jugador tiene a mano: la de su casilla o la de una casilla contigua
     # (arriba, abajo, izquierda o derecha). Si hay varias, la más cercana. None si no hay ninguna.
@@ -1993,8 +2012,10 @@ class App:
             self.rebuildMap()
             self.rebuild_map = False
 
-        # Dibujar mapa ya preparado
-        self.pantalla.blit(self.map_surface, (0,0))
+        # Dibujar mapa ya preparado (sólo la parte que se ve)
+        vista = self.vistaCamara()
+        self.pantalla.blit(self.map_surface, (vista.x, 0), (vista.x, 0, vista.width, BIAS))   # franja del HUD
+        self.pantalla.blit(self.map_surface, vista.topleft, vista)
 
         for puerta in self.maze.MazePuertas:
             puerta.draw(self.pantalla)
@@ -2130,6 +2151,8 @@ class App:
             obstaculos = [s.rect for s in self.maze.MazeParedes]
             obstaculos += [s.rect for s in self.EnemigosGroup]
             obstaculos += [p.rect for p in self.maze.MazePuertas]
+            vista = self.vistaCamara()
+            self.linterna.zona.topleft = (vista.x, vista.y + BIAS)   # la oscuridad cubre lo que se ve
             self.linterna.dibujar(self.pantalla, self.player.rect.center, obstaculos)
 
         # Haces de las alarmas encendidas, por encima de todo (también de la oscuridad).
@@ -2170,7 +2193,10 @@ class App:
                 self.pintarEfectoRojo()
             finally:
                 self.pantalla = pantallaReal
-            self.pantalla.blit(self.mundo, (-self.maze.camaraX, 0))
+            # Franja del HUD (arriba) y, debajo, la parte del laberinto que enfoca la cámara.
+            vista = self.vistaCamara()
+            self.pantalla.blit(self.mundo, (0, 0), (vista.x, 0, SCREEN_WIDTH, BIAS))
+            self.pantalla.blit(self.mundo, (0, BIAS), (vista.x, vista.y + BIAS, SCREEN_WIDTH, SCREEN_HEIGHT - BIAS))
 
         self.iteracion += 1
 

@@ -23,7 +23,7 @@ def nivel_real(n):
 
 def nivel(fondo, objetos=None, spawn=(1, 1), nombres=NOMBRES):
     alto, ancho = len(fondo), len(fondo[0])
-    objetos = objetos or [[0] * ancho for _ in range(alto)]
+    objetos = objetos or [fila[:] for fila in fondo]     # sin objetos: Objects repite el fondo
     return LevelData(path="prueba.json", tileNames=list(nombres), width=ancho, height=alto,
                      tileWidth=32, tileHeight=32, playerSpawnX=spawn[0], playerSpawnY=spawn[1],
                      layers=[Layer("Background", fondo), Layer("Objects", objetos)])
@@ -36,11 +36,12 @@ FONDO_OK = [
     [W, F, W, F, W],
     [W, W, W, W, W],
 ]
+# Objects repite el fondo (Wall / Floor) donde no hay objeto.
 OBJETOS_OK = [
-    [0, 0, 0, 0, 0],
-    [0, 0, B, D, 0],
-    [0, 0, 0, E, 0],
-    [0, 0, 0, 0, 0],
+    [W, W, W, W, W],
+    [W, F, B, D, W],
+    [W, F, W, E, W],
+    [W, W, W, W, W],
 ]
 
 
@@ -83,10 +84,13 @@ def test_analizar_nivel_correcto():
     (lambda: nivel(con(FONDO_OK, 2, 1, W), OBJETOS_OK), "no se pueden alcanzar desde el inicio"),
     (lambda: nivel(con(FONDO_OK, 2, 1, W), OBJETOS_OK), "dividido en 2 zonas"),
     (lambda: nivel(con(FONDO_OK, 0, 1, F), OBJETOS_OK), "borde no está cerrado"),
-    (lambda: nivel(FONDO_OK, con(OBJETOS_OK, 1, 1, F)), "tile 'Floor'"),
+    (lambda: nivel(FONDO_OK, con(OBJETOS_OK, 0, 0, F)), "no coincide con el fondo en 1 casilla(s). "
+                                                        "La primera, (0, 0): Objects dice Floor y el fondo Wall"),
+    (lambda: nivel(FONDO_OK, con(OBJETOS_OK, 1, 1, W)), "Objects dice Wall y el fondo Floor"),
+    (lambda: nivel(FONDO_OK, con(OBJETOS_OK, 1, 1, 0)), "1 casilla(s) vacías (0)"),
     (lambda: nivel(FONDO_OK, con(OBJETOS_OK, 0, 0, B)), "'Bone' están sobre una pared"),
     (lambda: nivel(FONDO_OK, con(OBJETOS_OK, 1, 2, 9)), "id 9"),
-    (lambda: nivel(FONDO_OK, con(OBJETOS_OK, 3, 2, 0)), "no tiene salida"),
+    (lambda: nivel(FONDO_OK, con(OBJETOS_OK, 3, 2, F)), "no tiene salida"),
     (lambda: nivel(FONDO_OK, con(OBJETOS_OK, 1, 2, E)), "2 salidas"),
     (lambda: nivel(con(FONDO_OK, 2, 2, B), OBJETOS_OK), "no son Floor ni Wall"),
 ])
@@ -101,7 +105,7 @@ def test_analizar_objeto_inalcanzable():
         [W, F, W, F, W],
         [W, W, W, W, W],
     ]
-    objetos = [[0] * 5, [0, 0, 0, E, 0], [0] * 5]
+    objetos = con(fondo, 3, 1, E)
     assert any("'Exit' no se pueden alcanzar" in p for p in nivel(fondo, objetos).analizar())
 
 
@@ -125,8 +129,21 @@ def test_levels_sin_problemas(n):
 
 
 @pytest.mark.parametrize("n", range(6))
-def test_levels_sin_tile_floor_en_objetos(n):
-    assert "Floor" not in nivel_real(n).objetos()
+def test_levels_objects_repite_el_fondo(n):
+    # Doble chequeo: Objects lleva Wall en las paredes y Floor (u objeto) en el suelo, sin ceros.
+    n = nivel_real(n)
+    assert n.comprobarObjectsConFondo() == []
+    assert "Floor" not in n.objetos() and "Wall" not in n.objetos()
+
+
+def test_objetos_no_cuenta_floor_ni_wall():
+    assert set(nivel(FONDO_OK, OBJETOS_OK).objetos()) == {"Bone", "DogDown1", "Exit"}
+
+
+def test_objeto_en_pared_y_objects_sin_repetir_el_fondo_a_la_vez():
+    problemas = nivel(FONDO_OK, con(OBJETOS_OK, 0, 0, B)).analizar()
+    assert "1 de 2 'Bone' están sobre una pared" in problemas
+    assert not any("no coincide" in p for p in problemas)
 
 
 def test_level_1_fondo_invertido():
@@ -255,7 +272,7 @@ def test_maze_desde_nivel_pequeno():
 
 
 def test_maze_nivel_demasiado_grande():
-    fondo = [[F] * (H + 1)]
+    fondo = [[F] * (MazeLab.MAX_CASILLAS_H + 1)]
     with pytest.raises(ValueError, match="máximo"):
         MazeLab.Maze(nivel(fondo, spawn=(0, 0)))
 
@@ -420,7 +437,7 @@ def test_confirmarCargaNivel_cancelar_y_avisa_de_problemas(monkeypatch, app, tmp
     datos = {"tileNames": NOMBRES, "width": 5, "height": 4, "tileWidth": 32, "tileHeight": 32,
              "playerSpawnX": 1, "playerSpawnY": 1,
              "layers": [{"name": "Background", "tiles": FONDO_OK},
-                        {"name": "Objects", "tiles": con(OBJETOS_OK, 3, 2, 0)}]}
+                        {"name": "Objects", "tiles": con(OBJETOS_OK, 3, 2, F)}]}
     (tmp_path / "Level_1.json").write_text(json.dumps(datos), encoding="utf-8")
     monkeypatch.setattr(Laberinto, "DIR_NIVELES", str(tmp_path))
     maze_antes = app.maze

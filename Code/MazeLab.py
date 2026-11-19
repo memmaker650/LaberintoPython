@@ -23,10 +23,28 @@ SCREEN_WIDTH = 864
 SCREEN_HEIGHT = 1000
 BIAS = 136
 CASILLA_PIXEL = 32
-NUM_CASILLAS_H = 40
-NUM_CASILLAS_VERTI = 27
-NUM_CASILLAS_CAMARA = 27
-ANCHO_MUNDO = NUM_CASILLAS_H * CASILLA_PIXEL   # ancho del laberinto completo en píxeles (40 casillas)
+# Rejilla del laberinto: como mínimo 40x27 casillas (el laberinto por defecto y los niveles
+# pequeños); un nivel más grande la amplía hasta MAX_CASILLAS_H x MAX_CASILLAS_VERTI (ver definirRejilla).
+REJILLA_MINIMA_H = 40
+REJILLA_MINIMA_VERTI = 27
+MAX_CASILLAS_H = 64
+MAX_CASILLAS_VERTI = 64
+NUM_CASILLAS_H = REJILLA_MINIMA_H
+NUM_CASILLAS_VERTI = REJILLA_MINIMA_VERTI
+NUM_CASILLAS_CAMARA = 27                       # columnas que se ven a la vez
+FILAS_CAMARA = (SCREEN_HEIGHT - BIAS) // CASILLA_PIXEL   # filas que se ven a la vez (27)
+ANCHO_MUNDO = NUM_CASILLAS_H * CASILLA_PIXEL   # ancho del laberinto completo en píxeles
+ALTO_MUNDO = BIAS + NUM_CASILLAS_VERTI * CASILLA_PIXEL   # alto del mundo (HUD + laberinto) en píxeles
+
+
+# Cambia el tamaño de la rejilla (casillas) y del mundo (píxeles). Las casillas se numeran
+# fila * NUM_CASILLAS_H + columna en todo el juego, así que se lee siempre como MazeLab.NUM_CASILLAS_H.
+def definirRejilla(ancho, alto):
+    global NUM_CASILLAS_H, NUM_CASILLAS_VERTI, ANCHO_MUNDO, ALTO_MUNDO
+    NUM_CASILLAS_H, NUM_CASILLAS_VERTI = ancho, alto
+    ANCHO_MUNDO = ancho * CASILLA_PIXEL
+    ALTO_MUNDO = BIAS + alto * CASILLA_PIXEL
+    Maze.M, Maze.N = ancho, alto
 # Código de mazeDataExtra de la luz de alarma ("Alarm" en los niveles JSON).
 CODIGO_ALARMA = OBJETOS_NIVEL["Alarm"]
 MARGEN_CAMARA = 4 * CASILLA_PIXEL              # la cámara se mueve si el jugador se acerca tanto al borde
@@ -63,8 +81,10 @@ class Maze:
     M = NUM_CASILLAS_H
     N = NUM_CASILLAS_VERTI
 
-    # Cámara horizontal: x del mundo que se ve en el borde izquierdo de la pantalla.
+    # Cámara: x del mundo que se ve en el borde izquierdo de la pantalla y desplazamiento vertical
+    # (camaraY = 0: se ve la primera fila del laberinto justo debajo del HUD).
     camaraX = 0
+    camaraY = 0
     camaraFija = False  # True si todo el suelo cabe en pantalla: la cámara no se desplaza.
 
     posicionInitJugador = int = 0
@@ -137,8 +157,12 @@ class Maze:
     ObjetosNoPintar = []
 
     def __init__(self, nivel=None):
+        # El laberinto por defecto mide 40x27; cargarNivel la amplía si el nivel es más grande.
+        if nivel is None:
+            definirRejilla(REJILLA_MINIMA_H, REJILLA_MINIMA_VERTI)
         self.M = NUM_CASILLAS_H
         self.N = NUM_CASILLAS_VERTI
+        self.camaraX = self.camaraY = 0
 
         # Casillas donde el nivel sitúa enemigos (vacía con el laberinto por defecto).
         self.posicionesEnemigos = []
@@ -218,8 +242,12 @@ class Maze:
     # El nivel se coloca dentro de la rejilla de NUM_CASILLAS_H x NUM_CASILLAS_VERTI,
     # desplazado una casilla si cabe, para que quede rodeado de paredes aunque su borde esté abierto.
     def cargarNivel(self, nivel):
-        if nivel.width > self.M or nivel.height > self.N:
-            raise ValueError(f"El nivel mide {nivel.width}x{nivel.height}; el máximo es {self.M}x{self.N}")
+        if nivel.width > MAX_CASILLAS_H or nivel.height > MAX_CASILLAS_VERTI:
+            raise ValueError(f"El nivel mide {nivel.width}x{nivel.height}; "
+                             f"el máximo es {MAX_CASILLAS_H}x{MAX_CASILLAS_VERTI}")
+        # La rejilla crece con el nivel (nunca baja de 40x27, como hasta ahora).
+        definirRejilla(max(REJILLA_MINIMA_H, nivel.width), max(REJILLA_MINIMA_VERTI, nivel.height))
+        self.M, self.N = NUM_CASILLAS_H, NUM_CASILLAS_VERTI
 
         ox = 1 if nivel.width + 2 <= self.M else 0
         oy = 1 if nivel.height + 2 <= self.N else 0
@@ -486,9 +514,27 @@ class Maze:
     # La cámara sigue al jugador (posicionX = x del jugador en el mundo): se desplaza cuando se
     # acerca a MARGEN_CAMARA del borde de la pantalla, sin salirse del laberinto. Devuelve camaraX.
     def moverCamara(self, posicionX, posicionY=None):
+        # Horizontal (camaraFija: todo el suelo cabe en las columnas visibles).
         if self.camaraFija:
             self.camaraX = 0
-            return self.camaraX
+        else:
+            enPantalla = posicionX - self.camaraX
+            if enPantalla > SCREEN_WIDTH - MARGEN_CAMARA - CASILLA_PIXEL:
+                self.camaraX = posicionX - (SCREEN_WIDTH - MARGEN_CAMARA - CASILLA_PIXEL)
+            elif enPantalla < MARGEN_CAMARA:
+                self.camaraX = posicionX - MARGEN_CAMARA
+            self.camaraX = int(max(0, min(self.camaraX, ANCHO_MUNDO - SCREEN_WIDTH)))
+
+        # Vertical: lo mismo con las filas. posicionY es la y del jugador en el mundo (con el HUD).
+        # Con 27 filas o menos el laberinto cabe entero y camaraY se queda en 0.
+        if posicionY is not None:
+            enPantalla = posicionY - self.camaraY
+            if enPantalla > SCREEN_HEIGHT - MARGEN_CAMARA - CASILLA_PIXEL:
+                self.camaraY = posicionY - (SCREEN_HEIGHT - MARGEN_CAMARA - CASILLA_PIXEL)
+            elif enPantalla < BIAS + MARGEN_CAMARA:
+                self.camaraY = posicionY - (BIAS + MARGEN_CAMARA)
+        self.camaraY = int(max(0, min(self.camaraY, ALTO_MUNDO - SCREEN_HEIGHT)))
+        return self.camaraX
         enPantalla = posicionX - self.camaraX
         if enPantalla > SCREEN_WIDTH - MARGEN_CAMARA - CASILLA_PIXEL:
             self.camaraX = posicionX - (SCREEN_WIDTH - MARGEN_CAMARA - CASILLA_PIXEL)
@@ -674,12 +720,12 @@ class Maze:
 
         eqCasilla = Maze.calcularCasilla(x, y)
 
-        if x >= ANCHO_MUNDO or y > SCREEN_HEIGHT or x < 0 or y < 0:
+        if x >= ANCHO_MUNDO or y >= ALTO_MUNDO or x < 0 or y < 0:
             logging.info("esAlcanzble : X= %s and Y= %s", x, y)
             if x >= ANCHO_MUNDO or x < 0 :
                 logging.info("esAlcanzble : X fuera de rango. %s", x)
                 return False
-            elif y > SCREEN_HEIGHT or y < 0:
+            elif y >= ALTO_MUNDO or y < 0:
                 logging.info("esAlcanzble : Y fuera de rango. %s", y)
                 return False
             else:

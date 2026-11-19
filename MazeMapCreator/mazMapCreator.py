@@ -1,17 +1,19 @@
 """
 MazeMapCreator: editor gráfico de niveles para el juego (pygame-ce o pygame).
 
-    python3 MazeMapCreator/maze_map_creator.py [nivel.json]
+    python3 MazeMapCreator/mazMapCreator.py [nivel.json]
 
   - Izquierda: elementos (suelo, pared, inicio del jugador, enemigo, puerta, oro...). Clic para elegir.
   - Centro: el mapa. Botón izquierdo pinta (se puede arrastrar); botón derecho quita el objeto
     de la casilla o, si no hay, pone pared.
   - Arriba a la derecha: tamaño del mapa en casillas (X, Y) y "Aplicar".
   - Importar / Exportar: niveles JSON de la carpeta Levels/ (también se puede arrastrar un .json
-    a la ventana para abrirlo).
+    a la ventana para abrirlo). Al importar mandan las casillas: si width/height u otras dimensiones
+    del fichero no cuadran con ellas, se pregunta si se quiere corregir el fichero (sólo eso).
   - Atajos: Ctrl/Cmd+Z deshacer, Ctrl/Cmd+O importar, Ctrl/Cmd+S exportar, ESC cerrar diálogo.
 """
 
+import json
 import os
 import sys
 
@@ -86,7 +88,9 @@ class Editor:
         self.deshacer = []
         self.herramienta = PARED
         self.trazo = None                # (botón, estado antes del trazo, última casilla)
-        self.dialogo = None              # None, "importar", "exportar", "sobrescribir", "salir"
+        self.dialogo = None              # None, "importar", "exportar", "sobrescribir", "salir", "corregir"
+        self.datosFichero = None         # JSON importado con errores de dimensiones (para corregirlo)
+        self.erroresFichero = []
         self.textoFichero = ""
         self.desplazamientoLista = 0
         self.salir = False
@@ -203,7 +207,10 @@ class Editor:
 
     def importar(self, ruta):
         try:
-            nuevo, avisos = Mapa.importar(ruta)
+            with open(ruta, "r", encoding="utf-8") as f:
+                datos = json.load(f)
+            nuevo, avisos = Mapa.desdeJson(datos)
+            errores = modelo.erroresDimensiones(datos)
         except (OSError, ValueError, TypeError, AttributeError) as error:
             self.avisar(f"No se puede importar {os.path.basename(ruta)}: {error}", COLOR_AVISO)
             return False
@@ -214,7 +221,36 @@ class Editor:
         self.cambios = bool(avisos)      # si se ha corregido algo, el fichero ya no es igual
         texto = f"Importado {os.path.basename(ruta)} ({nuevo.ancho}x{nuevo.alto})."
         self.avisar(texto + (" " + " · ".join(avisos) if avisos else ""), COLOR_AVISO if avisos else COLOR_OK)
+        # Dimensiones mal definidas en el fichero: se pregunta si se corrigen en el propio fichero.
+        self.datosFichero, self.erroresFichero = (datos, errores) if errores else (None, [])
+        if errores:
+            self.dialogo = "corregir"
         return True
+
+    # Botón "Corregir" del aviso de dimensiones: reescribe el fichero importado cambiando sólo lo
+    # que está mal (width/height y filas incompletas); el resto del fichero queda igual.
+    def corregirFichero(self):
+        self.dialogo = None
+        corregido = modelo.corregirDimensiones(self.datosFichero)
+        try:
+            with open(self.ruta, "w", encoding="utf-8") as f:
+                f.write(modelo.textoNivel(corregido))
+        except OSError as error:
+            self.avisar(f"No se puede corregir {os.path.basename(self.ruta)}: {error}", COLOR_AVISO)
+            return False
+        _, avisos = Mapa.desdeJson(corregido)
+        self.cambios = bool(avisos)
+        self.avisar(f"Corregido {os.path.basename(self.ruta)}: ahora mide {corregido['width']}x{corregido['height']} "
+                    f"({len(self.erroresFichero)} error(es) de dimensiones).", COLOR_OK)
+        self.datosFichero, self.erroresFichero = None, []
+        return True
+
+    def noCorregirFichero(self):
+        self.dialogo = None
+        self.datosFichero, self.erroresFichero = None, []
+        self.cambios = True              # lo que se ve ya no es igual que el fichero
+        self.avisar(f"{os.path.basename(self.ruta)} no se ha corregido; al exportarlo se escribirán las "
+                    f"dimensiones de las casillas.", COLOR_AVISO)
 
     def exportar(self, ruta):
         try:
@@ -379,7 +415,8 @@ class Editor:
 
     # ---------- Diálogos ----------
     def rectDialogo(self):
-        rect = pygame.Rect(0, 0, 520, 420 if self.dialogo == "importar" else 200)
+        alto = {"importar": 420, "corregir": 330}.get(self.dialogo, 200)
+        rect = pygame.Rect(0, 0, 560 if self.dialogo == "corregir" else 520, alto)
         rect.center = self.pantalla.get_rect().center
         return rect
 
@@ -397,6 +434,14 @@ class Editor:
 
     def manejarDialogo(self, ev):
         si, no = self.botonesDialogo()
+        if self.dialogo == "corregir":
+            if (ev.type == pygame.KEYDOWN and ev.key in (pygame.K_RETURN, pygame.K_KP_ENTER)) or \
+                    (ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and si.collidepoint(ev.pos)):
+                self.corregirFichero()
+            elif (ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE) or \
+                    (ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and no.collidepoint(ev.pos)):
+                self.noCorregirFichero()
+            return
         if ev.type == pygame.KEYDOWN and ev.key == pygame.K_ESCAPE:
             self.dialogo = "exportar" if self.dialogo == "sobrescribir" else None
             return
@@ -581,6 +626,22 @@ class Editor:
             self.textoEn("También puedes arrastrar un .json a la ventana.", (rect.x + 20, rect.bottom - 46),
                          TEXTO_SUAVE, self.fuentePequena)
             self.boton(no, "Cancelar")
+        elif self.dialogo == "corregir":
+            self.textoEn("Errores en las dimensiones", (rect.x + 20, rect.y + 18), COLOR_AVISO, self.fuenteTitulo)
+            self.textoEn(f"{os.path.basename(self.ruta)}: mandan las casillas.", (rect.x + 20, rect.y + 56),
+                         TEXTO_SUAVE, ancho=rect.width - 40)
+            y = rect.y + 90
+            lineas = [linea for error in self.erroresFichero[:5]
+                      for linea in self.partirTexto("• " + error, self.fuente, rect.width - 40)]
+            if len(self.erroresFichero) > 5:
+                lineas.append(f"… y {len(self.erroresFichero) - 5} más")
+            for linea in lineas[:6]:
+                self.textoEn(linea, (rect.x + 20, y))
+                y += 24
+            self.textoEn("¿Corregirlo en el fichero? Sólo se cambia lo que está mal.",
+                         (rect.x + 20, rect.bottom - 90), TEXTO, self.fuentePequena)
+            self.boton(si, "Corregir")
+            self.boton(no, "No")
         elif self.dialogo == "exportar":
             self.textoEn("Exportar a Levels/", (rect.x + 20, rect.y + 18), TEXTO, self.fuenteTitulo)
             campo = pygame.Rect(rect.x + 20, rect.y + 70, rect.width - 40, 38)
@@ -598,6 +659,19 @@ class Editor:
             self.textoEn(detalle, (rect.x + 20, rect.y + 70), TEXTO_SUAVE)
             self.boton(si, texto)
             self.boton(no, "Cancelar")
+
+    @staticmethod
+    def partirTexto(texto, fuente, ancho):
+        # Parte el texto en líneas que quepan en 'ancho' (las siguientes, con sangría).
+        lineas, actual = [], ""
+        for palabra in texto.split():
+            prueba = f"{actual} {palabra}" if actual else palabra
+            if actual and fuente.size(prueba)[0] > ancho:
+                lineas.append(actual)
+                actual = "   " + palabra
+            else:
+                actual = prueba
+        return lineas + [actual] if actual else lineas
 
     def actualizarTitulo(self):
         nombre = os.path.basename(self.ruta) if self.ruta else "sin guardar"

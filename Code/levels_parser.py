@@ -23,6 +23,8 @@ OBJETOS_NIVEL = {
     "Alarm": 16,        # luz de alarma
     "Door": 33,         # puerta
 }
+# Tiles del fondo. En la capa Objects marcan las casillas sin objeto (y deben coincidir con el fondo).
+BASES = ("Floor", "Wall")
 
 
 @dataclass
@@ -109,6 +111,9 @@ class LevelData:
     # Los ids de tile empiezan en 1 y apuntan a tileNames (0 = vacío):
     # 1 Floor, 2 Wall, 3 Bone, 4 DogDown1, 5 Exit... Los objetos que se
     # pueden poner en la capa Objects están en OBJETOS_NIVEL.
+    # La capa Objects repite también el fondo: Wall en las paredes y, en el suelo, Floor o
+    # el objeto de la casilla. Así no se pueden poner objetos en paredes y se comprueba dos
+    # veces que el fondo es el que se quería (ver analizar).
     # ----------------------------------------------------------------
     def tile_name(self, tile_id: int) -> Optional[str]:
         if 1 <= tile_id <= len(self.tileNames):
@@ -148,10 +153,10 @@ class LevelData:
         return sorted(zonas, reverse=True)
 
     def objetos(self) -> Dict[str, List[tuple]]:
-        # {nombre: [(x, y), ...]} de la capa Objects.
+        # {nombre: [(x, y), ...]} de la capa Objects. Floor y Wall no son objetos (repiten el fondo).
         resultado: Dict[str, List[tuple]] = {}
         for y, x, tile_id in self.tiles_iter("Objects"):
-            if tile_id:
+            if tile_id and self.tile_name(tile_id) not in BASES:
                 nombre = self.tile_name(tile_id) or f"id {tile_id}"
                 resultado.setdefault(nombre, []).append((x, y))
         return resultado
@@ -198,12 +203,10 @@ class LevelData:
         if borde:
             problemas.append(f"El borde no está cerrado: {len(borde)} casillas de suelo en el borde del mapa")
 
+        problemas += self.comprobarObjectsConFondo()
+
         objetos = self.objetos()
         for nombre, posiciones in sorted(objetos.items()):
-            if nombre == "Floor":
-                problemas.append(f"La capa Objects contiene {len(posiciones)} tile 'Floor' "
-                                 f"(no es un objeto) en {posiciones}")
-                continue
             if nombre.startswith("id "):
                 problemas.append(f"La capa Objects usa un {nombre} que no existe en tileNames")
             elif nombre not in OBJETOS_NIVEL and not nombre.startswith("Dog"):
@@ -221,6 +224,27 @@ class LevelData:
             problemas.append("El nivel no tiene salida ('Exit')")
         elif len(salidas) > 1:
             problemas.append(f"El nivel tiene {len(salidas)} salidas")
+        return problemas
+
+    def comprobarObjectsConFondo(self) -> List[str]:
+        # Doble chequeo: en cada casilla, Objects debe decir Wall si el fondo es pared, y Floor
+        # (o un objeto) si es suelo. Un objeto sobre pared lo avisa analizar() aparte.
+        vacias, distintas = [], []
+        for y, x, tile_id in self.tiles_iter("Objects"):
+            nombre = self.tile_name(tile_id) if tile_id else None
+            if not tile_id:
+                vacias.append((x, y))
+            elif nombre in BASES and nombre != ("Floor" if self.es_suelo(x, y) else "Wall"):
+                distintas.append((x, y, nombre))
+        problemas = []
+        if vacias:
+            problemas.append(f"La capa Objects tiene {len(vacias)} casilla(s) vacías (0); deben llevar "
+                             f"Floor, Wall o un objeto. La primera, {vacias[0]}")
+        if distintas:
+            x, y, nombre = distintas[0]
+            fondo = self.tile_name(self.get_tile("Background", x, y) or 0)
+            problemas.append(f"La capa Objects no coincide con el fondo en {len(distintas)} casilla(s). "
+                             f"La primera, ({x}, {y}): Objects dice {nombre} y el fondo {fondo}")
         return problemas
 
     def mismo_mapa(self, otro: "LevelData") -> bool:

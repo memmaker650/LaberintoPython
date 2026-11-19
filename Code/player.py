@@ -156,7 +156,7 @@ class Disparos(pygame.sprite.Sprite):
             self.kill()
         elif self.rect.y < BIAS:
             self.kill()
-        elif self.rect.y > SCREEN_HEIGHT:
+        elif self.rect.y > MazeLab.ALTO_MUNDO:  # el mundo puede ser más alto que la pantalla
             self.kill()
 
 

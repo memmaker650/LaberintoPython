@@ -1,4 +1,4 @@
-# Editor de niveles MazeMapCreator: modelo (mapa.py) e interfaz (maze_map_creator.py).
+# Editor de niveles MazeMapCreator: modelo (mapa.py) e interfaz (mazMapCreator.py).
 import json
 import os
 import sys
@@ -13,7 +13,7 @@ if DIR_EDITOR not in sys.path:
     sys.path.insert(0, DIR_EDITOR)
 
 import mapa as modelo  # noqa: E402
-import maze_map_creator as mmc  # noqa: E402
+import mazMapCreator as mmc  # noqa: E402
 from levels_parser import LevelParser  # noqa: E402
 from mapa import BORRAR, ENEMIGO, INICIO, PARED, SUELO, Mapa  # noqa: E402
 
@@ -24,7 +24,7 @@ def json_nivel(ancho, alto, fondo=None, objetos=None, inicio=(1, 1), nombres=Non
     nombres = nombres or ["Floor", "Wall", "Exit", "Gold", "DogDown1", "Door"]
     fondo = fondo or [[2 if x in (0, ancho - 1) or y in (0, alto - 1) else 1 for x in range(ancho)]
                       for y in range(alto)]
-    objetos = objetos or [[0] * ancho for _ in range(alto)]
+    objetos = objetos or [fila[:] for fila in fondo]          # Objects repite el fondo
     return dict(tileNames=nombres, width=ancho, height=alto, tileWidth=32, tileHeight=32,
                 playerSpawnX=inicio[0], playerSpawnY=inicio[1],
                 layers=[{"name": "Background", "tiles": fondo}, {"name": "Objects", "tiles": objetos}], **extra)
@@ -120,14 +120,17 @@ def test_importar_cabecera_que_no_cuadra_con_las_casillas():
     datos["width"] = datos["height"] = 27
     m, avisos = Mapa.desdeJson(datos)
     assert (m.ancho, m.alto) == (48, 32)
-    assert avisos == ["La cabecera dice 27x27 pero las casillas son 48x32: se usa 48x32"]
+    assert avisos == ["Las dimensiones del fichero no cuadran con sus casillas: se usa 48x32"]
+    assert modelo.erroresDimensiones(datos) == ["width es 27 pero las casillas tienen 48 columnas",
+                                                "height es 27 pero las casillas tienen 32 filas"]
 
 
 def test_importar_convierte_los_ids_por_nombre():
     # Los niveles antiguos tienen otros tileNames: se traducen por nombre a los ids de Level_0.
-    objetos = [[0] * 6 for _ in range(5)]
+    datos = json_nivel(6, 5, inicio=(2, 1))
+    objetos = datos["layers"][1]["tiles"]
     objetos[1][1], objetos[2][3], objetos[3][4] = 3, 4, 6     # Exit, Gold, Door
-    m, avisos = Mapa.desdeJson(json_nivel(6, 5, objetos=objetos, inicio=(2, 1)))
+    m, avisos = Mapa.desdeJson(datos)
     assert avisos == [] and m.inicio == (2, 1)
     assert m.objetos == {(1, 1): "Exit", (3, 2): "Gold", (4, 3): "Door"}
     datos = m.aJson()
@@ -136,13 +139,43 @@ def test_importar_convierte_los_ids_por_nombre():
     assert datos["layers"][1]["tiles"][1][1] == ids["Exit"] and datos["layers"][1]["tiles"][3][4] == ids["Door"]
 
 
+def test_exportar_objects_repite_el_fondo():
+    m = Mapa(6, 5)
+    m.pintar(2, 2, "Gold")
+    fondo, objetos = (c["tiles"] for c in m.aJson()["layers"])
+    ids = {n: i + 1 for i, n in enumerate(modelo.TILE_NAMES)}
+    assert objetos[2][2] == ids["Gold"]
+    assert all(objetos[y][x] == fondo[y][x] for y in range(5) for x in range(6) if (x, y) != (2, 2))
+    assert 0 not in sum(objetos, [])
+
+
+def test_importar_formato_antiguo_con_ceros():
+    datos = json_nivel(6, 5)
+    datos["layers"][1]["tiles"] = [[0] * 6 for _ in range(5)]
+    datos["layers"][1]["tiles"][2][2] = 4                       # Gold
+    m, avisos = Mapa.desdeJson(datos)
+    assert m.objetos == {(2, 2): "Gold"}
+    assert avisos == ["La capa Objects tiene 29 casilla(s) vacías (formato antiguo): al exportar se rellenan "
+                      "con Floor y Wall"]
+    assert m.problemas() == ["El nivel no tiene salida ('Exit')"]      # lo exportado ya no tiene ceros
+
+
+def test_importar_objects_que_no_coincide_con_el_fondo():
+    datos = json_nivel(6, 5)
+    datos["layers"][1]["tiles"][2][2] = 2                       # Objects dice Wall; el fondo, Floor
+    datos["layers"][1]["tiles"][0][0] = 1                       # Objects dice Floor; el fondo, Wall
+    m, avisos = Mapa.desdeJson(datos)
+    assert avisos == ["La capa Objects no coincide con el fondo en 2 casilla(s): se usa el fondo"]
+    assert m.fondo[2][2] == SUELO and m.fondo[0][0] == PARED
+
+
 def test_importar_avisa_de_lo_raro():
     fondo = [[2] * 5, [2, 1, 3, 1, 2], [2, 1, 1, 1], [2] * 5, [2] * 5]
     objetos = [[0] * 5 for _ in range(5)]
     objetos[1][1] = 9                                          # id que no existe
     m, avisos = Mapa.desdeJson(json_nivel(5, 5, fondo=fondo, objetos=objetos, inicio=(9, 9)))
     assert m.fondo[1][2] == PARED and m.fondo[2][4] == PARED and m.inicio is None
-    assert any("filas más cortas" in a for a in avisos)
+    assert any("no cuadran con sus casillas" in a for a in avisos)
     assert any("no eran Floor ni Wall" in a for a in avisos)
     assert any("id 9" in a for a in avisos)
     assert any("fuera del mapa" in a for a in avisos)
@@ -176,10 +209,16 @@ def test_problemas_como_los_del_juego():
 
 
 def test_problema_mapa_mas_grande_que_el_juego():
-    m = Mapa()                                                 # 32x32 por defecto
-    assert m.problemas()[0] == "El juego admite como máximo 40x27 casillas; este mapa mide 32x32"
-    m.redimensionar(40, 27)
+    m = Mapa(65, 30)
+    assert m.problemas()[0] == "El juego admite como máximo 64x64 casillas; este mapa mide 65x30"
+    m.redimensionar(64, 64)
     assert not any("como máximo" in p for p in m.problemas())
+    assert not any("como máximo" in p for p in Mapa().problemas())    # 32x32 ya cabe (scroll vertical)
+
+
+def test_maximo_igual_que_el_del_juego():
+    import MazeLab
+    assert (modelo.MAX_ANCHO_JUEGO, modelo.MAX_ALTO_JUEGO) == (MazeLab.MAX_CASILLAS_H, MazeLab.MAX_CASILLAS_VERTI)
 
 
 # ---------- Interfaz ----------
@@ -355,9 +394,120 @@ def test_arrastrar_un_json_a_la_ventana(editor, tmp_path):
     assert (editor.mapa.ancho, editor.mapa.alto) == (12, 9) and [c.texto for c in editor.campos] == ["12", "9"]
 
 
-def test_importa_level_3_aunque_la_cabecera_no_cuadre(editor):
-    assert editor.importar(os.path.join(NIVELES, "Level_3.json")) is True
+# ---------- Errores de dimensiones: mandan las casillas y se ofrece corregir el fichero ----------
+
+def nivel_mal(carpeta, nombre="Mal.json"):
+    # Cabecera 27x27, casillas 30x20; la fila 3 del fondo y la 5 de objetos más cortas; a Objects le
+    # faltan 2 filas. Lleva claves propias (oscuridad, autor) que deben quedar igual.
+    datos = json_nivel(30, 20, inicio=(2, 2), oscuridad=0.5)
+    datos["width"] = datos["height"] = 27
+    datos["autor"] = "Jorge"
+    fondo, objetos = datos["layers"][0]["tiles"], datos["layers"][1]["tiles"]
+    fondo[3] = fondo[3][:25]
+    objetos[1][1] = 3                       # Exit (id 3 en estos tileNames)
+    objetos[5] = objetos[5][:10]
+    del objetos[18:]
+    ruta = carpeta / nombre
+    ruta.write_text(json.dumps(datos), encoding="utf-8")
+    return ruta, datos
+
+
+def test_errores_de_dimensiones(tmp_path):
+    _, datos = nivel_mal(tmp_path)
+    assert modelo.dimensionesReales(datos) == (30, 20)
+    assert modelo.erroresDimensiones(datos) == [
+        "width es 27 pero las casillas tienen 30 columnas",
+        "height es 27 pero las casillas tienen 20 filas",
+        "La capa Background tiene 1 fila(s) con menos de 30 columnas (la primera, la 3)",
+        "La capa Objects tiene 18 filas de 20",
+        "La capa Objects tiene 1 fila(s) con menos de 30 columnas (la primera, la 5)",
+    ]
+
+
+@pytest.mark.parametrize("fichero", [f for f in sorted(os.listdir(NIVELES)) if f.endswith(".json") and f != "Level_3.json"])
+def test_los_niveles_del_juego_no_tienen_errores_de_dimensiones(fichero):
+    with open(os.path.join(NIVELES, fichero), encoding="utf-8") as f:
+        assert modelo.erroresDimensiones(json.load(f)) == []
+
+
+def test_corregir_cambia_solo_lo_que_esta_mal(tmp_path):
+    _, datos = nivel_mal(tmp_path)
+    corregido = modelo.corregirDimensiones(datos)
+    assert modelo.erroresDimensiones(corregido) == []
+    assert (corregido["width"], corregido["height"]) == (30, 20)
+    fondo, objetos = corregido["layers"][0]["tiles"], corregido["layers"][1]["tiles"]
+    assert fondo[3] == datos["layers"][0]["tiles"][3] + [2] * 5          # pared (id de Wall)
+    assert objetos[5] == datos["layers"][1]["tiles"][5] + fondo[5][10:]  # Objects repite el fondo
+    assert objetos[18:] == fondo[18:]
+    # Lo demás, igual (y en el mismo orden): tileNames, inicio, oscuridad, claves propias, filas bien.
+    assert list(corregido) == list(datos)
+    for clave in ("tileNames", "playerSpawnX", "playerSpawnY", "oscuridad", "autor", "tileWidth"):
+        assert corregido[clave] == datos[clave]
+    assert fondo[:3] == datos["layers"][0]["tiles"][:3]
+    assert datos["width"] == 27 and len(datos["layers"][1]["tiles"]) == 18   # el original no se toca
+
+
+def test_textoNivel_respeta_el_formato_de_los_niveles():
+    for fichero in ("Level_0.json", "Level_1.json"):
+        ruta = os.path.join(NIVELES, fichero)
+        with open(ruta, encoding="utf-8") as f:
+            texto = f.read()
+        assert modelo.textoNivel(json.loads(texto)) == texto
+
+
+def test_importar_con_errores_abre_el_aviso(editor, tmp_path):
+    ruta, _ = nivel_mal(tmp_path)
+    antes = ruta.read_text(encoding="utf-8")
+    assert editor.importar(str(ruta)) is True
+    assert (editor.mapa.ancho, editor.mapa.alto) == (30, 20)               # mandan las casillas
+    assert editor.dialogo == "corregir" and len(editor.erroresFichero) == 5
     editor.dibujar()
+    assert ruta.read_text(encoding="utf-8") == antes                       # aún no se ha tocado
+
+
+def test_corregir_desde_el_aviso_reescribe_el_fichero(editor, tmp_path):
+    ruta, datos = nivel_mal(tmp_path)
+    editor.importar(str(ruta))
+    si, _ = editor.botonesDialogo()
+    clic(editor, si.center)
+    assert editor.dialogo is None and editor.erroresFichero == []
+    corregido = json.loads(ruta.read_text(encoding="utf-8"))
+    assert corregido == modelo.corregirDimensiones(datos)
+    assert corregido["tileNames"] == datos["tileNames"] and corregido["autor"] == "Jorge"
+    assert "Corregido Mal.json: ahora mide 30x20" in editor.mensaje
+    nivel = LevelParser(str(tmp_path)).load_by_name("Mal.json")             # el juego ya lo acepta
+    assert (nivel.width, nivel.height) == (30, 20)
+    # Volver a importarlo ya no pregunta.
+    editor.importar(str(ruta))
+    assert editor.dialogo is None
+
+
+def test_no_corregir_deja_el_fichero_igual(editor, tmp_path):
+    ruta, _ = nivel_mal(tmp_path)
+    antes = ruta.read_text(encoding="utf-8")
+    editor.importar(str(ruta))
+    _, no = editor.botonesDialogo()
+    clic(editor, no.center)
+    assert editor.dialogo is None and ruta.read_text(encoding="utf-8") == antes and editor.cambios
+    editor.importar(str(ruta))
+    tecla(editor, pygame.K_ESCAPE)                                         # ESC también es "No"
+    assert editor.dialogo is None and ruta.read_text(encoding="utf-8") == antes
+    editor.importar(str(ruta))
+    tecla(editor, pygame.K_RETURN)                                         # INTRO es "Corregir"
+    assert modelo.erroresDimensiones(json.loads(ruta.read_text(encoding="utf-8"))) == []
+
+
+def test_level_3_se_puede_corregir_sin_tocar_el_original(editor, tmp_path):
+    copia = tmp_path / "Level_3.json"
+    copia.write_text(open(os.path.join(NIVELES, "Level_3.json"), encoding="utf-8").read(), encoding="utf-8")
+    original = json.loads(copia.read_text(encoding="utf-8"))
+    editor.importar(str(copia))
+    if editor.dialogo == "corregir":                                       # mientras siga mal definido
+        editor.dibujar()
+        editor.corregirFichero()
+        corregido = json.loads(copia.read_text(encoding="utf-8"))
+        assert (corregido["width"], corregido["height"]) == modelo.dimensionesReales(original)
+        assert corregido["layers"] == original["layers"]
 
 
 def test_salir_con_cambios_pregunta(editor):

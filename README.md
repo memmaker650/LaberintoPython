@@ -191,7 +191,7 @@ capas recortadas a 3×2 para que se lea; en el fichero real tienen `width` × `h
   "oscuridad": 0.9,
   "layers": [
     {"name": "Background", "tiles": [[2, 2, 2], [2, 1, 2]]},
-    {"name": "Objects",    "tiles": [[0, 0, 0], [0, 3, 0]]}
+    {"name": "Objects",    "tiles": [[2, 2, 2], [2, 3, 2]]}
   ]
 }
 ```
@@ -199,9 +199,13 @@ capas recortadas a 3×2 para que se lea; en el fichero real tienen `width` × `h
 - Los números de `tiles` son la posición en `tileNames` **empezando en 1** (0 = vacío):
   1 `Floor` suelo, 2 `Wall` pared, 3 `Bone` hueso, 4 `DogDown1` posición de enemigo, 5 `Exit` salida.
 - `Background`: suelo y paredes. `Objects`: huesos, posibles posiciones de enemigos y la salida.
+  `Objects` repite además el fondo: `Wall` en cada pared y `Floor` en cada suelo sin objeto (nunca 0).
+  Así no se pueden poner objetos sobre paredes y sirve de doble chequeo: el juego avisa si alguna
+  casilla de `Objects` no coincide con el fondo.
 - `playerSpawnX/Y`: casilla de inicio del jugador (columna, fila).
 - `oscuridad` (opcional, 0-1): nivel oscuro; sólo se ve el haz de la linterna. `Level_2` es oscuro (90 %).
-- Tamaño máximo: 40×27 casillas. Si cabe, el nivel se rodea de un marco de paredes.
+- Tamaño máximo: 64×64 casillas (con scroll horizontal y vertical). Si cabe en 40×27, el nivel se
+  rodea de un marco de paredes.
 
 ---
 
