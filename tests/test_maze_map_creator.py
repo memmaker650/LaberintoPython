@@ -1,4 +1,4 @@
-# Editor de niveles MazeMapCreator: modelo (mapa.py) e interfaz (mazMapCreator.py).
+# Editor de niveles MazeMapCreator: modelo (mapa.py) e interfaz (mazeMapCreator.py).
 import json
 import os
 import sys
@@ -13,7 +13,7 @@ if DIR_EDITOR not in sys.path:
     sys.path.insert(0, DIR_EDITOR)
 
 import mapa as modelo  # noqa: E402
-import mazMapCreator as mmc  # noqa: E402
+import mazeMapCreator as mmc  # noqa: E402
 from levels_parser import LevelParser  # noqa: E402
 from mapa import BORRAR, ENEMIGO, INICIO, PARED, SUELO, Mapa  # noqa: E402
 
@@ -86,7 +86,17 @@ def test_redimensionar_conserva_lo_que_cabe():
     m.redimensionar(6, 12)
     assert (m.ancho, m.alto) == (6, 12) and len(m.fondo) == 12 and {len(f) for f in m.fondo} == {6}
     assert m.objetos == {(2, 2): "Exit"} and m.inicio is None
-    assert m.fondo[11] == [PARED] * 6               # casillas nuevas: pared
+    assert m.fondo[11] == [PARED] * 6               # borde nuevo: pared
+    assert m.fondo[10] == [PARED] + [SUELO] * 4 + [PARED]   # el resto de casillas nuevas: suelo
+
+
+def test_agrandar_pone_suelo_y_cierra_el_borde_nuevo():
+    m = Mapa(10, 10)
+    m.redimensionar(15, 13)
+    assert all(m.fondo[y][x] == SUELO for y in range(10, 12) for x in range(1, 14))
+    assert all(m.fondo[y][x] == SUELO for y in range(1, 12) for x in range(10, 14))
+    assert m.fondo[12] == [PARED] * 15 and all(f[14] == PARED for f in m.fondo)
+    assert all(m.fondo[y][9] == PARED for y in range(10)) and m.fondo[9][5] == PARED   # lo antiguo, igual
 
 
 def test_estado_y_restaurar():
@@ -531,3 +541,154 @@ def test_la_ventana_cambia_de_tamano(editor):
     editor.dibujar()
     rect = editor.rectMapa()
     assert editor.superficieMapa.get_size() == rect.size and rect.right <= 900 - mmc.MARGEN
+
+
+# ---------- Zoom, desplazamiento y cámara del juego ----------
+
+def mapa_grande(editor, ancho=64, alto=64):
+    editor.mapa = Mapa(ancho, alto)
+    editor.mapaCambiado()
+    editor.verMapaNuevo()
+
+
+def rueda(editor, x=0, y=0):
+    editor.manejar(pygame.event.Event(pygame.MOUSEWHEEL, x=x, y=y, flipped=False))
+
+
+def test_limites_de_la_camara_como_en_el_juego():
+    import MazeLab
+    assert (modelo.CAMARA_ANCHO, modelo.CAMARA_ALTO) == (MazeLab.NUM_CASILLAS_CAMARA, MazeLab.FILAS_CAMARA)
+    assert (modelo.REJILLA_MINIMA_H, modelo.REJILLA_MINIMA_VERTI) == (MazeLab.REJILLA_MINIMA_H,
+                                                                     MazeLab.REJILLA_MINIMA_VERTI)
+    assert Mapa(64, 50).limitesCamara() == (64 - 27, 50 - 27)
+    assert Mapa(32, 20).limitesCamara() == (40 - 27, 0)       # la rejilla del juego mide al menos 40x27
+    assert Mapa(20, 20).limitesCamara() == (0, 0)             # todo el suelo cabe: cámara fija en horizontal
+    m = Mapa(64, 64)
+    assert m.camaraCentradaEn(32, 32) == (19, 19)
+    assert m.camaraCentradaEn(0, 0) == (0, 0) and m.camaraCentradaEn(63, 63) == (37, 37)
+
+
+def test_zoom_y_desplazamiento_para_editar_todo_el_mapa(editor):
+    mapa_grande(editor)
+    assert editor.zoom is None and editor.rectMapa().size == (64 * 10, 64 * 10)   # entero en la ventana
+    for _ in range(10):
+        tecla(editor, pygame.K_PLUS)
+    c = editor.tamanoCasilla()
+    assert c > 20 and editor.rectMapa().height > editor.zonaMapa().height
+    editor.dibujar()
+    assert editor.superficieMapa.get_size() == editor.zonaMapa().size              # sólo la parte visible
+    # La esquina de abajo a la derecha no se ve hasta desplazarse; luego se puede pintar.
+    for _ in range(100):
+        rueda(editor, y=-1)
+        tecla(editor, pygame.K_RIGHT)
+    rect, zona = editor.rectMapa(), editor.zonaMapa()
+    assert rect.bottomright == zona.bottomright
+    elegir(editor, "Gold")
+    clic(editor, centro_casilla(editor, 62, 62))
+    assert editor.mapa.objetos[(62, 62)] == "Gold"
+    editor.dibujar()
+    assert editor.casillaEn((zona.x + 1, zona.y + 1)) != (0, 0)
+    for _ in range(100):
+        rueda(editor, y=1)
+        rueda(editor, x=-1)
+    assert editor.rectMapa().topleft == zona.topleft
+    tecla(editor, pygame.K_0)
+    assert editor.zoom is None
+
+
+def test_arrastrar_con_el_boton_central(editor):
+    mapa_grande(editor)
+    for _ in range(6):
+        tecla(editor, pygame.K_PLUS)
+    zona = editor.zonaMapa()
+    editor.vista = [0, 0]
+    editor.manejar(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=zona.center, button=2))
+    editor.manejar(pygame.event.Event(pygame.MOUSEMOTION, pos=zona.topleft, rel=(-100, -80), buttons=(0, 1, 0)))
+    editor.manejar(pygame.event.Event(pygame.MOUSEBUTTONUP, pos=zona.topleft, button=2))
+    assert editor.vista == [100, 80] and not editor.mapa.objetos
+
+
+def test_el_zoom_no_baja_de_ver_el_mapa_entero(editor):
+    tamano = editor.tamanoCasilla()
+    tecla(editor, pygame.K_MINUS)
+    assert editor.zoom is None and editor.tamanoCasilla() == tamano
+    editor.calcularBotones()
+    clic(editor, editor.botones["zoomMas"].center)
+    assert editor.tamanoCasilla() > tamano
+    clic(editor, editor.botones["zoomMenos"].center)
+    assert editor.zoom is None
+
+
+@pytest.fixture
+def mayusculas(monkeypatch):
+    # Simula tener pulsada (o no) la tecla Mayúsculas mientras se hace clic.
+    pulsada = {"si": False}
+    monkeypatch.setattr(pygame.key, "get_mods", lambda: pygame.KMOD_SHIFT if pulsada["si"] else 0)
+    return pulsada
+
+
+def test_camara_centrada_donde_diga_el_usuario(editor, mayusculas):
+    mapa_grande(editor)
+    editor.mapa.pintar(40, 40, SUELO)
+    editor.calcularBotones()
+    clic(editor, editor.botones["camara"].center)
+    assert editor.verCamara and editor.camara == (0, 0)          # empieza donde el jugador
+    assert editor.zoom is None                                    # se sigue viendo el nivel entero
+    estado = editor.mapa.estado()
+    mayusculas["si"] = True
+    clic(editor, centro_casilla(editor, 40, 40))
+    assert editor.camara == (27, 27) and editor.mapa.estado() == estado     # mover la cámara no pinta
+    # Arrastrar con Mayúsculas la lleva con el ratón y las flechas la mueven (sin salir del mundo).
+    editor.manejar(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=centro_casilla(editor, 20, 20), button=1))
+    editor.manejar(pygame.event.Event(pygame.MOUSEMOTION, pos=centro_casilla(editor, 30, 25), rel=(0, 0), buttons=(1, 0, 0)))
+    editor.manejar(pygame.event.Event(pygame.MOUSEBUTTONUP, pos=centro_casilla(editor, 30, 25), button=1))
+    assert editor.camara == (17, 12) and editor.mapa.estado() == estado
+    tecla(editor, pygame.K_RIGHT)
+    tecla(editor, pygame.K_DOWN, pygame.KMOD_SHIFT)
+    assert editor.camara == (18, 17)
+    for _ in range(30):
+        tecla(editor, pygame.K_RIGHT, pygame.KMOD_SHIFT)
+    assert editor.camara == (37, 17)
+    # Sin Mayúsculas se pinta como siempre, también fuera de la cámara.
+    mayusculas["si"] = False
+    elegir(editor, "Gold")
+    clic(editor, centro_casilla(editor, 5, 5))
+    assert editor.mapa.objetos[(5, 5)] == "Gold" and editor.verCamara and editor.camara == (37, 17)
+    tecla(editor, pygame.K_c)
+    assert not editor.verCamara
+
+
+def test_la_camara_no_oscurece_el_resto_del_nivel(editor):
+    mapa_grande(editor)
+    editor.dibujar()
+    rect, c = editor.rectMapa(), editor.tamanoCasilla()
+    fuera = (rect.right - c // 2, rect.bottom - c // 2)          # casilla lejos de la cámara
+    antes = editor.pantalla.get_at(fuera)
+    tecla(editor, pygame.K_c)
+    editor.dibujar()
+    assert editor.pantalla.get_at(fuera) == antes
+    camara = editor.rectCamara()
+    assert camara.size == (27 * c, 27 * c)
+    assert editor.pantalla.get_at((camara.x + 1, camara.centery))[:3] == mmc.COLOR_CAMARA   # sólo el borde
+
+
+def test_la_camara_sigue_valida_al_achicar_el_mapa(editor, mayusculas):
+    mapa_grande(editor)
+    tecla(editor, pygame.K_c)
+    mayusculas["si"] = True
+    clic(editor, centro_casilla(editor, 60, 60))
+    assert editor.camara == (37, 37)
+    editor.mapa.redimensionar(50, 30)
+    editor.mapaCambiado()
+    assert editor.camara == (23, 3)
+    editor.dibujar()
+
+
+def test_importar_vuelve_a_ver_el_mapa_entero(editor, tmp_path):
+    mapa_grande(editor)
+    tecla(editor, pygame.K_PLUS)
+    rueda(editor, y=-5)
+    ruta = tmp_path / "Level_7.json"
+    ruta.write_text(json.dumps(json_nivel(50, 50)), encoding="utf-8")
+    editor.importar(str(ruta))
+    assert editor.zoom is None and editor.vista == [0, 0]

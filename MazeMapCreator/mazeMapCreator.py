@@ -1,11 +1,17 @@
 """
 MazeMapCreator: editor gráfico de niveles para el juego (pygame-ce o pygame).
 
-    python3 MazeMapCreator/mazMapCreator.py [nivel.json]
+    python3 MazeMapCreator/mazeMapCreator.py [nivel.json]
 
   - Izquierda: elementos (suelo, pared, inicio del jugador, enemigo, puerta, oro...). Clic para elegir.
   - Centro: el mapa. Botón izquierdo pinta (se puede arrastrar); botón derecho quita el objeto
     de la casilla o, si no hay, pone pared.
+  - Zoom con "-" / "+" (o Ctrl/Cmd + rueda, teclas - + y 0 para ajustar a la ventana). Si el mapa no
+    cabe, se mueve con la rueda (Mayúsculas + rueda en horizontal), las flechas o arrastrando con el
+    botón central: así se edita todo el nivel.
+  - "Cámara" (tecla C): muestra lo que el juego ve a la vez (27x27 casillas). Clic o arrastrar en el
+    mapa con Mayúsculas la centra en esa casilla y las flechas la mueven. Sólo se dibuja su borde: se
+    sigue viendo y pintando todo el nivel.
   - Arriba a la derecha: tamaño del mapa en casillas (X, Y) y "Aplicar".
   - Importar / Exportar: niveles JSON de la carpeta Levels/ (también se puede arrastrar un .json
     a la ventana para abrirlo). Al importar mandan las casillas: si width/height u otras dimensiones
@@ -29,6 +35,9 @@ ALTO_ESTADO = 58
 MARGEN = 10
 ALTO_ELEMENTO = 38
 MAX_DESHACER = 100
+ZOOM_MAXIMO = 48                 # píxeles por casilla con el zoom al máximo
+PASO_RUEDA = 40                  # píxeles que se desplaza el mapa por cada paso de la rueda
+GROSOR_BARRA = 6                 # barras de desplazamiento (sólo indican qué parte se ve)
 
 FONDO = (38, 32, 44)
 PANEL = (52, 44, 60)
@@ -38,11 +47,13 @@ BOTON_ELEGIDO = (216, 75, 32)
 TEXTO = (240, 240, 240)
 TEXTO_SUAVE = (170, 165, 180)
 COLOR_SUELO = (205, 195, 165)
-COLOR_PARED = (75, 62, 52)
+COLOR_PARED = (150, 96, 70)            # ladrillo (no oscuro: no debe parecer una zona desactivada)
+COLOR_JUNTA = (95, 60, 45)             # juntas entre los ladrillos
 COLOR_REJILLA = (30, 26, 34)
 COLOR_OK = (110, 210, 90)
 COLOR_AVISO = (255, 170, 60)
 COLOR_CAMPO = (25, 22, 30)
+COLOR_CAMARA = (80, 200, 255)
 
 # Paleta: (herramienta, etiqueta, imagen en Resources/ o None si se dibuja).
 ELEMENTOS = [
@@ -65,7 +76,10 @@ ELEMENTOS = [
     ("FirstAid", "Botiquín", "medical-box.png"),
     (BORRAR, "Borrar objeto", None),
 ]
-BOTONES_BARRA = [("nuevo", "Nuevo"), ("importar", "Importar"), ("exportar", "Exportar"), ("deshacer", "Deshacer")]
+BOTONES_BARRA = [("nuevo", "Nuevo"), ("importar", "Importar"), ("exportar", "Exportar"), ("deshacer", "Deshacer"),
+                 ("camara", "Cámara")]
+BOTONES_ZOOM = [("zoomMenos", "-"), ("zoomMas", "+")]
+FLECHAS = {pygame.K_LEFT: (-1, 0), pygame.K_RIGHT: (1, 0), pygame.K_UP: (0, -1), pygame.K_DOWN: (0, 1)}
 
 
 class CampoNumero:
@@ -102,7 +116,14 @@ class Editor:
         self.fuenteTitulo = pygame.font.SysFont("Arial", 22, bold=True)
         self.iconos = {}
         self.cacheCasillas = {}
-        self.superficieMapa = None       # mapa ya pintado (se rehace al cambiar)
+        self.superficieMapa = None       # parte visible del mapa ya pintada (se rehace al cambiar)
+        self.claveMapa = None            # (tamaño de casilla, posición, tamaño) de superficieMapa
+        self.zoom = None                 # píxeles por casilla; None = ajustado a la ventana
+        self.vista = [0, 0]              # desplazamiento (píxeles) del mapa cuando no cabe
+        self.arrastrandoVista = False    # botón central pulsado
+        self.verCamara = False           # muestra el borde de la cámara del juego (Mayúsculas+clic la mueve)
+        self.camara = None               # esquina superior izquierda de la cámara, en casillas
+        self.moviendoCamara = False
         self.problemas = self.mapa.problemas()
         self.botones = {}                # nombre -> Rect (los calcula dibujar)
         if ruta:
@@ -114,19 +135,38 @@ class Editor:
         return pygame.Rect(ANCHO_PANEL + MARGEN, ALTO_BARRA + MARGEN,
                            max(10, ancho - ANCHO_PANEL - 2 * MARGEN), max(10, alto - ALTO_BARRA - ALTO_ESTADO - 2 * MARGEN))
 
-    def tamanoCasilla(self):
+    # Tamaño de casilla con el que el mapa entero cabe en la zona central.
+    def tamanoAjustado(self):
         zona = self.zonaMapa()
         return max(2, min(zona.width // self.mapa.ancho, zona.height // self.mapa.alto))
 
+    def tamanoCasilla(self):
+        return self.zoom if self.zoom is not None else self.tamanoAjustado()
+
+    def limitarVista(self):
+        zona, c = self.zonaMapa(), self.tamanoCasilla()
+        for i, (total, visible) in enumerate(((c * self.mapa.ancho, zona.width), (c * self.mapa.alto, zona.height))):
+            self.vista[i] = max(0, min(self.vista[i], total - visible))
+
+    # El mapa entero en la pantalla: centrado si cabe; si no, desplazado según self.vista (y sólo se
+    # ve la parte que cae en zonaMapa()).
     def rectMapa(self):
         zona, c = self.zonaMapa(), self.tamanoCasilla()
         rect = pygame.Rect(0, 0, c * self.mapa.ancho, c * self.mapa.alto)
         rect.center = zona.center
+        self.limitarVista()
+        if rect.width > zona.width:
+            rect.x = zona.x - self.vista[0]
+        if rect.height > zona.height:
+            rect.y = zona.y - self.vista[1]
         return rect
+
+    def rectVisible(self):
+        return self.rectMapa().clip(self.zonaMapa())
 
     def casillaEn(self, pos):
         rect = self.rectMapa()
-        if not rect.collidepoint(pos):
+        if not rect.clip(self.zonaMapa()).collidepoint(pos):
             return None
         c = self.tamanoCasilla()
         return (pos[0] - rect.x) // c, (pos[1] - rect.y) // c
@@ -141,6 +181,9 @@ class Editor:
         for nombre, _ in BOTONES_BARRA:
             b[nombre] = pygame.Rect(x, 14, 96, 36)
             x += 104
+        for nombre, _ in BOTONES_ZOOM:
+            b[nombre] = pygame.Rect(x, 14, 40, 36)
+            x += 48
         # Arriba a la derecha: X [  ]  Y [  ]  [Aplicar]
         b["aplicar"] = pygame.Rect(ancho - MARGEN - 90, 14, 90, 36)
         self.campos[1].rect = pygame.Rect(b["aplicar"].x - 10 - 64, 14, 64, 36)
@@ -156,6 +199,8 @@ class Editor:
         self.cambios = True
         self.superficieMapa = None
         self.problemas = self.mapa.problemas()
+        if self.verCamara:
+            self.limitarCamara()         # el mapa ha podido cambiar de tamaño o de suelo
         for campo, valor in zip(self.campos, (self.mapa.ancho, self.mapa.alto)):
             if not campo.activo:
                 campo.texto = str(valor)
@@ -192,6 +237,91 @@ class Editor:
         self.avisar(f"Mapa de {ancho}x{alto} casillas.")
         return True
 
+    # ---------- Zoom, desplazamiento y cámara ----------
+    def desplazar(self, dx, dy):
+        self.vista[0] += round(dx)
+        self.vista[1] += round(dy)
+        self.limitarVista()
+
+    # sentido > 0 acerca, < 0 aleja (como mucho hasta que el mapa entero cabe) y 0 ajusta a la ventana.
+    # La casilla bajo 'ancla' (el ratón) se queda en el mismo sitio.
+    def cambiarZoom(self, sentido, ancla=None):
+        c, ajustado = self.tamanoCasilla(), self.tamanoAjustado()
+        if sentido > 0:
+            nuevo = min(max(ZOOM_MAXIMO, ajustado), max(c + 1, round(c * 1.25)))
+        elif sentido < 0:
+            nuevo = max(ajustado, min(c - 1, round(c / 1.25)))
+        else:
+            nuevo = ajustado
+        if nuevo == c and (sentido or self.zoom is None):
+            return False
+        zona, rect = self.zonaMapa(), self.rectMapa()
+        ancla = ancla if ancla is not None and rect.clip(zona).collidepoint(ancla) else rect.clip(zona).center
+        fx, fy = (ancla[0] - rect.x) / c, (ancla[1] - rect.y) / c      # punto del mapa, en casillas
+        self.zoom = None if nuevo <= ajustado else nuevo
+        c = self.tamanoCasilla()
+        self.vista = [round(zona.x + fx * c - ancla[0]), round(zona.y + fy * c - ancla[1])]
+        self.limitarVista()
+        self.superficieMapa = None
+        self.avisar(f"Zoom: casillas de {c} px" + (" (todo el mapa)." if self.zoom is None else
+                                                   ". Rueda, flechas o botón central para moverse."))
+        return True
+
+    # Desplaza la vista para que la casilla (x, y) quede en el centro de la zona del mapa.
+    def centrarVistaEn(self, x, y):
+        zona, c = self.zonaMapa(), self.tamanoCasilla()
+        self.vista = [round((x + 0.5) * c - zona.width / 2), round((y + 0.5) * c - zona.height / 2)]
+        self.limitarVista()
+
+    def limitarCamara(self):
+        if self.camara is not None:
+            maxX, maxY = self.mapa.limitesCamara()
+            self.camara = (max(0, min(self.camara[0], maxX)), max(0, min(self.camara[1], maxY)))
+
+    def rectCamara(self):
+        # La cámara en la pantalla (puede salirse del mapa: la rejilla del juego mide al menos 40x27).
+        rect, c = self.rectMapa(), self.tamanoCasilla()
+        return pygame.Rect(rect.x + self.camara[0] * c, rect.y + self.camara[1] * c,
+                           modelo.CAMARA_ANCHO * c, modelo.CAMARA_ALTO * c)
+
+    def avisarCamara(self):
+        x, y = self.camara
+        self.avisar(f"Cámara: columnas {x}-{x + modelo.CAMARA_ANCHO - 1}, filas {y}-{y + modelo.CAMARA_ALTO - 1}. "
+                    f"Mayúsculas + clic (o arrastrar) la centra, flechas la mueven; C la oculta.", COLOR_CAMARA)
+
+    def centrarCamara(self, casilla):
+        self.camara = self.mapa.camaraCentradaEn(*casilla)
+        self.avisarCamara()
+
+    def moverCamara(self, dx, dy):
+        self.camara = (self.camara[0] + dx, self.camara[1] + dy)
+        self.limitarCamara()
+        # Si se sale de lo que se ve, la vista la sigue.
+        x, y = self.camara[0] + modelo.CAMARA_ANCHO // 2, self.camara[1] + modelo.CAMARA_ALTO // 2
+        rect, c = self.rectMapa(), self.tamanoCasilla()
+        if not self.zonaMapa().collidepoint(rect.x + x * c, rect.y + y * c):
+            self.centrarVistaEn(x, y)
+        self.avisarCamara()
+
+    def alternarCamara(self):
+        self.verCamara = not self.verCamara
+        self.terminarTrazo()
+        self.moviendoCamara = False
+        if not self.verCamara:
+            self.avisar("Cámara oculta.")
+            return
+        if self.camara is None:          # la primera vez, donde empieza el jugador (como en el juego)
+            self.camara = self.mapa.camaraCentradaEn(*(self.mapa.inicio or (0, 0)))
+        self.limitarCamara()
+        self.avisarCamara()
+
+    def verMapaNuevo(self):
+        # Al abrir otro mapa: zoom ajustado, vista arriba a la izquierda y cámara en el inicio.
+        self.zoom, self.vista, self.camara = None, [0, 0], None
+        if self.verCamara:
+            self.verCamara = False
+            self.alternarCamara()
+
     def nuevo(self):
         ancho, alto = (campo.valor() for campo in self.campos)
         try:
@@ -203,6 +333,7 @@ class Editor:
         self.mapa = nuevo
         self.ruta = None
         self.mapaCambiado()
+        self.verMapaNuevo()
         self.avisar(f"Mapa nuevo de {nuevo.ancho}x{nuevo.alto} (Deshacer lo recupera).")
 
     def importar(self, ruta):
@@ -218,6 +349,7 @@ class Editor:
         self.mapa = nuevo
         self.ruta = os.path.abspath(ruta)
         self.mapaCambiado()
+        self.verMapaNuevo()
         self.cambios = bool(avisos)      # si se ha corregido algo, el fichero ya no es igual
         texto = f"Importado {os.path.basename(ruta)} ({nuevo.ancho}x{nuevo.alto})."
         self.avisar(texto + (" " + " · ".join(avisos) if avisos else ""), COLOR_AVISO if avisos else COLOR_OK)
@@ -377,6 +509,43 @@ class Editor:
                     campo.texto = str((self.mapa.ancho, self.mapa.alto)[self.campos.index(campo)])
             elif ev.key == pygame.K_ESCAPE:
                 self.pedirSalir()
+            elif ev.key == pygame.K_c:
+                self.alternarCamara()
+            elif ev.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
+                self.cambiarZoom(1, pygame.mouse.get_pos())
+            elif ev.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
+                self.cambiarZoom(-1, pygame.mouse.get_pos())
+            elif ev.key in (pygame.K_0, pygame.K_KP0):
+                self.cambiarZoom(0)
+            elif ev.key in FLECHAS:
+                dx, dy = FLECHAS[ev.key]
+                if self.verCamara:
+                    paso = 5 if ev.mod & pygame.KMOD_SHIFT else 1
+                    self.moverCamara(dx * paso, dy * paso)
+                else:
+                    paso = 3 * self.tamanoCasilla()
+                    self.desplazar(dx * paso, dy * paso)
+        elif ev.type == pygame.MOUSEWHEEL:
+            mods = pygame.key.get_mods()
+            if mods & (pygame.KMOD_CTRL | pygame.KMOD_META):
+                if ev.y:
+                    self.cambiarZoom(1 if ev.y > 0 else -1, pygame.mouse.get_pos())
+            elif mods & pygame.KMOD_SHIFT:
+                self.desplazar(-ev.y * PASO_RUEDA, 0)
+            else:
+                self.desplazar(ev.x * PASO_RUEDA, -ev.y * PASO_RUEDA)
+        elif ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 2:
+            self.arrastrandoVista = self.zonaMapa().collidepoint(ev.pos)
+        elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 2:
+            self.arrastrandoVista = False
+        elif ev.type == pygame.MOUSEMOTION and self.arrastrandoVista:
+            self.desplazar(-ev.rel[0], -ev.rel[1])
+        elif ev.type == pygame.MOUSEMOTION and self.moviendoCamara:
+            casilla = self.casillaEn(ev.pos)
+            if casilla is not None:
+                self.centrarCamara(casilla)
+        elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and self.moviendoCamara:
+            self.moviendoCamara = False
         elif ev.type == pygame.TEXTINPUT:
             campo = next((c for c in self.campos if c.activo), None)
             if campo is not None:
@@ -405,10 +574,15 @@ class Editor:
                 if rect.collidepoint(pos):
                     {"nuevo": self.nuevo, "importar": lambda: self.abrirDialogo("importar"),
                      "exportar": lambda: self.abrirDialogo("exportar"), "deshacer": self.hacerDeshacer,
-                     "aplicar": self.aplicarTamano}[nombre]()
+                     "aplicar": self.aplicarTamano, "camara": self.alternarCamara,
+                     "zoomMenos": lambda: self.cambiarZoom(-1), "zoomMas": lambda: self.cambiarZoom(1)}[nombre]()
                     return
         casilla = self.casillaEn(pos)
-        if casilla is not None:
+        # Con la cámara visible, Mayúsculas + clic la mueve; sin Mayúsculas se pinta como siempre.
+        if casilla is not None and self.verCamara and boton == 1 and pygame.key.get_mods() & pygame.KMOD_SHIFT:
+            self.moviendoCamara = True
+            self.centrarCamara(casilla)
+        elif casilla is not None:
             self.trazo = (boton, self.mapa.estado(), casilla)
             if self.pintarEn(casilla, boton):
                 self.mapaCambiado()
@@ -496,8 +670,10 @@ class Editor:
                 except (pygame.error, FileNotFoundError):
                     self.iconos[fichero] = None
             imagen = self.iconos[fichero]
-        if herramienta in (SUELO, PARED):
-            sup.fill(COLOR_SUELO if herramienta == SUELO else COLOR_PARED)
+        if herramienta == SUELO:
+            sup.fill(COLOR_SUELO)
+        elif herramienta == PARED:
+            self.dibujarLadrillos(sup, tamano)
         elif imagen is not None:
             sup.blit(pygame.transform.smoothscale(imagen.convert_alpha() if pygame.display.get_surface() else imagen,
                                                   (tamano, tamano)), (0, 0))
@@ -518,20 +694,42 @@ class Editor:
         self.cacheCasillas[clave] = sup
         return sup
 
-    def pintarMapa(self):
+    # Pinta sólo la parte visible del mapa (con zoom, el mapa entero podría ser enorme).
+    # Pared: ladrillos con sus juntas (si la casilla es muy pequeña, sólo el color).
+    @staticmethod
+    def dibujarLadrillos(sup, tamano):
+        sup.fill(COLOR_PARED)
+        if tamano < 8:
+            return
+        alto = max(3, tamano // 3)
+        for fila, y in enumerate(range(0, tamano, alto)):
+            pygame.draw.line(sup, COLOR_JUNTA, (0, y), (tamano - 1, y))
+            desfase = 0 if fila % 2 == 0 else tamano // 2
+            for x in (desfase, desfase + tamano // 2):
+                if 0 < x < tamano:
+                    pygame.draw.line(sup, COLOR_JUNTA, (x, y), (x, min(tamano - 1, y + alto - 1)))
+
+    def pintarMapa(self, rect, visible):
         c = self.tamanoCasilla()
-        sup = pygame.Surface((c * self.mapa.ancho, c * self.mapa.alto))
+        sup = pygame.Surface(visible.size)
         sup.fill(COLOR_REJILLA)
+        ox, oy = visible.x - rect.x, visible.y - rect.y        # esquina visible, en píxeles del mapa
+        x0, y0 = ox // c, oy // c
+        x1 = min(self.mapa.ancho, -(-(ox + visible.width) // c))
+        y1 = min(self.mapa.alto, -(-(oy + visible.height) // c))
         hueco = 1 if c >= 6 else 0
-        for y, fila in enumerate(self.mapa.fondo):
-            for x, tipo in enumerate(fila):
-                sup.fill(COLOR_SUELO if tipo == SUELO else COLOR_PARED, (x * c, y * c, c - hueco, c - hueco))
+        suelo, pared = self.icono(SUELO, c - hueco), self.icono(PARED, c - hueco)
+        for y in range(y0, y1):
+            fila = self.mapa.fondo[y]
+            for x in range(x0, x1):
+                sup.blit(suelo if fila[x] == SUELO else pared, (x * c - ox, y * c - oy))
         margen = 1 if c >= 8 else 0
-        for (x, y), nombre in self.mapa.objetos.items():
-            sup.blit(self.icono(nombre, c - 2 * margen), (x * c + margen, y * c + margen))
+        casillas = list(self.mapa.objetos.items())
         if self.mapa.inicio is not None:
-            x, y = self.mapa.inicio
-            sup.blit(self.icono(INICIO, c - 2 * margen), (x * c + margen, y * c + margen))
+            casillas.append((self.mapa.inicio, INICIO))
+        for (x, y), nombre in casillas:
+            if x0 <= x < x1 and y0 <= y < y1:
+                sup.blit(self.icono(nombre, c - 2 * margen), (x * c + margen - ox, y * c + margen - oy))
         return sup
 
     def boton(self, rect, texto, elegido=False, color=None):
@@ -556,11 +754,8 @@ class Editor:
         # Barra superior: botones, nombre del fichero y tamaño (arriba a la derecha).
         pygame.draw.rect(self.pantalla, PANEL, (0, 0, ancho, ALTO_BARRA))
         self.textoEn("MazeMapCreator", (MARGEN, 20), BOTON_ENCIMA, self.fuenteTitulo)
-        for nombre, texto in BOTONES_BARRA:
-            self.boton(self.botones[nombre], texto)
-        nombre = (os.path.basename(self.ruta) if self.ruta else "sin guardar") + (" *" if self.cambios else "")
-        x = self.botones["deshacer"].right + 16
-        self.textoEn(nombre, (x, 24), TEXTO_SUAVE, ancho=max(0, self.campos[0].rect.x - 40 - x))
+        for nombre, texto in BOTONES_BARRA + BOTONES_ZOOM:
+            self.boton(self.botones[nombre], texto, elegido=nombre == "camara" and self.verCamara)
         for campo in self.campos:
             self.textoEn(campo.etiqueta, (campo.rect.x - 20, 22))
             pygame.draw.rect(self.pantalla, COLOR_CAMPO, campo.rect, border_radius=4)
@@ -579,17 +774,26 @@ class Editor:
                 pygame.draw.rect(self.pantalla, BOTON_ELEGIDO if elegido else BOTON, rect, border_radius=5)
             self.pantalla.blit(self.icono(herramienta, 26), (rect.x + 6, rect.y + 4))
             self.textoEn(etiqueta, (rect.x + 42, rect.y + 8))
+        nombre = (os.path.basename(self.ruta) if self.ruta else "sin guardar") + (" *" if self.cambios else "")
+        self.textoEn(nombre, (MARGEN, alto - 28), TEXTO_SUAVE, self.fuentePequena, ancho=ANCHO_PANEL - 2 * MARGEN)
 
         # Centro: el mapa con su cuadrícula.
-        rectMapa = self.rectMapa()
-        # Se rehace al cambiar el mapa o el tamaño de la ventana (cambia el tamaño de casilla).
-        if self.superficieMapa is None or self.superficieMapa.get_size() != rectMapa.size:
-            self.superficieMapa = self.pintarMapa()
-        self.pantalla.blit(self.superficieMapa, rectMapa)
+        rectMapa, zona, c = self.rectMapa(), self.zonaMapa(), self.tamanoCasilla()
+        visible = rectMapa.clip(zona)
+        # Se rehace al cambiar el mapa, el zoom, la vista o el tamaño de la ventana.
+        clave = (c, rectMapa.topleft, visible.size)
+        if self.superficieMapa is None or self.claveMapa != clave:
+            self.superficieMapa, self.claveMapa = self.pintarMapa(rectMapa, visible), clave
+        self.pantalla.blit(self.superficieMapa, visible)
+        self.dibujarBarras(rectMapa, zona)
+        if self.verCamara and self.camara is not None:
+            self.dibujarCamara(zona)
         casilla = self.casillaEn(pygame.mouse.get_pos()) if not self.dialogo else None
         if casilla is not None:
-            c = self.tamanoCasilla()
-            pygame.draw.rect(self.pantalla, BOTON_ENCIMA, (rectMapa.x + casilla[0] * c, rectMapa.y + casilla[1] * c, c, c), 2)
+            self.pantalla.set_clip(zona)
+            pygame.draw.rect(self.pantalla, COLOR_CAMARA if self.verCamara else BOTON_ENCIMA,
+                             (rectMapa.x + casilla[0] * c, rectMapa.y + casilla[1] * c, c, c), 2)
+            self.pantalla.set_clip(None)
 
         # Barra de estado: casilla, último mensaje y problemas para el juego.
         y = alto - ALTO_ESTADO
@@ -606,6 +810,28 @@ class Editor:
 
         if self.dialogo:
             self.dibujarDialogo()
+
+    # Barras finas en el borde de la zona del mapa que indican qué parte se ve cuando no cabe.
+    def dibujarBarras(self, rect, zona):
+        if rect.width > zona.width:
+            largo = max(20, zona.width * zona.width // rect.width)
+            x = zona.x + (zona.x - rect.x) * (zona.width - largo) // (rect.width - zona.width)
+            pygame.draw.rect(self.pantalla, BOTON, (x, zona.bottom + 2, largo, GROSOR_BARRA), border_radius=3)
+        if rect.height > zona.height:
+            largo = max(20, zona.height * zona.height // rect.height)
+            y = zona.y + (zona.y - rect.y) * (zona.height - largo) // (rect.height - zona.height)
+            pygame.draw.rect(self.pantalla, BOTON, (zona.right + 2, y, GROSOR_BARRA, largo), border_radius=3)
+
+    # Recuadra la cámara del juego (sólo el borde: el resto del nivel se sigue viendo igual).
+    def dibujarCamara(self, zona):
+        camara = self.rectCamara()
+        self.pantalla.set_clip(zona)
+        pygame.draw.rect(self.pantalla, COLOR_CAMARA, camara, 3)
+        etiqueta = self.fuentePequena.render(f"Cámara {modelo.CAMARA_ANCHO}x{modelo.CAMARA_ALTO}", True, COLOR_CAMARA)
+        fondo = etiqueta.get_rect(topleft=(camara.x + 6, camara.y + 6)).inflate(8, 4)
+        pygame.draw.rect(self.pantalla, COLOR_CAMPO, fondo)
+        self.pantalla.blit(etiqueta, (camara.x + 6, camara.y + 6))
+        self.pantalla.set_clip(None)
 
     def dibujarDialogo(self):
         velo = pygame.Surface(self.pantalla.get_size(), pygame.SRCALPHA)

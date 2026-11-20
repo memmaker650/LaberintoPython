@@ -43,6 +43,10 @@ TAM_MINIMO, TAM_MAXIMO = 3, 200
 # Tamaño máximo que admite el juego (MazeLab.MAX_CASILLAS_H x MAX_CASILLAS_VERTI; con scroll
 # horizontal y vertical).
 MAX_ANCHO_JUEGO, MAX_ALTO_JUEGO = 64, 64
+# Lo que se ve a la vez en el juego (la cámara): 27x27 casillas (MazeLab.NUM_CASILLAS_CAMARA y
+# FILAS_CAMARA), dentro de una rejilla de al menos 40x27 (REJILLA_MINIMA_H/VERTI).
+CAMARA_ANCHO, CAMARA_ALTO = 27, 27
+REJILLA_MINIMA_H, REJILLA_MINIMA_VERTI = 40, 27
 
 
 # ---------- Dimensiones del fichero ----------
@@ -180,10 +184,13 @@ class Mapa:
         return self.pintar(x, y, PARED)
 
     # Cambia el tamaño conservando lo que cabe (esquina superior izquierda). Las casillas nuevas
-    # son pared; los objetos y el inicio que quedan fuera se pierden.
+    # son suelo con el borde nuevo de pared; los objetos y el inicio que quedan fuera se pierden.
     def redimensionar(self, ancho, alto):
         self.comprobarTamano(ancho, alto)
-        self.fondo = [[self.fondo[y][x] if x < self.ancho and y < self.alto else PARED for x in range(ancho)]
+        # Las casillas nuevas son suelo, salvo las del borde nuevo, que son pared (el nivel queda cerrado).
+        def nueva(x, y):
+            return PARED if x in (0, ancho - 1) or y in (0, alto - 1) else SUELO
+        self.fondo = [[self.fondo[y][x] if x < self.ancho and y < self.alto else nueva(x, y) for x in range(ancho)]
                       for y in range(alto)]
         self.ancho, self.alto = ancho, alto
         self.objetos = {p: n for p, n in self.objetos.items() if self.dentro(*p)}
@@ -302,6 +309,21 @@ class Mapa:
     def exportar(self, ruta):
         with open(ruta, "w", encoding="utf-8") as f:
             f.write(self.textoJson())
+
+    # ---------- Cámara del juego ----------
+    # Posición más a la derecha y más abajo que puede tener la esquina superior izquierda de la
+    # cámara, en casillas, igual que MazeLab.moverCamara: la rejilla del juego mide al menos 40x27 y,
+    # si todo el suelo cabe en las 27 primeras columnas, la cámara no se mueve en horizontal.
+    def limitesCamara(self):
+        columnas = [x for fila in self.fondo for x, tipo in enumerate(fila) if tipo == SUELO]
+        fija = bool(columnas) and max(columnas) < CAMARA_ANCHO
+        maxX = 0 if fija else max(REJILLA_MINIMA_H, self.ancho) - CAMARA_ANCHO
+        return maxX, max(REJILLA_MINIMA_VERTI, self.alto) - CAMARA_ALTO
+
+    # Esquina superior izquierda de la cámara centrada en la casilla (x, y), sin salirse del mundo.
+    def camaraCentradaEn(self, x, y):
+        maxX, maxY = self.limitesCamara()
+        return (max(0, min(x - CAMARA_ANCHO // 2, maxX)), max(0, min(y - CAMARA_ALTO // 2, maxY)))
 
     # ---------- Comprobaciones ----------
     def problemas(self):
