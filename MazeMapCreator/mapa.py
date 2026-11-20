@@ -23,7 +23,7 @@ DIR_RECURSOS = os.path.join(DIR_PROYECTO, "Resources")
 _DIR_CODIGO = os.path.join(DIR_PROYECTO, "Code")
 if _DIR_CODIGO not in sys.path:
     sys.path.insert(0, _DIR_CODIGO)
-from levels_parser import OBJETOS_NIVEL, Layer, LevelData  # noqa: E402
+from levels_parser import MAX_CASILLAS_PUERTA, OBJETOS_NIVEL, Layer, LevelData, agruparPuertas  # noqa: E402,F401
 
 SUELO = "Floor"
 PARED = "Wall"
@@ -326,6 +326,16 @@ class Mapa:
         return (max(0, min(x - CAMARA_ANCHO // 2, maxX)), max(0, min(y - CAMARA_ALTO // 2, maxY)))
 
     # ---------- Comprobaciones ----------
+    # Puertas como las crea el juego: 2 o 3 casillas de puerta seguidas son una sola puerta.
+    def puertas(self):
+        return agruparPuertas(p for p, nombre in self.objetos.items() if nombre == "Door")
+
+    # La puerta (lista de casillas) a la que pertenece la casilla (x, y), o None.
+    def puertaEn(self, x, y):
+        if self.objetos.get((x, y)) != "Door":
+            return None
+        return next(grupo for grupo in self.puertas() if (x, y) in grupo)
+
     def problemas(self):
         """Problemas que tendría el nivel en el juego (los mismos que avisa el juego, más el tamaño)."""
         datos = self.aJson()

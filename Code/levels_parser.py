@@ -25,6 +25,33 @@ OBJETOS_NIVEL = {
 }
 # Tiles del fondo. En la capa Objects marcan las casillas sin objeto (y deben coincidir con el fondo).
 BASES = ("Floor", "Wall")
+# Una puerta puede ocupar 1, 2 o 3 casillas seguidas (para pasillos de 2 o 3 casillas de ancho).
+MAX_CASILLAS_PUERTA = 3
+
+
+# Tramos de puertas seguidas: [[(x, y), ...], ...]. Las casillas de puerta contiguas en una fila
+# forman un tramo horizontal (de izquierda a derecha); si no, las contiguas en una columna forman
+# uno vertical (de arriba abajo); una puerta suelta es un tramo de 1. Los tramos no se limitan aquí.
+def tramosPuertas(casillas) -> List[List[tuple]]:
+    pendientes = set(casillas)
+    tramos = []
+    for x, y in sorted(pendientes, key=lambda p: (p[1], p[0])):
+        if (x, y) not in pendientes:
+            continue
+        paso = (1, 0) if (x + 1, y) in pendientes else (0, 1)
+        tramo = [(x, y)]
+        while (tramo[-1][0] + paso[0], tramo[-1][1] + paso[1]) in pendientes:
+            tramo.append((tramo[-1][0] + paso[0], tramo[-1][1] + paso[1]))
+        pendientes -= set(tramo)
+        tramos.append(tramo)
+    return tramos
+
+
+# Puertas del nivel: cada una es la lista de sus casillas (1 a MAX_CASILLAS_PUERTA). Un tramo más
+# largo se parte en puertas de 3 (el análisis del nivel avisa).
+def agruparPuertas(casillas) -> List[List[tuple]]:
+    return [tramo[i:i + MAX_CASILLAS_PUERTA] for tramo in tramosPuertas(casillas)
+            for i in range(0, len(tramo), MAX_CASILLAS_PUERTA)]
 
 
 @dataclass
@@ -161,6 +188,10 @@ class LevelData:
                 resultado.setdefault(nombre, []).append((x, y))
         return resultado
 
+    def puertas(self) -> List[List[tuple]]:
+        # Una entrada por puerta (2 o 3 puertas seguidas son una sola), con sus casillas.
+        return agruparPuertas(self.objetos().get("Door", []))
+
     def analizar(self) -> List[str]:
         # Devuelve la lista de problemas encontrados (vacía si el nivel tiene sentido).
         problemas: List[str] = []
@@ -218,6 +249,13 @@ class LevelData:
             inalcanzables = [p for p in posiciones if p in suelo and p not in alcanzables]
             if inalcanzables and alcanzables:
                 problemas.append(f"{len(inalcanzables)} '{nombre}' no se pueden alcanzar")
+
+        largos = [t for t in tramosPuertas(objetos.get("Door", [])) if len(t) > MAX_CASILLAS_PUERTA]
+        if largos:
+            x, y = largos[0][0]
+            problemas.append(f"{len(largos)} puerta(s) de más de {MAX_CASILLAS_PUERTA} casillas seguidas "
+                             f"(la primera, de {len(largos[0])} en ({x}, {y})); se parten en puertas de "
+                             f"{MAX_CASILLAS_PUERTA}")
 
         salidas = objetos.get("Exit", [])
         if not salidas:

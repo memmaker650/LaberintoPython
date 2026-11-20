@@ -21,6 +21,9 @@ python3 MazeMapCreator/mazeMapCreator.py Levels/Level_0.json  # abre un nivel
   sigue viendo y pintando todo el nivel. En el juego la cámara sigue al jugador; aquí se coloca donde quieras:
   Mayúsculas + clic (o arrastrar) la centra en esa casilla y las flechas la mueven (Mayúsculas: de 5 en 5). No se sale
   del mundo, igual que en el juego (rejilla de al menos 40x27). C o el botón la ocultan.
+- **Puertas de 2 o 3 casillas:** pon 2 o 3 puertas seguidas (en fila o en columna) y se dibujan como una sola,
+  con un marco amarillo y una hoja que las cruza, igual que las crea el juego. Al pasar el ratón por encima, la barra
+  inferior dice de cuántas casillas es. Más de 3 seguidas es un problema para el juego (se partirían).
 - **Arriba a la derecha:** tamaño en casillas (X, Y) y **Aplicar**. Al cambiar el tamaño se conserva lo que cabe;
   las casillas nuevas son suelo y el borde nuevo, pared (el nivel sigue cerrado).
 - **Nuevo:** mapa vacío con el tamaño de X e Y.

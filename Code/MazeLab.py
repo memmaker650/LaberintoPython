@@ -12,7 +12,7 @@ from pygame.locals import *
 
 import json
 from plyer import notification
-from levels_parser import LevelParser, OBJETOS_NIVEL
+from levels_parser import LevelParser, OBJETOS_NIVEL, agruparPuertas
 import Luces
 
 # -----------
@@ -310,6 +310,27 @@ class Maze:
         self.font = pygame.font.SysFont('Arial', 25)
         self.font.render(texto, True, (255, 0, 0))
 
+    # Puerta que ocupa las casillas 'grupo' [(x, y), ...] (1 a 3, en fila o en columna). La bisagra va
+    # en el lado que toca la pared y, cerrada, la hoja cruza las casillas por la mitad:
+    #  - orientación 4 (hoja horizontal, cierra un pasillo vertical): bisagra a media altura del lado
+    #    izquierdo de la primera casilla.
+    #  - orientación 1 (hoja vertical, cierra un pasillo horizontal): bisagra en mitad del lado de
+    #    arriba de la primera casilla.
+    def crearPuerta(self, grupo):
+        bx, by = grupo[0]
+        casillas = [x + y * self.M for x, y in grupo]
+        if len(grupo) > 1:
+            orientacion = 4 if grupo[1][1] == by else 1
+        elif not self.esAlcanzableCasilla(casillas[0] - 1) and not self.esAlcanzableCasilla(casillas[0] + 1):
+            orientacion = 4
+        else:
+            orientacion = 1
+        if orientacion == 4:
+            pivot_x, pivot_y = bx * CASILLA_PIXEL, by * CASILLA_PIXEL + CASILLA_PIXEL // 2 + BIAS
+        else:
+            pivot_x, pivot_y = bx * CASILLA_PIXEL + CASILLA_PIXEL // 2, by * CASILLA_PIXEL + BIAS
+        return Puerta(pivot_x, pivot_y, orientacion, casillas[0], casillas=casillas)
+
     def draw(self, display_surf, image_surf, w_surf, casillasObjetos={}):
         bx = 0
         by = 0
@@ -459,37 +480,20 @@ class Maze:
                     kasylla, (bx * CASILLA_PIXEL, by * CASILLA_PIXEL + BIAS, CASILLA_PIXEL, CASILLA_PIXEL))
                 self.MazeAlarmas.append(alarma)
 
-            # Puerta/s
-            #------------------------
-            if self.mazeDataExtra[bx + (by * self.M)] == 33:
-                kasylla = bx + (by * self.M)
-
-                # Determinar orientación. La bisagra va en el centro del lado de la casilla que
-                # toca la pared y, cerrada, la hoja cruza la casilla por la mitad.
-                if not self.esAlcanzableCasilla(kasylla - 1) and \
-                   not self.esAlcanzableCasilla(kasylla + 1):
-
-                    # Pasillo vertical: bisagra a media altura del lado izquierdo, hoja horizontal.
-                    orientacion = 4
-                    pivot_x = bx * CASILLA_PIXEL
-                    pivot_y = by * CASILLA_PIXEL + CASILLA_PIXEL // 2 + BIAS
-                else:
-                    # Pasillo horizontal: bisagra en mitad del lado de arriba, hoja vertical.
-                    orientacion = 1
-                    pivot_x = bx * CASILLA_PIXEL + CASILLA_PIXEL // 2
-                    pivot_y = by * CASILLA_PIXEL + BIAS
-                self.posicionPuerta.append((kasylla, orientacion))
-
-                puerta = Puerta(pivot_x, pivot_y, orientacion, kasylla)
-                if kasylla in estadoPuertas:
-                    puerta.abierta, puerta.angle = estadoPuertas[kasylla]
-                    puerta.rotar()
-                self.MazePuertas.add(puerta)
-
             bx = bx + 1
             if bx > self.M - 1:
                 bx = 0
                 by = by + 1
+
+        # Puertas: 2 o 3 casillas de puerta seguidas son una sola puerta (pasillos anchos).
+        celdasPuerta = {(i % self.M, i // self.M) for i, valor in enumerate(self.mazeDataExtra) if valor == 33}
+        for grupo in agruparPuertas(celdasPuerta):
+            puerta = self.crearPuerta(grupo)
+            self.posicionPuerta.append((puerta.casilla, puerta.orientacion))
+            if puerta.casilla in estadoPuertas:
+                puerta.abierta, puerta.angle = estadoPuertas[puerta.casilla]
+                puerta.rotar()
+            self.MazePuertas.add(puerta)
 
         for texto, posicionTexto in numerosCasilla:
             display_surf.blit(xfont.render(texto, True, (255, 0, 0)), posicionTexto)
@@ -915,14 +919,16 @@ class Smoke(pygame.sprite.Sprite):
 
 class Puerta(pygame.sprite.Sprite):
 
-    def __init__(self, pivot_x, pivot_y, orientacion, casilla=None):
+    # 'casillas': todas las casillas que ocupa (1 a 3); 'casilla' es la primera (la de la bisagra).
+    def __init__(self, pivot_x, pivot_y, orientacion, casilla=None, casillas=None):
         super().__init__()
 
         self.orientacion = orientacion
         self.casilla = casilla
+        self.casillas = list(casillas) if casillas else ([casilla] if casilla is not None else [])
 
         self.ancho = 15
-        self.alto = 32
+        self.alto = CASILLA_PIXEL * max(1, len(self.casillas))   # largo de la hoja
 
         self.image_original = pygame.Surface(
             (self.ancho, self.alto),

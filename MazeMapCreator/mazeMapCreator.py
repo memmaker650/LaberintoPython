@@ -54,6 +54,7 @@ COLOR_OK = (110, 210, 90)
 COLOR_AVISO = (255, 170, 60)
 COLOR_CAMPO = (25, 22, 30)
 COLOR_CAMARA = (80, 200, 255)
+COLOR_PUERTA_ANCHA = (255, 200, 60)
 
 # Paleta: (herramienta, etiqueta, imagen en Resources/ o None si se dibuja).
 ELEMENTOS = [
@@ -724,13 +725,37 @@ class Editor:
             for x in range(x0, x1):
                 sup.blit(suelo if fila[x] == SUELO else pared, (x * c - ox, y * c - oy))
         margen = 1 if c >= 8 else 0
-        casillas = list(self.mapa.objetos.items())
+        # Las puertas de 2 o 3 casillas se dibujan como una sola (más abajo).
+        puertasAnchas = [g for g in self.mapa.puertas() if len(g) > 1]
+        enPuertaAncha = {p for g in puertasAnchas for p in g}
+        casillas = [(p, n) for p, n in self.mapa.objetos.items() if p not in enPuertaAncha]
         if self.mapa.inicio is not None:
             casillas.append((self.mapa.inicio, INICIO))
         for (x, y), nombre in casillas:
             if x0 <= x < x1 and y0 <= y < y1:
                 sup.blit(self.icono(nombre, c - 2 * margen), (x * c + margen - ox, y * c + margen - oy))
+        for grupo in puertasAnchas:
+            if any(x0 <= x < x1 and y0 <= y < y1 for x, y in grupo):
+                self.dibujarPuertaAncha(sup, grupo, c, ox, oy)
         return sup
+
+    # Una puerta de 2 o 3 casillas: un marco alrededor de todas y una sola hoja que las cruza por la
+    # mitad, con la bisagra en la primera (como en el juego).
+    @staticmethod
+    def dibujarPuertaAncha(sup, grupo, c, ox, oy):
+        (x, y), horizontal = grupo[0], grupo[1][1] == grupo[0][1]
+        largo = len(grupo) * c
+        marco = pygame.Rect(x * c - ox, y * c - oy, largo if horizontal else c, c if horizontal else largo)
+        grosor = max(2, c // 5)
+        if horizontal:
+            hoja = pygame.Rect(marco.x + 1, marco.centery - grosor // 2, marco.width - 2, grosor)
+            bisagra = (marco.x + 2, marco.centery)
+        else:
+            hoja = pygame.Rect(marco.centerx - grosor // 2, marco.y + 1, grosor, marco.height - 2)
+            bisagra = (marco.centerx, marco.y + 2)
+        pygame.draw.rect(sup, (140, 90, 40), hoja)
+        pygame.draw.circle(sup, (60, 40, 20), bisagra, max(2, c // 6))
+        pygame.draw.rect(sup, COLOR_PUERTA_ANCHA, marco, max(2, c // 10))
 
     def boton(self, rect, texto, elegido=False, color=None):
         encima = rect.collidepoint(pygame.mouse.get_pos())
@@ -799,9 +824,13 @@ class Editor:
         y = alto - ALTO_ESTADO
         pygame.draw.rect(self.pantalla, PANEL, (ANCHO_PANEL, y, ancho - ANCHO_PANEL, ALTO_ESTADO))
         posicion = f"Casilla ({casilla[0]}, {casilla[1]})" if casilla else f"{self.mapa.ancho}x{self.mapa.alto}"
+        puerta = self.mapa.puertaEn(*casilla) if casilla else None
+        if puerta:
+            posicion += f" · puerta de {len(puerta)}"
         self.textoEn(posicion, (ANCHO_PANEL + MARGEN, y + 8), TEXTO_SUAVE, self.fuentePequena)
-        self.textoEn(self.mensaje, (ANCHO_PANEL + 130, y + 8), self.colorMensaje, self.fuentePequena,
-                     ancho=ancho - ANCHO_PANEL - 140)
+        x = max(ANCHO_PANEL + 130, ANCHO_PANEL + MARGEN + self.fuentePequena.size(posicion)[0] + 16)
+        self.textoEn(self.mensaje, (x, y + 8), self.colorMensaje, self.fuentePequena,
+                     ancho=max(0, ancho - x - MARGEN))
         if self.problemas:
             texto, color = f"{len(self.problemas)} problema(s) para el juego: {self.problemas[0]}", COLOR_AVISO
         else:

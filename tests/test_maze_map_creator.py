@@ -692,3 +692,47 @@ def test_importar_vuelve_a_ver_el_mapa_entero(editor, tmp_path):
     ruta.write_text(json.dumps(json_nivel(50, 50)), encoding="utf-8")
     editor.importar(str(ruta))
     assert editor.zoom is None and editor.vista == [0, 0]
+
+
+# ---------- Puertas de 2 o 3 casillas ----------
+
+def test_puertas_seguidas_son_una_sola():
+    m = Mapa(12, 12)
+    for p in ((2, 5), (3, 5), (8, 2), (8, 3), (8, 4), (5, 9)):
+        m.pintar(*p, "Door")
+    assert sorted(m.puertas()) == [[(2, 5), (3, 5)], [(5, 9)], [(8, 2), (8, 3), (8, 4)]]
+    assert m.puertaEn(3, 5) == [(2, 5), (3, 5)] and m.puertaEn(5, 9) == [(5, 9)] and m.puertaEn(1, 1) is None
+    assert not [p for p in m.problemas() if "puerta" in p.lower()]
+
+
+def test_puerta_de_mas_de_3_es_un_problema():
+    m = Mapa(12, 12)
+    for x in range(2, 6):
+        m.pintar(x, 5, "Door")
+    assert any("de más de 3 casillas" in p for p in m.problemas())
+    assert m.puertas() == [[(2, 5), (3, 5), (4, 5)], [(5, 5)]]
+
+
+def test_el_editor_dibuja_la_puerta_ancha_como_una(editor):
+    elegir(editor, "Door")
+    for x in (4, 5, 6):
+        clic(editor, centro_casilla(editor, x, 8))
+    editor.dibujar()
+    rect, c = editor.rectMapa(), editor.tamanoCasilla()
+    # El marco rodea las 3 casillas: el borde de arriba es del mismo color en las tres.
+    for x in (4, 5, 6):
+        assert editor.pantalla.get_at((rect.x + x * c + c // 2, rect.y + 8 * c))[:3] == mmc.COLOR_PUERTA_ANCHA
+    editor.manejar(pygame.event.Event(pygame.MOUSEMOTION, pos=centro_casilla(editor, 5, 8), rel=(0, 0), buttons=(0, 0, 0)))
+    assert editor.mapa.puertaEn(5, 8) == [(4, 8), (5, 8), (6, 8)]
+
+
+def test_exportar_e_importar_mantiene_la_puerta_ancha(tmp_path):
+    m = Mapa(12, 12)
+    m.pintar(4, 4, "Door")
+    m.pintar(5, 4, "Door")
+    m.pintar(9, 9, "Exit")
+    ruta = tmp_path / "Level_8.json"
+    m.exportar(str(ruta))
+    datos = LevelParser(str(tmp_path)).load_by_name("Level_8.json")
+    assert datos.puertas() == [[(4, 4), (5, 4)]]
+    assert Mapa.importar(str(ruta))[0].puertas() == [[(4, 4), (5, 4)]]

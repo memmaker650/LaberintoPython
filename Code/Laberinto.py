@@ -1341,7 +1341,7 @@ class App:
         self.JefeEnemigo.cargarCasillaRecorrido(self.JefeEnemigo.casilla)
 
         # Las puertas cerradas son pared para la IA de los enemigos.
-        casillasPuertasCerradas = {p.casilla for p in self.maze.MazePuertas if not p.abierta}
+        casillasPuertasCerradas = self.casillasPuertasCerradas()
 
         # Resto de enemigos.
         i = 0
@@ -1833,7 +1833,7 @@ class App:
         casilla = MazeLab.Maze.calcularCasilla(*enemigo.rect.center)
         ocupadas = {e.alarmaDestino for e in self.EnemigosGroup if e.alarmaDestino is not None}
         enemigo.kia.casilla = casilla
-        enemigo.kia.casillasBloqueadas = {p.casilla for p in self.maze.MazePuertas if not p.abierta}
+        enemigo.kia.casillasBloqueadas = self.casillasPuertasCerradas()
         mejor, distancia = None, None
         for alarma in self.maze.MazeAlarmas:
             if alarma.encendida(ahora) or alarma in ocupadas:
@@ -1926,7 +1926,7 @@ class App:
     def gritarAlarma(self, enemigo):
         ahora = pygame.time.get_ticks()
         origen = MazeLab.Maze.calcularCasilla(*enemigo.rect.center)
-        puertasCerradas = {p.casilla for p in self.maze.MazePuertas if not p.abierta}
+        puertasCerradas = self.casillasPuertasCerradas()
         alcanzadas = KerberosIA.propagarSonido(origen, self.conexiones, puertasCerradas)
         oyentes = []
         for otro in self.EnemigosGroup:
@@ -1953,16 +1953,20 @@ class App:
                 pygame.draw.polygon(self.superficieConos, color, poligono)
         self.pantalla.blit(self.superficieConos, vista.topleft)
     
+    # Casillas de las puertas cerradas (una puerta puede ocupar 2 o 3): son pared para la IA y el sonido.
+    def casillasPuertasCerradas(self):
+        return {c for p in self.maze.MazePuertas if not p.abierta for c in p.casillas}
+
     # Puerta que el jugador tiene a mano: la de su casilla o la de una casilla contigua
-    # (arriba, abajo, izquierda o derecha). Si hay varias, la más cercana. None si no hay ninguna.
+    # (arriba, abajo, izquierda o derecha) de cualquiera de sus casillas. Si hay varias, la más cercana. None si no hay ninguna.
     def puertaCercana(self):
         centro = pygame.math.Vector2(self.player.x + self.player.rect.width // 2,
                                      self.player.y + self.player.rect.height // 2)
         casilla = MazeLab.Maze.calcularCasilla(centro.x, centro.y)
         columna, fila = casilla % MazeLab.NUM_CASILLAS_H, casilla // MazeLab.NUM_CASILLAS_H
         cercanas = [puerta for puerta in self.maze.MazePuertas
-                    if abs(puerta.casilla % MazeLab.NUM_CASILLAS_H - columna)
-                    + abs(puerta.casilla // MazeLab.NUM_CASILLAS_H - fila) <= 1]
+                    if any(abs(c % MazeLab.NUM_CASILLAS_H - columna) + abs(c // MazeLab.NUM_CASILLAS_H - fila) <= 1
+                           for c in puerta.casillas)]
         if not cercanas:
             return None
         return min(cercanas, key=lambda puerta: centro.distance_to(puerta.rect.center))
