@@ -23,7 +23,7 @@ DIR_RECURSOS = os.path.join(DIR_PROYECTO, "Resources")
 _DIR_CODIGO = os.path.join(DIR_PROYECTO, "Code")
 if _DIR_CODIGO not in sys.path:
     sys.path.insert(0, _DIR_CODIGO)
-from levels_parser import MAX_CASILLAS_PUERTA, OBJETOS_NIVEL, Layer, LevelData, agruparPuertas  # noqa: E402,F401
+from levels_parser import JEFE, MAX_CASILLAS_PUERTA, OBJETOS_NIVEL, Layer, LevelData, agruparPuertas  # noqa: E402,F401
 
 SUELO = "Floor"
 PARED = "Wall"
@@ -33,9 +33,9 @@ BORRAR = "Borrar"     # herramienta: quita el objeto de la casilla
 
 # tileNames que se escriben al exportar (los mismos ids que Level_0.json).
 TILE_NAMES = [SUELO, PARED, "Bone", ENEMIGO, "Exit", "Alarm", "PileOfBones", "Key", "DoorKey", "Mushroom",
-              "RedStar", "Tunnel", "Gold", "Grenade", "FirstAid", "Door"]
-# Lo que se puede poner en la capa Objects: los objetos del juego y los enemigos.
-OBJETOS = [n for n in TILE_NAMES if n in OBJETOS_NIVEL or n == ENEMIGO]
+              "RedStar", "Tunnel", "Gold", "Grenade", "FirstAid", "Door", JEFE]
+# Lo que se puede poner en la capa Objects: los objetos del juego, los enemigos y el jefe (sólo uno).
+OBJETOS = [n for n in TILE_NAMES if n in OBJETOS_NIVEL or n in (ENEMIGO, JEFE)]
 
 TAM_CASILLA = 32
 ANCHO_POR_DEFECTO = ALTO_POR_DEFECTO = 32
@@ -172,6 +172,8 @@ class Mapa:
             self.inicio = (x, y)
         elif herramienta in OBJETOS:
             self.fondo[y][x] = SUELO
+            if herramienta == JEFE:          # sólo hay un jefe: se mueve a la nueva casilla
+                self.objetos = {p: n for p, n in self.objetos.items() if n != JEFE}
             self.objetos[(x, y)] = herramienta
         else:
             raise ValueError(f"Herramienta desconocida: {herramienta}")

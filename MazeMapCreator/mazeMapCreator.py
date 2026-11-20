@@ -26,7 +26,7 @@ import sys
 import pygame
 
 import mapa as modelo
-from mapa import BORRAR, ENEMIGO, INICIO, PARED, SUELO, Mapa
+from mapa import BORRAR, ENEMIGO, INICIO, JEFE, PARED, SUELO, Mapa
 
 TAMANO_VENTANA = (1200, 820)
 ANCHO_PANEL = 210
@@ -62,6 +62,7 @@ ELEMENTOS = [
     (PARED, "Pared", "Wall.png"),
     (INICIO, "Inicio jugador", "player.png"),
     (ENEMIGO, "Enemigo", "DogDown1.png"),
+    (JEFE, "Jefe enemigo", "wilber-eeek.png"),
     ("Door", "Puerta", None),
     ("Alarm", "Alarma", None),
     ("Exit", "Salida", "banderaPirataRoja2.png"),
@@ -800,7 +801,7 @@ class Editor:
             self.pantalla.blit(self.icono(herramienta, 26), (rect.x + 6, rect.y + 4))
             self.textoEn(etiqueta, (rect.x + 42, rect.y + 8))
         nombre = (os.path.basename(self.ruta) if self.ruta else "sin guardar") + (" *" if self.cambios else "")
-        self.textoEn(nombre, (MARGEN, alto - 28), TEXTO_SUAVE, self.fuentePequena, ancho=ANCHO_PANEL - 2 * MARGEN)
+        self.textoEn(nombre, (MARGEN, alto - 22), TEXTO_SUAVE, self.fuentePequena, ancho=ANCHO_PANEL - 2 * MARGEN)
 
         # Centro: el mapa con su cuadrícula.
         rectMapa, zona, c = self.rectMapa(), self.zonaMapa(), self.tamanoCasilla()

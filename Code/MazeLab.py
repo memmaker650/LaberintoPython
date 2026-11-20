@@ -12,7 +12,7 @@ from pygame.locals import *
 
 import json
 from plyer import notification
-from levels_parser import LevelParser, OBJETOS_NIVEL, agruparPuertas
+from levels_parser import JEFE, LevelParser, OBJETOS_NIVEL, agruparPuertas
 import Luces
 
 # -----------
@@ -166,6 +166,7 @@ class Maze:
 
         # Casillas donde el nivel sitúa enemigos (vacía con el laberinto por defecto).
         self.posicionesEnemigos = []
+        self.posicionJefe = None        # casilla del jefe si el nivel la marca ('Boss')
 
         self.maze = [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -256,6 +257,7 @@ class Maze:
         self.maze = [0] * (self.M * self.N)
         self.mazeDataExtra = [0] * (self.M * self.N)
         self.posicionesEnemigos = []
+        self.posicionJefe = None        # casilla del jefe si el nivel la marca ('Boss')
 
         def casilla(x, y):
             return (y + oy) * self.M + (x + ox)
@@ -275,6 +277,8 @@ class Maze:
                     self.mazeDataExtra[c] = OBJETOS_NIVEL[nombre]
                 elif nombre.startswith("Dog"):
                     self.posicionesEnemigos.append(c)
+                elif nombre == JEFE and self.posicionJefe is None:
+                    self.posicionJefe = c
 
         # Si todo el suelo está en las columnas visibles no hace falta desplazar la cámara.
         columnas = [c % self.M for c, v in enumerate(self.maze) if v == 1]

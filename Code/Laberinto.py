@@ -413,6 +413,10 @@ class App:
         )
 
         candidatas = self.casillasInicioEnemigos()
+        # Si el nivel marca dónde empieza el jefe, esa casilla es suya (ningún perro empieza ahí).
+        casillaJefe = self.maze.posicionJefe
+        if casillaJefe is not None:
+            candidatas = [c for c in candidatas if c != casillaJefe]
 
         # Llenar el vector de enemigos (en el centro de su casilla, para que la patrulla
         # pase exactamente por los centros de las casillas).
@@ -439,7 +443,7 @@ class App:
         self.JefeEnemigo.isJefeEnemigo = True
         self.JefeEnemigo.vida = VIDA_JEFE
         self.JefeEnemigo.conoVision = KerberosIA.VisionEnemigo(alcance=ALCANCE_VISION_JEFE, apertura=50)
-        self.JefeEnemigo.casilla = candidatas.pop(0)
+        self.JefeEnemigo.casilla = casillaJefe if casillaJefe is not None else candidatas.pop(0)
         pos = MazeLab.Maze.centroCasilla(self.JefeEnemigo.casilla)
         self.JefeEnemigo.x = pos.x - (self.JefeEnemigo.rect.width // 2)
         self.JefeEnemigo.y = pos.y - (self.JefeEnemigo.rect.height // 2)

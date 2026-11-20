@@ -736,3 +736,28 @@ def test_exportar_e_importar_mantiene_la_puerta_ancha(tmp_path):
     datos = LevelParser(str(tmp_path)).load_by_name("Level_8.json")
     assert datos.puertas() == [[(4, 4), (5, 4)]]
     assert Mapa.importar(str(ruta))[0].puertas() == [[(4, 4), (5, 4)]]
+
+
+# ---------- Jefe enemigo ----------
+
+def test_el_jefe_es_unico_y_se_exporta(tmp_path):
+    m = Mapa(12, 12)
+    m.pintar(3, 3, modelo.JEFE)
+    m.pintar(8, 8, modelo.JEFE)                      # se mueve: sólo hay uno
+    assert [p for p, n in m.objetos.items() if n == modelo.JEFE] == [(8, 8)]
+    m.pintar(5, 5, ENEMIGO)
+    m.pintar(10, 10, "Exit")
+    ruta = tmp_path / "Level_8.json"
+    m.exportar(str(ruta))
+    datos = LevelParser(str(tmp_path)).load_by_name("Level_8.json")
+    assert datos.objetos()[modelo.JEFE] == [(8, 8)] and datos.analizar() == []
+    importado, avisos = Mapa.importar(str(ruta))
+    assert importado.objetos[(8, 8)] == modelo.JEFE and not avisos
+
+
+def test_jefe_en_la_paleta(editor):
+    elegir(editor, modelo.JEFE)
+    clic(editor, centro_casilla(editor, 6, 6))
+    clic(editor, centro_casilla(editor, 9, 4))
+    assert editor.mapa.objetos.get((9, 4)) == modelo.JEFE and (6, 6) not in editor.mapa.objetos
+    assert editor.iconos.get("wilber-eeek.png") is not None

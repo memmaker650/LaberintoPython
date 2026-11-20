@@ -23,6 +23,8 @@ OBJETOS_NIVEL = {
     "Alarm": 16,        # luz de alarma
     "Door": 33,         # puerta
 }
+# Jefe enemigo: casilla donde empieza (uno por nivel; si no hay, el juego elige una al azar).
+JEFE = "Boss"
 # Tiles del fondo. En la capa Objects marcan las casillas sin objeto (y deben coincidir con el fondo).
 BASES = ("Floor", "Wall")
 # Una puerta puede ocupar 1, 2 o 3 casillas seguidas (para pasillos de 2 o 3 casillas de ancho).
@@ -240,9 +242,9 @@ class LevelData:
         for nombre, posiciones in sorted(objetos.items()):
             if nombre.startswith("id "):
                 problemas.append(f"La capa Objects usa un {nombre} que no existe en tileNames")
-            elif nombre not in OBJETOS_NIVEL and not nombre.startswith("Dog"):
+            elif nombre not in OBJETOS_NIVEL and nombre != JEFE and not nombre.startswith("Dog"):
                 problemas.append(f"La capa Objects usa '{nombre}', que no es un objeto conocido "
-                                 f"({', '.join(sorted(OBJETOS_NIVEL))} o Dog...)")
+                                 f"({', '.join(sorted(OBJETOS_NIVEL))}, {JEFE} o Dog...)")
             en_pared = [p for p in posiciones if p not in suelo]
             if en_pared:
                 problemas.append(f"{len(en_pared)} de {len(posiciones)} '{nombre}' están sobre una pared")
@@ -256,6 +258,10 @@ class LevelData:
             problemas.append(f"{len(largos)} puerta(s) de más de {MAX_CASILLAS_PUERTA} casillas seguidas "
                              f"(la primera, de {len(largos[0])} en ({x}, {y})); se parten en puertas de "
                              f"{MAX_CASILLAS_PUERTA}")
+
+        jefes = objetos.get(JEFE, [])
+        if len(jefes) > 1:
+            problemas.append(f"El nivel tiene {len(jefes)} jefes ('{JEFE}'); sólo se usa el primero")
 
         salidas = objetos.get("Exit", [])
         if not salidas:

@@ -8,7 +8,8 @@ python3 MazeMapCreator/mazeMapCreator.py                      # mapa nuevo de 32
 python3 MazeMapCreator/mazeMapCreator.py Levels/Level_0.json  # abre un nivel
 ```
 
-- **Izquierda:** elementos (suelo, pared, inicio del jugador, enemigo, puerta, alarma, salida, llaves, oro...).
+- **Izquierda:** elementos (suelo, pared, inicio del jugador, enemigo, jefe enemigo, puerta, alarma, salida, llaves,
+  oro...). El jefe es único: ponerlo en otra casilla lo mueve. Si no se pone, el juego lo coloca al azar.
   Clic para elegir uno.
 - **Centro:** el mapa con su cuadrícula.
   - Botón izquierdo: pinta (se puede arrastrar).
